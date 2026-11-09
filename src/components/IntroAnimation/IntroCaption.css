@@ -1,0 +1,45 @@
+.intro-caption {
+  position: absolute;
+  left: clamp(0.55rem, 1.35vw, 1rem);
+  bottom: clamp(0.5rem, 1.25vw, 0.85rem);
+  margin: 0;
+  padding: 0;
+  max-width: min(92vw, 36rem);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  font-size: clamp(0.5rem, 0.16vw + 0.45rem, 0.59rem);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0.045em;
+  color: rgba(0, 0, 0, 0.44);
+  pointer-events: none;
+  z-index: 2;
+  transition: color 0.35s ease;
+}
+
+.intro-caption__sep {
+  margin: 0 0.42em;
+  opacity: 0.75;
+}
+
+.intro-animation--complete .intro-caption {
+  color: rgba(255, 255, 255, 0.52);
+}
+
+@media (max-width: 480px) {
+  .intro-caption {
+    letter-spacing: 0.035em;
+    line-height: 1.5;
+  }
+
+  .intro-caption__sep {
+    margin: 0 0.35em;
+  }
+}

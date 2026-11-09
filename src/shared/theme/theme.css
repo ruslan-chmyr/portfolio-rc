@@ -1,0 +1,52 @@
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+  --color-background: #ffffff;
+  --color-background-complete: #000000;
+  --color-foreground: #000000;
+  --color-ink: #000000;
+  --color-text-muted: rgba(0, 0, 0, 0.45);
+  --color-text-strong: rgba(0, 0, 0, 0.82);
+  --color-text-hover: rgba(0, 0, 0, 0.78);
+  --color-border: rgba(0, 0, 0, 0.2);
+  --color-cursor-source: #ffffff;
+  --color-text-on-complete: rgba(255, 255, 255, 0.52);
+  --theme-transition-duration: 320ms;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --color-background: #000000;
+  --color-background-complete: #ffffff;
+  --color-foreground: #ffffff;
+  --color-ink: #ffffff;
+  --color-text-muted: rgba(255, 255, 255, 0.52);
+  --color-text-strong: rgba(255, 255, 255, 0.88);
+  --color-text-hover: rgba(255, 255, 255, 0.88);
+  --color-border: rgba(255, 255, 255, 0.22);
+  --color-cursor-source: #ffffff;
+  --color-text-on-complete: rgba(0, 0, 0, 0.52);
+}
+
+html {
+  transition:
+    background-color var(--theme-transition-duration) ease,
+    color var(--theme-transition-duration) ease;
+}
+
+body,
+.intro-animation,
+.intro-caption,
+.intro-scroll-hint,
+.theme-toggle {
+  transition:
+    background-color var(--theme-transition-duration) ease,
+    color var(--theme-transition-duration) ease,
+    border-color var(--theme-transition-duration) ease,
+    opacity var(--theme-transition-duration) ease;
+}
+
+.intro-animation__ink {
+  color: var(--color-ink);
+  transition: color var(--theme-transition-duration) ease;
+}

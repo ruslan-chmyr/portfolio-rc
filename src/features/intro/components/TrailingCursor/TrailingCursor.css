@@ -1,0 +1,37 @@
+.trailing-cursor {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10001;
+  mix-blend-mode: difference;
+}
+
+.trailing-cursor__dot,
+.trailing-cursor__ring {
+  position: fixed;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  will-change: transform;
+}
+
+/* White source + difference → dark on white bg, light on black (logo / canvas / post-transition). */
+.trailing-cursor__dot {
+  width: 2.625px;
+  height: 2.625px;
+  border-radius: 50%;
+  background: var(--color-cursor-source);
+}
+
+.trailing-cursor__ring {
+  width: 34.5px;
+  height: 34.5px;
+  border-radius: 50%;
+  border: 0.94px solid var(--color-cursor-source);
+  background: transparent;
+}
+
+html.intro-custom-cursor,
+html.intro-custom-cursor * {
+  cursor: none !important;
+}
