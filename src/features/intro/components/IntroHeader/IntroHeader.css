@@ -1,0 +1,30 @@
+.intro-animation__header {
+  position: absolute;
+  top: clamp(1.15rem, 3.1vw, 2.15rem);
+  right: clamp(0.55rem, 1.35vw, 1rem);
+  left: auto;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(1.1rem, 3vw, 2rem);
+  z-index: 4;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.intro-animation__header > * {
+  pointer-events: auto;
+}
+
+.intro-animation--complete .intro-animation__header {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .intro-animation__header {
+    gap: clamp(0.85rem, 4vw, 1.25rem);
+  }
+}

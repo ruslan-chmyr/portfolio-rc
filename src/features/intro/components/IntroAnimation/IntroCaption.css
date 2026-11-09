@@ -1,0 +1,79 @@
+.intro-caption {
+  position: absolute;
+  left: clamp(0.55rem, 1.35vw, 1rem);
+  bottom: clamp(0.5rem, 1.25vw, 0.85rem);
+  margin: 0;
+  padding: 0;
+  max-width: min(92vw, 36rem);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  font-size: clamp(0.5rem, 0.16vw + 0.45rem, 0.59rem);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0.045em;
+  color: var(--color-text-muted);
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.intro-caption__line {
+  display: inline-block;
+  transform-origin: left bottom;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .intro-caption__line {
+    animation: intro-caption-float 5.8s ease-in-out infinite;
+  }
+}
+
+@keyframes intro-caption-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-6px);
+  }
+  55% {
+    transform: translateY(-2.5px);
+  }
+}
+
+.intro-caption__segment {
+  display: inline;
+}
+
+.intro-caption__letter {
+  display: inline-block;
+  transform-origin: center bottom;
+  will-change: transform;
+}
+
+.intro-caption__sep {
+  margin: 0 0.42em;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.intro-animation--complete .intro-caption {
+  color: var(--color-text-on-complete);
+}
+
+@media (max-width: 480px) {
+  .intro-caption {
+    letter-spacing: 0.035em;
+    line-height: 1.5;
+  }
+
+  .intro-caption__sep {
+    margin: 0 0.35em;
+  }
+}

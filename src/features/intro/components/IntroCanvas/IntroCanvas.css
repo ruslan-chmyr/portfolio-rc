@@ -1,0 +1,28 @@
+.intro-animation__liquid-canvas {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(90vw, 780px);
+  height: auto;
+  aspect-ratio: 600 / 320;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (max-width: 640px) {
+  .intro-animation__liquid-canvas {
+    width: min(94vw, 620px);
+  }
+}
+
+.intro-animation__transition-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+}

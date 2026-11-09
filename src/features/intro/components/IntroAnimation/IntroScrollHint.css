@@ -1,0 +1,41 @@
+.intro-scroll-hint__word {
+  display: inline-block;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.intro-scroll-hint {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: clamp(0.45rem, 1.1vw, 0.75rem);
+  align-items: baseline;
+  justify-content: flex-end;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  font-size: clamp(0.58rem, 1.35vw + 0.22rem, 0.82rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-strong);
+  pointer-events: auto;
+  will-change: transform;
+  transition: opacity 0.4s ease, color 0.35s ease;
+}
+
+@media (max-width: 480px) {
+  .intro-scroll-hint {
+    font-size: clamp(0.54rem, 2.6vw, 0.7rem);
+    letter-spacing: 0.16em;
+    gap: 0.5rem;
+  }
+}

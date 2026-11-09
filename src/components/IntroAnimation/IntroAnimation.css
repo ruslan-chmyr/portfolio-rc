@@ -1,0 +1,65 @@
+.intro-animation {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  background: #fff;
+  overflow: hidden;
+  z-index: 1000;
+  isolation: isolate;
+}
+
+.intro-animation--complete {
+  background: #000;
+}
+
+.intro-animation__stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.intro-animation__svg {
+  display: block;
+  width: min(90vw, 780px);
+  height: auto;
+  overflow: visible;
+}
+
+.intro-animation__mark {
+  transform-box: view-box;
+  transform-origin: center;
+}
+
+.intro-animation__bloom {
+  transform-box: view-box;
+  transform-origin: center;
+}
+
+@media (max-width: 640px) {
+  .intro-animation__svg {
+    width: min(94vw, 620px);
+  }
+}
+
+/* GPU-rendered mask has the same 600:320 aspect ratio as the SVG.
+   It fades out before the existing SVG bloom transition begins. */
+.intro-animation__liquid-canvas {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(90vw, 780px);
+  height: auto;
+  aspect-ratio: 600 / 320;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (max-width: 640px) {
+  .intro-animation__liquid-canvas {
+    width: min(94vw, 620px);
+  }
+}
