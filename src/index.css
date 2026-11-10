@@ -19,6 +19,31 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html.portfolio-native-scroll body {
+  background: var(--color-portfolio-background);
+  color: var(--color-portfolio-foreground);
+}
+
 #root {
   min-height: 100dvh;
+}
+
+html:not(.portfolio-native-scroll),
+html:not(.portfolio-native-scroll) body {
+  overflow: hidden;
+  height: 100%;
+}
+
+html.portfolio-native-scroll,
+html.portfolio-native-scroll body {
+  overflow-x: clip;
+  overflow-y: auto;
+  height: auto;
+  min-height: 100%;
+  background: var(--color-portfolio-background);
+}
+
+html.portfolio-native-scroll #root {
+  min-height: 0;
+  background: var(--color-portfolio-background);
 }

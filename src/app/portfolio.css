@@ -1,0 +1,19 @@
+.portfolio-main {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--color-portfolio-background);
+  color: var(--color-portfolio-foreground);
+  /* Re-map shared tokens for all About / nav children */
+  --color-background: var(--color-portfolio-background);
+  --color-foreground: var(--color-portfolio-foreground);
+  --color-text-muted: var(--color-portfolio-text-muted);
+  --color-text-strong: var(--color-portfolio-text-strong);
+  --color-text-hover: var(--color-portfolio-text-hover);
+  --color-border: var(--color-portfolio-border);
+}
+
+html.portfolio-native-scroll .pin-spacer {
+  background: var(--color-portfolio-background);
+}

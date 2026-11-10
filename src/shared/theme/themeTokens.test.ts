@@ -7,9 +7,11 @@ describe('THEME_TOKENS', () => {
     expect(THEME_TOKENS.dark.ink).toEqual([1, 1, 1])
   })
 
-  it('keeps background and clear colors inverted between themes', () => {
+  it('inverts portfolio clear color relative to intro background', () => {
     expect(THEME_TOKENS.light.background).toEqual([1, 1, 1])
+    expect(THEME_TOKENS.light.backgroundComplete).toEqual([0, 0, 0])
     expect(THEME_TOKENS.dark.background).toEqual([0, 0, 0])
+    expect(THEME_TOKENS.dark.backgroundComplete).toEqual([1, 1, 1])
   })
 })
 

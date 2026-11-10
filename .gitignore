@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+src/assets/me/portraitBlackFilter.png
+src/assets/me/portraitShort.png
+src/assets/me/portraitShortBlackFilter.png

@@ -1,0 +1,71 @@
+/* —— Animated hero typography —— */
+.about-section:not(.about-section--type-ready) .about-hero-type {
+  visibility: hidden;
+}
+
+.about-section:not(.about-section--type-ready):not(.about-section--static) .about-tech-ambient__reveal {
+  visibility: hidden;
+}
+
+.about-hero-type {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.about-hero-type__anchor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.about-hero-type__stage {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+
+.about-hero-type__word {
+  position: absolute;
+  margin: 0;
+  font-family: var(--about-font-sans);
+  font-weight: 800;
+  line-height: 0.8;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+  color: var(--color-foreground);
+  will-change: transform, opacity;
+}
+
+.about-hero-type__word--senior {
+  top: var(--about-headline-top);
+  left: var(--about-gutter);
+  max-width: 52vw;
+  text-align: left;
+}
+
+.about-hero-type__word--frontend {
+  top: calc(var(--about-headline-top) + var(--about-hero-size) * 0.78);
+  left: var(--about-gutter);
+  max-width: 52vw;
+  text-align: left;
+}
+
+.about-hero-type__word--engineer {
+  right: var(--about-gutter);
+  bottom: var(--about-engineer-bottom);
+  text-align: right;
+}
+
+.about-hero-type__line {
+  display: block;
+  font-size: var(--about-hero-size);
+  white-space: nowrap;
+}
+
+.about-hero-type__word--engineer .about-hero-type__line {
+  font-size: var(--about-engineer-hero-size);
+}
+

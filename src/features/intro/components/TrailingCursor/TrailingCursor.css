@@ -2,9 +2,11 @@
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 10001;
+  z-index: 2147483000;
   mix-blend-mode: difference;
 }
+
+/* Intro + About: white source and difference so the cursor inverts over text and bg. */
 
 .trailing-cursor__dot,
 .trailing-cursor__ring {

@@ -1,6 +1,5 @@
 import { useId, useMemo, useRef } from 'react'
 import { useIntroAnimation } from '../../hooks/useIntroAnimation'
-import { TrailingCursor } from '../TrailingCursor/TrailingCursor'
 import { IntroCaption } from './IntroCaption'
 import { IntroHeader } from '../IntroHeader/IntroHeader'
 import { IntroLogo } from '../IntroLogo/IntroLogo'
@@ -45,7 +44,6 @@ export function IntroAnimation() {
 
   return (
     <div ref={rootRef} className="intro-animation">
-      <TrailingCursor />
       <IntroHeader />
       <div ref={stageRef} className="intro-animation__stage" aria-hidden>
         <IntroLogo

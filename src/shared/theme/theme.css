@@ -1,6 +1,7 @@
 :root,
 [data-theme='light'] {
   color-scheme: light;
+  /* Intro surface */
   --color-background: #ffffff;
   --color-background-complete: #000000;
   --color-foreground: #000000;
@@ -9,9 +10,20 @@
   --color-text-strong: rgba(0, 0, 0, 0.82);
   --color-text-hover: rgba(0, 0, 0, 0.78);
   --color-border: rgba(0, 0, 0, 0.2);
+  /* White + difference reads on intro light/dark surfaces; portfolio overrides below. */
   --color-cursor-source: #ffffff;
   --color-text-on-complete: rgba(255, 255, 255, 0.52);
+  /* Portfolio surface (inverted vs intro) */
+  --color-portfolio-background: #000000;
+  --color-portfolio-foreground: #ffffff;
+  --color-portfolio-text-muted: rgba(255, 255, 255, 0.52);
+  --color-portfolio-text-strong: rgba(255, 255, 255, 0.88);
+  --color-portfolio-text-hover: rgba(255, 255, 255, 0.88);
+  --color-portfolio-border: rgba(255, 255, 255, 0.22);
   --theme-transition-duration: 320ms;
+  --header-controls-top: 20px;
+  --header-controls-right: 20px;
+  --header-controls-gap: clamp(1.1rem, 3vw, 2rem);
 }
 
 [data-theme='dark'] {
@@ -26,15 +38,34 @@
   --color-border: rgba(255, 255, 255, 0.22);
   --color-cursor-source: #ffffff;
   --color-text-on-complete: rgba(0, 0, 0, 0.52);
+  --color-portfolio-background: #ffffff;
+  --color-portfolio-foreground: #000000;
+  --color-portfolio-text-muted: rgba(0, 0, 0, 0.45);
+  --color-portfolio-text-strong: rgba(0, 0, 0, 0.82);
+  --color-portfolio-text-hover: rgba(0, 0, 0, 0.78);
+  --color-portfolio-border: rgba(0, 0, 0, 0.2);
 }
 
 html {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
   transition:
     background-color var(--theme-transition-duration) ease,
     color var(--theme-transition-duration) ease;
 }
 
+html.portfolio-native-scroll {
+  background-color: var(--color-portfolio-background);
+  color: var(--color-portfolio-foreground);
+  /* Keep #fff for mix-blend-mode: difference over portfolio text and surfaces */
+  --color-cursor-source: #ffffff;
+}
+
 body,
+#root,
+.portfolio-main,
+.about-section,
+.about-section__pin,
 .intro-animation,
 .intro-caption,
 .intro-scroll-hint,

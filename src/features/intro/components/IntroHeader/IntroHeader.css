@@ -1,14 +1,14 @@
 .intro-animation__header {
   position: absolute;
-  top: clamp(1.15rem, 3.1vw, 2.15rem);
-  right: clamp(0.55rem, 1.35vw, 1rem);
+  top: var(--header-controls-top);
+  right: var(--header-controls-right);
   left: auto;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
-  gap: clamp(1.1rem, 3vw, 2rem);
+  gap: var(--header-controls-gap);
   z-index: 4;
   pointer-events: none;
   transition: opacity 0.4s ease;
