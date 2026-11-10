@@ -13,6 +13,11 @@
   background: var(--color-background-complete);
 }
 
+.intro-animation--handed-off {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .intro-animation__stage {
   position: absolute;
   inset: 0;

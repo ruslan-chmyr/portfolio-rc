@@ -1,6 +1,7 @@
 import gsap from 'gsap'
 import { INTRO_POINTER, INTRO_SCROLL, INTRO_TRANSITION } from '../model/introConfig'
 import { createIntroScrollController } from './createIntroScrollController'
+import { createIntroScrollHandoff } from './createIntroScrollHandoff'
 import { clamp01, smooth01 } from './introMath'
 import type { IntroRuntime } from './introRuntime'
 
@@ -127,6 +128,8 @@ export function attachIntroTransition(runtime: IntroRuntime): IntroTransitionHan
     }
   }
 
+  const handoff = createIntroScrollHandoff(root)
+
   const scroll = createIntroScrollController({
     distancePx: () =>
       Math.max(
@@ -135,6 +138,7 @@ export function attachIntroTransition(runtime: IntroRuntime): IntroTransitionHan
       ),
     keyboardStep: INTRO_SCROLL.keyboardStep,
     onProgress: applyProgress,
+    handoff,
   })
 
   return {
@@ -147,6 +151,7 @@ export function attachIntroTransition(runtime: IntroRuntime): IntroTransitionHan
         }
       }
       scroll.dispose()
+      handoff.dispose()
       ctx.revert()
     },
   }

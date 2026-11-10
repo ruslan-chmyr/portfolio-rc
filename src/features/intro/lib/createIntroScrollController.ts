@@ -1,4 +1,5 @@
 import { clamp01 } from './introMath'
+import type { IntroScrollHandoff } from './createIntroScrollHandoff'
 
 /**
  * Owns the intro's *virtual scroll position*.
@@ -10,6 +11,7 @@ export type IntroScrollControllerOptions = {
   distancePx: () => number
   keyboardStep: number
   onProgress: (progress: number) => void
+  handoff?: IntroScrollHandoff
 }
 
 export type IntroScrollController = {
@@ -21,6 +23,7 @@ export function createIntroScrollController({
   distancePx,
   keyboardStep,
   onProgress,
+  handoff,
 }: IntroScrollControllerOptions): IntroScrollController {
   let progress = 0
   let previousTouchY: number | null = null
@@ -39,10 +42,32 @@ export function createIntroScrollController({
 
   const onWheel = (event: WheelEvent) => {
     if (event.ctrlKey) return // Preserve the browser's pinch-to-zoom gesture.
-    if (event.cancelable) event.preventDefault()
+
+    const portfolioActive = handoff && !handoff.isCapturing()
+    if (portfolioActive) {
+      if (window.scrollY <= 0 && event.deltaY < 0) {
+        handoff.reengage()
+      } else {
+        return
+      }
+    }
+
     const multiplier =
       event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1
-    move(event.deltaY * multiplier)
+    const delta = event.deltaY * multiplier
+
+    if (
+      handoff &&
+      handoff.isCapturing() &&
+      progress >= 1 &&
+      delta > 0
+    ) {
+      handoff.releaseForward()
+      return
+    }
+
+    if (event.cancelable) event.preventDefault()
+    move(delta)
   }
 
   const onTouchStart = (event: TouchEvent) => {
@@ -54,6 +79,22 @@ export function createIntroScrollController({
     const y = event.touches[0].clientY
     const delta = previousTouchY - y
     previousTouchY = y
+
+    if (handoff && !handoff.isCapturing()) {
+      if (window.scrollY <= 0 && delta < 0) handoff.reengage()
+      else return
+    }
+
+    if (
+      handoff &&
+      handoff.isCapturing() &&
+      progress >= 1 &&
+      delta > 0
+    ) {
+      handoff.releaseForward()
+      return
+    }
+
     if (event.cancelable) event.preventDefault()
     move(delta)
   }
@@ -69,10 +110,26 @@ export function createIntroScrollController({
       (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
     ) return
 
+    if (handoff && !handoff.isCapturing()) {
+      const reverseKey =
+        event.key === 'ArrowUp' ||
+        event.key === 'PageUp' ||
+        (event.key === ' ' && event.shiftKey)
+      if (reverseKey && window.scrollY <= 0) {
+        handoff.reengage()
+        if (event.cancelable) event.preventDefault()
+      }
+      return
+    }
+
     let next: number | null = null
     switch (event.key) {
       case 'ArrowDown':
       case 'PageDown':
+        if (handoff && progress >= 1) {
+          handoff.releaseForward()
+          return
+        }
         next = progress + keyboardStep
         break
       case 'ArrowUp':
@@ -80,6 +137,10 @@ export function createIntroScrollController({
         next = progress - keyboardStep
         break
       case ' ':
+        if (!event.shiftKey && handoff && progress >= 1) {
+          handoff.releaseForward()
+          return
+        }
         next = progress + (event.shiftKey ? -keyboardStep : keyboardStep)
         break
       case 'Home':

@@ -25,24 +25,24 @@
   place-items: center;
 }
 
-/* Filled crescent reads clearly on white; subtle chip so the control is obvious. */
-[data-theme='light'] .theme-toggle {
+/* Intro-only chips — portfolio re-maps tokens on `.portfolio-main`. */
+[data-theme='light'] .intro-animation .theme-toggle {
   color: var(--color-foreground);
   border-color: rgba(0, 0, 0, 0.26);
   background: rgba(0, 0, 0, 0.045);
 }
 
-[data-theme='light'] .theme-toggle:hover {
+[data-theme='light'] .intro-animation .theme-toggle:hover {
   background: rgba(0, 0, 0, 0.08);
   border-color: rgba(0, 0, 0, 0.34);
 }
 
-[data-theme='dark'] .theme-toggle {
+[data-theme='dark'] .intro-animation .theme-toggle {
   border-color: rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.04);
 }
 
-[data-theme='dark'] .theme-toggle:hover {
+[data-theme='dark'] .intro-animation .theme-toggle:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 

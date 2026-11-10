@@ -1,10 +1,10 @@
-import { IntroAnimation } from './components/IntroAnimation/IntroAnimation'
+import { PortfolioApp } from './app/PortfolioApp'
 import { ThemeProvider } from './shared/theme'
 
 function App() {
   return (
     <ThemeProvider>
-      <IntroAnimation />
+      <PortfolioApp />
     </ThemeProvider>
   )
 }
