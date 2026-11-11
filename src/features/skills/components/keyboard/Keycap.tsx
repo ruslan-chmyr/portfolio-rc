@@ -6,6 +6,7 @@ import {
   pointerTypeToModality,
   type SkillEngageOptions,
 } from '../../lib/skillEngagement'
+import type { StoryKeyVisual } from '../../lib/storyHighlight'
 import { resolveKeycapLegendMode, useSvgTexture } from '../../lib/useSvgTexture'
 import type { SkillDefinition } from '../../model/skillsConfig'
 import { getSkillVisual, mixHex } from '../../model/skillVisuals'
@@ -29,6 +30,8 @@ type KeycapProps = {
   keyDef: ResolvedKeyboardKey
   skill: SkillDefinition | null
   selected: boolean
+  /** Story Focus layer — independent from inspection selection. */
+  storyVisual?: StoryKeyVisual
   /** Shared flip legend opacity — read from a ref to avoid React updates per frame. */
   labelOpacityRef: RefObject<number>
   reducedMotion: boolean
@@ -42,6 +45,7 @@ export function Keycap({
   keyDef,
   skill,
   selected,
+  storyVisual = 'idle',
   labelOpacityRef,
   reducedMotion,
   interactionsLocked,
@@ -90,9 +94,18 @@ export function Keycap({
   const faceColor = useMemo(() => {
     if (liveHeld) return COLOR_PRESSED
     if (!visual) return COLOR_DECORATIVE
-    if (liveSelected) return mixHex(visual.accent, '#FFFFFF', 0.22)
-    return visual.accent
-  }, [liveHeld, liveSelected, visual])
+    let accent = liveSelected ? mixHex(visual.accent, '#FFFFFF', 0.22) : visual.accent
+    if (storyVisual === 'related') accent = mixHex(accent, '#FFFFFF', 0.16)
+    if (storyVisual === 'muted') accent = mixHex(accent, '#05070f', 0.58)
+    return accent
+  }, [liveHeld, liveSelected, storyVisual, visual])
+
+  const storyEmissive =
+    storyVisual === 'related' && visual && !liveHeld
+      ? mixHex(visual.accent, '#000000', 0.45)
+      : '#000000'
+  const storyEmissiveIntensity =
+    storyVisual === 'related' && !liveHeld ? (liveSelected ? 0.55 : 0.42) : 0
 
   const fontSize = useMemo(() => {
     if (!label) return 0.22
@@ -217,12 +230,16 @@ export function Keycap({
         >
           <meshStandardMaterial
             color={faceColor}
-            roughness={selected || liveHeld ? 0.28 : 0.36}
-            metalness={selected || liveHeld ? 0.18 : 0.12}
+            roughness={selected || liveHeld || storyVisual === 'related' ? 0.28 : 0.36}
+            metalness={selected || liveHeld || storyVisual === 'related' ? 0.18 : 0.12}
             emissive={
-              liveSelected && visual ? mixHex(visual.accent, '#000000', 0.55) : '#000000'
+              liveSelected && visual
+                ? mixHex(visual.accent, '#000000', 0.55)
+                : storyEmissive
             }
-            emissiveIntensity={liveSelected ? 0.35 : 0}
+            emissiveIntensity={
+              liveSelected ? 0.35 : storyEmissiveIntensity
+            }
           />
         </RoundedBox>
 

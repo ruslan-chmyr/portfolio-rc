@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useKeyboardSound } from '../hooks/useKeyboardSound'
 import { useSkillCategoryTransition } from '../hooks/useSkillCategoryTransition'
 import {
@@ -6,16 +6,22 @@ import {
   type SkillEngageOptions,
 } from '../lib/skillEngagement'
 import { resolveSkillInspection } from '../lib/skillSelection'
-import { canUseWebGL } from '../lib/webglSupport'
+import { toRelatedSkillSet } from '../lib/storyHighlight'
+import { canUseWebGL, prefersReducedMotion } from '../lib/webglSupport'
 import {
   getSkill,
   type SkillBoardCategory,
   type SkillId,
 } from '../model/skillsConfig'
+import {
+  getEngineeringStory,
+  type EngineeringStoryId,
+} from '../model/storiesConfig'
 import { SkillCategorySelector } from './SkillCategorySelector'
 import { SkillInspection } from './SkillInspection'
 import { SkillSoundToggle } from './SkillSoundToggle'
 import { SkillsKeyboardFallback } from './SkillsKeyboardFallback'
+import { StoriesPanel } from './stories/StoriesPanel'
 import '../styles/skills.css'
 
 const SkillsKeyboardCanvas = lazy(() =>
@@ -26,7 +32,11 @@ const SkillsKeyboardCanvas = lazy(() =>
 
 export function SkillsSection() {
   const [webgl] = useState(() => canUseWebGL())
+  const [reducedMotion, setReducedMotion] = useState(() => prefersReducedMotion())
   const [selectedSkillId, setSelectedSkillId] = useState<SkillId | null>(null)
+  const [focusedStoryId, setFocusedStoryId] = useState<EngineeringStoryId | null>(
+    null,
+  )
   const { soundEnabled, toggleSound, playKeyClick } = useKeyboardSound()
   const {
     activeCategory,
@@ -37,6 +47,20 @@ export function SkillsSection() {
     handleFlipSwap,
     handleFlipComplete,
   } = useSkillCategoryTransition()
+
+  const focusedStory = getEngineeringStory(focusedStoryId)
+  const relatedSkillIds = useMemo(
+    () => toRelatedSkillSet(focusedStory?.relatedSkillIds),
+    [focusedStory],
+  )
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const onChange = () => setReducedMotion(mq.matches)
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
 
   const handleSelectCategory = useCallback(
     (category: SkillBoardCategory) => {
@@ -63,13 +87,43 @@ export function SkillsSection() {
     setSelectedSkillId(null)
   }, [isFlipping])
 
+  const handleOpenStory = useCallback(
+    (storyId: EngineeringStoryId) => {
+      const story = getEngineeringStory(storyId)
+      if (!story) return
+      setFocusedStoryId(story.id)
+      // Only flip when the Story requires a different board — avoid repeat flips.
+      if (story.category !== activeCategory) {
+        selectCategory(story.category)
+      }
+    },
+    [activeCategory, selectCategory],
+  )
+
+  const handleCloseStory = useCallback(() => {
+    setFocusedStoryId(null)
+  }, [])
+
+  useEffect(() => {
+    if (!focusedStoryId) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setFocusedStoryId(null)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [focusedStoryId])
+
   const selectedSkill = selectedSkillId ? getSkill(selectedSkillId) : null
+  const mode = focusedStory ? 'story-focus' : 'explore'
 
   return (
     <section
       id="expertise"
       className="skills-section"
-      data-skills-mode="explore"
+      data-skills-mode={mode}
       aria-labelledby="skills-heading"
     >
       <div className="skills-section__shell">
@@ -106,6 +160,7 @@ export function SkillsSection() {
                   enabled={webgl}
                   displayCategory={displayCategory}
                   selectedSkillId={selectedSkillId}
+                  relatedSkillIds={relatedSkillIds}
                   isFlipping={isFlipping}
                   flipNonce={flipNonce}
                   onEngageSkill={handleEngageSkill}
@@ -118,10 +173,12 @@ export function SkillsSection() {
           </div>
         </div>
 
-        <aside
-          className="skills-section__stories-panel"
-          aria-hidden
-          data-skills-stories-slot
+        <StoriesPanel
+          focusedStory={focusedStory}
+          paused={Boolean(focusedStory)}
+          reducedMotion={reducedMotion}
+          onOpenStory={handleOpenStory}
+          onCloseStory={handleCloseStory}
         />
       </div>
     </section>

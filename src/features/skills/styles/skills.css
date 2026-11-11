@@ -42,6 +42,7 @@
   gap: var(--skills-shell-gap);
   align-items: start;
   min-height: 0;
+  transition: grid-template-columns 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .skills-section__keyboard-panel {
@@ -61,9 +62,11 @@
 }
 
 .skills-section__stories-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   min-height: 100%;
-  /* Intentionally empty — future Engineering Stories carousel. */
 }
 
 .skills-section__header {
@@ -453,11 +456,21 @@
   .skills-section__shell {
     grid-template-columns: minmax(0, 1fr);
     min-height: 0;
-    gap: 1rem;
+    gap: 1.35rem;
+    transition: none;
   }
 
   .skills-section__stories-panel {
-    display: none;
+    display: flex;
+    order: 2;
+  }
+
+  .skills-section__keyboard-panel {
+    order: 1;
+  }
+
+  .skills-stories__stage {
+    height: clamp(20rem, 52vh, 28rem);
   }
 
   .skills-section__stage {
@@ -512,6 +525,10 @@
 @media (prefers-reduced-motion: reduce) {
   .skills-keyboard__canvas {
     touch-action: pan-y;
+  }
+
+  .skills-section__shell {
+    transition: none;
   }
 
   .skills-category-selector__key,

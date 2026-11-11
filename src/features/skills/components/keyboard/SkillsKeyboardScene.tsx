@@ -5,6 +5,7 @@ import type { Group, PerspectiveCamera as ThreePerspectiveCamera } from 'three'
 import { computeKeyboardCameraFraming } from '../../lib/keyboardCameraFraming'
 import { KEYBOARD_CAMERA_VIEW } from '../../lib/keyboardCameraView'
 import type { SkillEngageOptions } from '../../lib/skillEngagement'
+import { resolveStoryKeyVisual } from '../../lib/storyHighlight'
 import {
   KEYBOARD_FLIP_MS,
   KEYBOARD_FLIP_PIVOT_Y,
@@ -29,6 +30,7 @@ import { Keycap } from './Keycap'
 type SkillsKeyboardSceneProps = {
   displayCategory: SkillBoardCategory
   selectedSkillId: SkillId | null
+  relatedSkillIds: ReadonlySet<string> | null
   reducedMotion: boolean
   isFlipping: boolean
   flipNonce: number
@@ -52,6 +54,7 @@ type FlipAnimation = {
 export function SkillsKeyboardScene({
   displayCategory,
   selectedSkillId,
+  relatedSkillIds,
   reducedMotion,
   isFlipping,
   flipNonce,
@@ -262,6 +265,7 @@ export function SkillsKeyboardScene({
                         keyDef={key}
                         skill={skill}
                         selected={selectedSkillId === skill.id}
+                        storyVisual={resolveStoryKeyVisual(skill?.id, relatedSkillIds)}
                         labelOpacityRef={labelOpacityRef}
                         reducedMotion={reducedMotion}
                         interactionsLocked={interactionsLocked}

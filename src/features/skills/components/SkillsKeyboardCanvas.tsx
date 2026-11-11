@@ -25,6 +25,7 @@ type SkillsKeyboardCanvasProps = {
   enabled: boolean
   displayCategory: SkillBoardCategory
   selectedSkillId: SkillId | null
+  relatedSkillIds: ReadonlySet<string> | null
   isFlipping: boolean
   flipNonce: number
   onEngageSkill: EngageSkillHandler
@@ -54,6 +55,7 @@ class SkillsKeyboardErrorBoundary extends Component<
 function SkillsKeyboardCanvasInner({
   displayCategory,
   selectedSkillId,
+  relatedSkillIds,
   isFlipping,
   flipNonce,
   onEngageSkill,
@@ -127,6 +129,7 @@ function SkillsKeyboardCanvasInner({
           <SkillsKeyboardScene
             displayCategory={displayCategory}
             selectedSkillId={selectedSkillId}
+            relatedSkillIds={relatedSkillIds}
             reducedMotion={reducedMotion}
             isFlipping={isFlipping}
             flipNonce={flipNonce}
@@ -153,6 +156,7 @@ export function SkillsKeyboardCanvas({
   enabled,
   displayCategory,
   selectedSkillId,
+  relatedSkillIds,
   isFlipping,
   flipNonce,
   onEngageSkill,
@@ -185,6 +189,7 @@ export function SkillsKeyboardCanvas({
       <SkillsKeyboardCanvasInner
         displayCategory={displayCategory}
         selectedSkillId={selectedSkillId}
+        relatedSkillIds={relatedSkillIds}
         isFlipping={isFlipping}
         flipNonce={flipNonce}
         onEngageSkill={onEngageSkill}
