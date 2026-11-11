@@ -15,8 +15,8 @@
 .about-section {
   --about-gutter: clamp(1rem, 3vw, 2.25rem);
   --about-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --about-hero-size: clamp(2.85rem, 11.8vw, 10.5rem);
-  --about-engineer-hero-size: clamp(3rem, 12.5vw, 11.25rem);
+  --about-hero-size: clamp(3.2rem, 13.2vw, 11.75rem);
+  --about-engineer-hero-size: clamp(3.35rem, 14vw, 12.6rem);
   --about-headline-top: clamp(4.35rem, 10vh, 6rem);
   --about-content-top: clamp(31vh, 34vh, 37vh);
   --about-engineer-bottom: clamp(2rem, 6vh, 3.5rem);
@@ -88,5 +88,89 @@
   opacity: 1;
   transform: none;
   visibility: visible;
+}
+
+/* 13–14" laptops (e.g. MacBook 13" ~1440×900): tighten hero so type clears the content band. */
+@media (max-width: 1512px) and (max-height: 920px) {
+  .about-section {
+    --about-hero-size: clamp(2.65rem, 9.65vw, 7.55rem);
+    --about-engineer-hero-size: clamp(2.75rem, 10.2vw, 8rem);
+    --about-headline-top: clamp(3.75rem, 7.5vh, 5.1rem);
+    --about-content-top: clamp(28vh, 30.5vh, 33vh);
+    --about-engineer-bottom: clamp(1.5rem, 4.5vh, 2.75rem);
+    --about-ambient-left: 58%;
+    --about-ambient-right: 72px;
+  }
+}
+
+@media (max-width: 1440px) and (max-height: 820px) {
+  .about-section {
+    --about-hero-size: clamp(2.4rem, 8.75vw, 6.55rem);
+    --about-engineer-hero-size: clamp(2.5rem, 9.2vw, 6.95rem);
+    --about-headline-top: clamp(3.5rem, 6.8vh, 4.75rem);
+    --about-content-top: clamp(27vh, 29.5vh, 32vh);
+    --about-engineer-bottom: clamp(1.25rem, 3.8vh, 2.35rem);
+  }
+}
+
+/* Phone / narrow tablet: static stack, no pin choreography. */
+@media (max-width: 700px) {
+  .about-section {
+    --about-gutter: 1.25rem;
+    --about-hero-size: clamp(1.85rem, 11.5vw, 2.55rem);
+    --about-engineer-hero-size: clamp(1.95rem, 12vw, 2.7rem);
+    --about-headline-top: 4.65rem;
+    --about-engineer-bottom: 1rem;
+  }
+
+  .about-section__pin {
+    height: auto;
+    min-height: 100svh;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .about-section__continuation {
+    min-height: 6vh;
+  }
+
+  .about-section__scroll-label {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    align-self: flex-end;
+    margin: 0.35rem var(--header-controls-right) 1.15rem auto;
+  }
+
+  .about-section--mobile .about-hero-type,
+  .about-section--static .about-hero-type {
+    z-index: 0;
+    opacity: 0.12;
+  }
+
+  .about-section--mobile .about-hero-type__word--senior,
+  .about-section--mobile .about-hero-type__word--frontend,
+  .about-section--static.about-section--mobile .about-hero-type__word--senior,
+  .about-section--static.about-section--mobile .about-hero-type__word--frontend {
+    left: 50%;
+    right: auto;
+    max-width: 94vw;
+    text-align: center;
+    transform: translateX(-50%);
+  }
+
+  .about-section--mobile .about-hero-type__word--frontend {
+    top: calc(var(--about-headline-top) + var(--about-hero-size) * 0.72);
+  }
+
+  .about-section--mobile .about-hero-type__word--engineer {
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    top: calc(var(--about-headline-top) + var(--about-hero-size) * 1.45);
+    max-width: 94vw;
+    text-align: center;
+    transform: translateX(-50%);
+  }
 }
 

@@ -221,15 +221,38 @@
   }
 }
 
+@media (max-width: 700px) {
+  .portfolio-nav {
+    gap: 1rem;
+    padding-bottom: 0.85rem;
+  }
+
+  .portfolio-nav__logo-wrap {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .portfolio-nav__links {
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    gap: 0.75rem;
+  }
+}
+
 @media (max-width: 520px) {
   .portfolio-nav {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     row-gap: 0.65rem;
     max-width: 100%;
   }
 
   .portfolio-nav__links {
-    letter-spacing: 0.14em;
-    gap: 0.45rem 0.7rem;
+    letter-spacing: 0.12em;
+    gap: 0.55rem 0.7rem;
+    font-size: 0.58rem;
+  }
+
+  .portfolio-nav__end {
+    gap: 0.55rem;
   }
 }

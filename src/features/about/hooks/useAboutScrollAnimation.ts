@@ -1,6 +1,10 @@
 import { useLayoutEffect, type RefObject } from 'react'
+import { applyAboutMobileLayout, isAboutMobileViewport } from '../lib/applyAboutMobileLayout'
 import { applyAboutReducedMotion } from '../lib/applyAboutReducedMotion'
-import { createAboutScrollController } from '../lib/createAboutScrollController'
+import {
+  createAboutScrollController,
+  type AboutScrollController,
+} from '../lib/createAboutScrollController'
 
 export type AboutScrollTargets = {
   sectionRef: RefObject<HTMLElement | null>
@@ -41,22 +45,50 @@ export function useAboutScrollAnimation(targets: AboutScrollTargets, enabled: bo
     }
 
     const typeWords = [senior, frontend, engineer]
+    let controller: AboutScrollController | undefined
+    const mobileMq = window.matchMedia('(max-width: 700px)')
 
-    if (prefersReducedMotion()) {
-      applyAboutReducedMotion(section, typeWords, content)
-      return
+    const clearModeClasses = () => {
+      section.classList.remove(
+        'about-section--mobile',
+        'about-section--static',
+        'about-section--type-ready',
+      )
     }
 
-    const controller = createAboutScrollController({
-      section,
-      pin,
-      stage,
-      senior,
-      frontend,
-      engineer,
-      content,
-    })
+    const setup = () => {
+      controller?.dispose()
+      controller = undefined
+      clearModeClasses()
 
-    return () => controller.dispose()
+      if (prefersReducedMotion()) {
+        applyAboutReducedMotion(section, typeWords, content)
+        return
+      }
+
+      if (isAboutMobileViewport() || mobileMq.matches) {
+        applyAboutMobileLayout(section, typeWords, content)
+        return
+      }
+
+      controller = createAboutScrollController({
+        section,
+        pin,
+        stage,
+        senior,
+        frontend,
+        engineer,
+        content,
+      })
+    }
+
+    setup()
+    mobileMq.addEventListener('change', setup)
+
+    return () => {
+      mobileMq.removeEventListener('change', setup)
+      controller?.dispose()
+      clearModeClasses()
+    }
   }, [enabled, targets])
 }

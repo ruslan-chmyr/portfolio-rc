@@ -45,7 +45,7 @@
 .about-content__name {
   margin: 0;
   font-family: var(--about-font-sans);
-  font-size: clamp(1.65rem, 1.9vw + 0.9rem, 2.65rem);
+  font-size: clamp(1.85rem, 2.15vw + 1rem, 2.95rem);
   font-weight: 600;
   line-height: 1.08;
   letter-spacing: -0.025em;
@@ -54,7 +54,7 @@
 
 .about-content__intro {
   margin: clamp(0.65rem, 1.4vh, 1rem) 0 0;
-  font-size: clamp(0.95rem, 0.55vw + 0.75rem, 1.12rem);
+  font-size: clamp(1.05rem, 0.62vw + 0.84rem, 1.25rem);
   font-weight: 400;
   line-height: 1.58;
   color: var(--color-text-strong);
@@ -112,7 +112,7 @@
 
 .about-content__expertise--primary {
   margin-top: clamp(1rem, 2vh, 1.35rem);
-  font-size: clamp(0.78rem, 0.42vw + 0.62rem, 0.94rem);
+  font-size: clamp(0.88rem, 0.47vw + 0.7rem, 1.05rem);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--color-foreground);
@@ -122,7 +122,7 @@
 
 .about-content__expertise--secondary {
   margin-top: clamp(0.65rem, 1.2vh, 0.9rem);
-  font-size: clamp(0.56rem, 0.28vw + 0.46rem, 0.66rem);
+  font-size: clamp(0.63rem, 0.31vw + 0.52rem, 0.74rem);
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -151,10 +151,37 @@
   filter: grayscale(100%);
 }
 
+/* Compact content column on 13–14" laptop widths while height is still desktop-like. */
+@media (max-width: 1512px) and (min-height: 701px) {
+  .about-content__profile {
+    grid-template-columns: minmax(0, clamp(8.25rem, 18vw, 12.75rem)) minmax(0, 1fr);
+    gap: clamp(1.1rem, 2.4vw, 1.85rem);
+    width: min(48rem, calc(100vw - var(--about-gutter) - min(40vw, 28rem) - 1.25rem));
+  }
+
+  .about-content__name {
+    font-size: clamp(1.62rem, 1.7vw + 0.95rem, 2.5rem);
+  }
+
+  .about-content__intro {
+    font-size: clamp(0.99rem, 0.45vw + 0.81rem, 1.14rem);
+    line-height: 1.52;
+  }
+
+  .about-content__expertise--primary {
+    font-size: clamp(0.81rem, 0.39vw + 0.65rem, 0.96rem);
+  }
+
+  .about-content__expertise--secondary {
+    font-size: clamp(0.58rem, 0.25vw + 0.49rem, 0.7rem);
+    letter-spacing: 0.12em;
+  }
+}
+
 @media (max-width: 1024px) {
   .about-section {
-    --about-hero-size: clamp(2.35rem, 10.8vw, 7.75rem);
-    --about-engineer-hero-size: clamp(2.45rem, 11.2vw, 8.1rem);
+    --about-hero-size: clamp(2.65rem, 12.1vw, 8.7rem);
+    --about-engineer-hero-size: clamp(2.75rem, 12.5vw, 9.1rem);
     --about-content-top: clamp(33vh, 36vh, 39vh);
   }
 
@@ -188,30 +215,79 @@
 
 }
 
-@media (max-width: 520px) {
+@media (max-width: 700px) {
+  .about-content {
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    z-index: 3;
+    flex: 1;
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0.35rem var(--about-gutter) 1.5rem;
+    overflow: visible;
+  }
 
-  .about-section {
-    --about-hero-size: clamp(1.95rem, 13vw, 3.75rem);
-    --about-engineer-hero-size: clamp(2rem, 13.5vw, 3.85rem);
+  .about-section--static .about-content,
+  .about-section--mobile .about-content {
+    visibility: visible;
   }
 
   .about-content__profile {
-    grid-template-columns: 1fr;
-    max-width: 24rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    grid-template-columns: none;
+    width: 100%;
+    max-width: 22.5rem;
+    margin-inline: auto;
+    gap: 1.25rem;
   }
 
-  .about-section {
-    --about-content-top: clamp(38vh, 40vh, 44vh);
-    --about-headline-top: clamp(4.5rem, 11vh, 6.25rem);
+  .about-portrait {
+    width: min(12rem, 48vw);
   }
 
-  .about-hero-type__word--senior,
-  .about-hero-type__word--frontend {
-    max-width: 92vw;
+  .about-content__copy {
+    width: 100%;
   }
 
-  .about-content {
-    bottom: clamp(20vh, 24vh, 28vh);
+  .about-content__name {
+    font-size: clamp(1.55rem, 5.8vw, 1.9rem);
+    text-align: center;
   }
 
+  .about-content__intro {
+    font-size: clamp(0.95rem, 0.4vw + 0.88rem, 1.05rem);
+    line-height: 1.55;
+  }
+
+  .about-content__expertise--primary {
+    font-size: clamp(0.78rem, 0.3vw + 0.7rem, 0.9rem);
+    text-align: center;
+  }
+
+  .about-content__expertise--secondary {
+    font-size: clamp(0.58rem, 0.2vw + 0.5rem, 0.66rem);
+    letter-spacing: 0.1em;
+    text-align: center;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 520px) {
+  .about-content__profile {
+    max-width: 20.5rem;
+    gap: 1.1rem;
+  }
+
+  .about-portrait {
+    width: min(10.75rem, 52vw);
+  }
+
+  .about-content__name {
+    font-size: clamp(1.45rem, 6.2vw, 1.75rem);
+  }
 }

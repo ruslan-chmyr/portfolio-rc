@@ -2,6 +2,8 @@
 const ROOT_CLASS = 'portfolio-native-scroll'
 const INTRO_HANDED_OFF_CLASS = 'intro-animation--handed-off'
 export const PORTFOLIO_SCROLL_HANDOFF_EVENT = 'portfolio-scroll-handoff'
+/** Fired when intro re-captures scroll at the top (about cluster must re-measure). */
+export const PORTFOLIO_SCROLL_REENGAGE_EVENT = 'portfolio-scroll-reengage'
 
 export type IntroScrollHandoff = {
   isCapturing: () => boolean
@@ -36,6 +38,9 @@ export function createIntroScrollHandoff(root: HTMLElement): IntroScrollHandoff 
       if (capturing) return
       capturing = true
       applyDomState()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(PORTFOLIO_SCROLL_REENGAGE_EVENT))
+      }
     },
     dispose() {
       capturing = true

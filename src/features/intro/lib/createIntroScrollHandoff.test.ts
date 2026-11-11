@@ -32,6 +32,19 @@ describe('createIntroScrollHandoff', () => {
     expect(root.classList.contains('intro-animation--handed-off')).toBe(false)
   })
 
+  it('dispatches reengage event for about cluster resync', () => {
+    const handoff = createIntroScrollHandoff(root)
+    handoff.releaseForward()
+    let fired = false
+    const onReengage = () => {
+      fired = true
+    }
+    window.addEventListener('portfolio-scroll-reengage', onReengage)
+    handoff.reengage()
+    window.removeEventListener('portfolio-scroll-reengage', onReengage)
+    expect(fired).toBe(true)
+  })
+
   it('dispose clears portfolio-native-scroll classes', () => {
     const handoff = createIntroScrollHandoff(root)
     handoff.releaseForward()
