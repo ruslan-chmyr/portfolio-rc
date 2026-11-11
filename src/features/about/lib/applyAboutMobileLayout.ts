@@ -1,15 +1,29 @@
-import { applyAboutReducedMotion } from './applyAboutReducedMotion'
+import { clearAboutAnimationStyles } from './clearAboutAnimationStyles'
 
-/** Static stacked layout for narrow viewports — no pin/scrub type choreography. */
+export {
+  ABOUT_MOBILE_MAX_WIDTH_PX,
+  isAboutMobileViewport,
+} from './selectAboutPresentationMode'
+
+type ApplyAboutMobileLayoutOptions = {
+  prefersReducedMotion?: boolean
+}
+
+/**
+ * Static-flow editorial layout for narrow viewports — no pin/scrub choreography.
+ * Independent from reduced-motion; pass prefersReducedMotion to disable CSS accents.
+ */
 export function applyAboutMobileLayout(
   section: HTMLElement,
   typeWords: HTMLElement[],
   content: HTMLElement,
+  options: ApplyAboutMobileLayoutOptions = {},
 ) {
-  applyAboutReducedMotion(section, typeWords, content)
-  section.classList.add('about-section--mobile')
-}
-
-export function isAboutMobileViewport(width = typeof window !== 'undefined' ? window.innerWidth : 0) {
-  return width > 0 && width <= 700
+  clearAboutAnimationStyles(section, typeWords, content)
+  section.classList.remove('about-section--static')
+  section.classList.add('about-section--mobile', 'about-section--type-ready')
+  section.classList.toggle(
+    'about-section--motion-reduced',
+    Boolean(options.prefersReducedMotion),
+  )
 }

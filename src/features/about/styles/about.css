@@ -84,7 +84,8 @@
   line-height: 1;
 }
 
-.about-section--static .about-content {
+.about-section--static .about-content,
+.about-section--mobile .about-content {
   opacity: 1;
   transform: none;
   visibility: visible;
@@ -113,64 +114,121 @@
   }
 }
 
-/* Phone / narrow tablet: static stack, no pin choreography. */
+/* Phone / narrow tablet: static editorial stack, no pin choreography. */
 @media (max-width: 700px) {
   .about-section {
-    --about-gutter: 1.25rem;
-    --about-hero-size: clamp(1.85rem, 11.5vw, 2.55rem);
-    --about-engineer-hero-size: clamp(1.95rem, 12vw, 2.7rem);
-    --about-headline-top: 4.65rem;
-    --about-engineer-bottom: 1rem;
+    --about-gutter: clamp(1rem, 4.2vw, 1.35rem);
+    --about-hero-size: clamp(2.55rem, 13.5vw, 3.55rem);
+    --about-engineer-hero-size: clamp(2.65rem, 14vw, 3.7rem);
+    --about-headline-top: 0.15rem;
+    --about-engineer-bottom: 0;
+    --about-mobile-type-band: clamp(8.75rem, 34vw, 11.5rem);
+    --about-mobile-portrait-pull: clamp(2.75rem, 10vw, 3.75rem);
   }
 
   .about-section__pin {
     height: auto;
-    min-height: 100svh;
+    min-height: 0;
     max-height: none;
     overflow: visible;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .about-section__pin > .portfolio-nav {
+    order: 0;
+  }
+
+  .about-section__pin > .about-section__index-column {
+    order: 1;
+  }
+
+  .about-section__pin > .about-hero-type {
+    order: 2;
+  }
+
+  .about-section__pin > .about-content {
+    order: 3;
+  }
+
+  .about-section__pin > .about-section__scroll-label {
+    order: 4;
+  }
+
+  .about-section__pin > .about-tech-ambient {
+    order: 5;
   }
 
   .about-section__continuation {
-    min-height: 6vh;
+    min-height: 4vh;
   }
 
   .about-section__scroll-label {
     position: relative;
     right: auto;
     bottom: auto;
-    align-self: flex-end;
-    margin: 0.35rem var(--header-controls-right) 1.15rem auto;
+    align-self: center;
+    margin: 1.35rem auto 0.35rem;
+    letter-spacing: 0.2em;
   }
 
-  .about-section--mobile .about-hero-type,
-  .about-section--static .about-hero-type {
+  .about-section--mobile .about-hero-type {
+    position: relative;
+    inset: auto;
     z-index: 0;
-    opacity: 0.12;
+    width: 100%;
+    height: var(--about-mobile-type-band);
+    margin: 0.35rem 0 0;
+    opacity: 0.28;
+    overflow: hidden;
+  }
+
+  .about-section--mobile.about-section--motion-reduced .about-hero-type {
+    opacity: 0.22;
   }
 
   .about-section--mobile .about-hero-type__word--senior,
   .about-section--mobile .about-hero-type__word--frontend,
-  .about-section--static.about-section--mobile .about-hero-type__word--senior,
-  .about-section--static.about-section--mobile .about-hero-type__word--frontend {
-    left: 50%;
-    right: auto;
-    max-width: 94vw;
-    text-align: center;
-    transform: translateX(-50%);
-  }
-
-  .about-section--mobile .about-hero-type__word--frontend {
-    top: calc(var(--about-headline-top) + var(--about-hero-size) * 0.72);
-  }
-
   .about-section--mobile .about-hero-type__word--engineer {
     left: 50%;
     right: auto;
-    bottom: auto;
-    top: calc(var(--about-headline-top) + var(--about-hero-size) * 1.45);
-    max-width: 94vw;
+    max-width: min(96vw, 22rem);
     text-align: center;
     transform: translateX(-50%);
+  }
+
+  .about-section--mobile .about-hero-type__word--senior {
+    top: var(--about-headline-top);
+  }
+
+  .about-section--mobile .about-hero-type__word--frontend {
+    top: calc(var(--about-headline-top) + var(--about-hero-size) * 0.78);
+  }
+
+  .about-section--mobile .about-hero-type__word--engineer {
+    bottom: auto;
+    top: calc(var(--about-headline-top) + var(--about-hero-size) * 1.56);
+  }
+
+  .about-section--mobile .about-hero-type__line {
+    letter-spacing: -0.05em;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .about-section--mobile:not(.about-section--motion-reduced) .about-content__profile {
+      animation: about-mobile-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+}
+
+@keyframes about-mobile-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

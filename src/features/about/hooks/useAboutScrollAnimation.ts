@@ -1,10 +1,14 @@
 import { useLayoutEffect, type RefObject } from 'react'
-import { applyAboutMobileLayout, isAboutMobileViewport } from '../lib/applyAboutMobileLayout'
+import { applyAboutMobileLayout } from '../lib/applyAboutMobileLayout'
 import { applyAboutReducedMotion } from '../lib/applyAboutReducedMotion'
 import {
   createAboutScrollController,
   type AboutScrollController,
 } from '../lib/createAboutScrollController'
+import {
+  ABOUT_MOBILE_MAX_WIDTH_PX,
+  selectAboutPresentationMode,
+} from '../lib/selectAboutPresentationMode'
 
 export type AboutScrollTargets = {
   sectionRef: RefObject<HTMLElement | null>
@@ -46,13 +50,15 @@ export function useAboutScrollAnimation(targets: AboutScrollTargets, enabled: bo
 
     const typeWords = [senior, frontend, engineer]
     let controller: AboutScrollController | undefined
-    const mobileMq = window.matchMedia('(max-width: 700px)')
+    const mobileMq = window.matchMedia(`(max-width: ${ABOUT_MOBILE_MAX_WIDTH_PX}px)`)
+    const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)')
 
     const clearModeClasses = () => {
       section.classList.remove(
         'about-section--mobile',
         'about-section--static',
         'about-section--type-ready',
+        'about-section--motion-reduced',
       )
     }
 
@@ -61,13 +67,21 @@ export function useAboutScrollAnimation(targets: AboutScrollTargets, enabled: bo
       controller = undefined
       clearModeClasses()
 
-      if (prefersReducedMotion()) {
-        applyAboutReducedMotion(section, typeWords, content)
+      const reduced = prefersReducedMotion() || motionMq.matches
+      const mode = selectAboutPresentationMode({
+        isMobile: mobileMq.matches,
+        prefersReducedMotion: reduced,
+      })
+
+      if (mode === 'mobile') {
+        applyAboutMobileLayout(section, typeWords, content, {
+          prefersReducedMotion: reduced,
+        })
         return
       }
 
-      if (isAboutMobileViewport() || mobileMq.matches) {
-        applyAboutMobileLayout(section, typeWords, content)
+      if (mode === 'reduced-motion') {
+        applyAboutReducedMotion(section, typeWords, content)
         return
       }
 
@@ -84,9 +98,11 @@ export function useAboutScrollAnimation(targets: AboutScrollTargets, enabled: bo
 
     setup()
     mobileMq.addEventListener('change', setup)
+    motionMq.addEventListener('change', setup)
 
     return () => {
       mobileMq.removeEventListener('change', setup)
+      motionMq.removeEventListener('change', setup)
       controller?.dispose()
       clearModeClasses()
     }

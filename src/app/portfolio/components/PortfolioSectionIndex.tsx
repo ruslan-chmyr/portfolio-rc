@@ -29,15 +29,18 @@ function SectionIndexRow({ number, title, active = false }: SectionIndexRowProps
   )
 }
 
+/** Decorative section progress — not interactive navigation. */
 export function PortfolioSectionIndex() {
   return (
-    <aside className="about-section__index-column" aria-label="Section progress" aria-hidden>
+    <aside className="about-section__index-column" aria-hidden>
       <SectionIndexRow
         number={PORTFOLIO_CURRENT_SECTION.number}
         title={PORTFOLIO_CURRENT_SECTION.title}
         active
       />
-      <div className="about-section__index-stack">
+      <div className="about-section__index-stack" aria-hidden>
+        {/* Include current section as the active short marker on mobile compact band. */}
+        <span className="about-section__index-marker about-section__index-marker--active" />
         {PORTFOLIO_FOLLOWING_SECTIONS.map((section) => (
           <SectionIndexRow key={section.id} number={section.number} title={section.title} />
         ))}

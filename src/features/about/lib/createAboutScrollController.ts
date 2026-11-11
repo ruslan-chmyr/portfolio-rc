@@ -55,13 +55,16 @@ export function createAboutScrollController(
     window.innerHeight * ABOUT_SCROLL.pinViewportFactor,
   )
 
+  let disposed = false
   let scrollTimeline: gsap.core.Timeline | undefined
+  let pendingRelayoutFrame: number | null = null
 
   /**
    * Re-measure the centered cluster, then re-seed timeline start values.
    * Avoids invalidateOnRefresh silently capturing x/y:0 after a deep scrub.
    */
   const relayoutCluster = () => {
+    if (disposed) return
     const progress = scrollTimeline?.progress() ?? 0
     if (!scrollTimeline) {
       syncTypeClusterLayout(stage, typeWords)
@@ -76,15 +79,30 @@ export function createAboutScrollController(
     scrollTimeline.progress(progress, true)
   }
 
+  const cancelPendingRelayout = () => {
+    if (pendingRelayoutFrame == null) return
+    cancelAnimationFrame(pendingRelayoutFrame)
+    pendingRelayoutFrame = null
+  }
+
   const scheduleRelayout = () => {
-    requestAnimationFrame(() => {
+    if (disposed) return
+    cancelPendingRelayout()
+    pendingRelayoutFrame = requestAnimationFrame(() => {
+      pendingRelayoutFrame = null
+      if (disposed) return
       relayoutCluster()
       ScrollTrigger.refresh()
       scrollTimeline?.scrollTrigger?.update()
     })
   }
 
-  section.classList.remove('about-section--type-ready', 'about-section--static')
+  section.classList.remove(
+    'about-section--type-ready',
+    'about-section--static',
+    'about-section--mobile',
+    'about-section--motion-reduced',
+  )
 
   const ctx = gsap.context(() => {
     syncTypeClusterLayout(stage, typeWords)
@@ -119,6 +137,7 @@ export function createAboutScrollController(
   window.addEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, onReengage)
 
   const onResize = () => {
+    if (disposed) return
     relayoutCluster()
     ScrollTrigger.refresh()
   }
@@ -127,19 +146,28 @@ export function createAboutScrollController(
   const fontsReady =
     typeof document !== 'undefined' && document.fonts?.ready
       ? document.fonts.ready.then(() => {
-          if (!scrollTimeline) return
+          if (disposed || !scrollTimeline) return
           relayoutCluster()
           ScrollTrigger.refresh()
         })
       : null
 
   const dispose = () => {
+    if (disposed) return
+    disposed = true
+    cancelPendingRelayout()
     window.removeEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, onHandoff)
     window.removeEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, onReengage)
     window.removeEventListener('resize', onResize)
     void fontsReady
     ctx.revert()
-    section.classList.remove('about-section--static', 'about-section--type-ready')
+    ScrollTrigger.refresh()
+    section.classList.remove(
+      'about-section--static',
+      'about-section--type-ready',
+      'about-section--mobile',
+      'about-section--motion-reduced',
+    )
   }
 
   return { dispose }

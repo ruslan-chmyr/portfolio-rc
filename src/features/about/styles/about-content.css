@@ -3,7 +3,7 @@
   will-change: transform, opacity;
 }
 
-.about-section:not(.about-section--static) .about-content {
+.about-section:not(.about-section--static):not(.about-section--mobile) .about-content {
   visibility: hidden;
 }
 
@@ -223,15 +223,16 @@
     bottom: auto;
     left: auto;
     z-index: 3;
-    flex: 1;
+    flex: 0 0 auto;
     width: 100%;
     justify-content: flex-start;
-    padding: 0.35rem var(--about-gutter) 1.5rem;
+    padding: 0 var(--about-gutter) 0.5rem;
+    margin-top: calc(var(--about-mobile-portrait-pull, 3rem) * -1);
     overflow: visible;
   }
 
-  .about-section--static .about-content,
-  .about-section--mobile .about-content {
+  .about-section--mobile .about-content,
+  .about-section--static .about-content {
     visibility: visible;
   }
 
@@ -241,53 +242,66 @@
     align-items: center;
     grid-template-columns: none;
     width: 100%;
-    max-width: 22.5rem;
+    max-width: 26rem;
     margin-inline: auto;
-    gap: 1.25rem;
+    gap: 1.15rem;
   }
 
   .about-portrait {
-    width: min(12rem, 48vw);
+    position: relative;
+    z-index: 2;
+    width: clamp(190px, 58vw, 260px);
   }
 
   .about-content__copy {
     width: 100%;
+    max-width: 26rem;
   }
 
   .about-content__name {
-    font-size: clamp(1.55rem, 5.8vw, 1.9rem);
-    text-align: center;
+    font-size: clamp(1.55rem, 5.2vw + 0.4rem, 1.85rem);
+    text-align: left;
   }
 
   .about-content__intro {
-    font-size: clamp(0.95rem, 0.4vw + 0.88rem, 1.05rem);
-    line-height: 1.55;
+    margin-top: 0.85rem;
+    font-size: clamp(1rem, 0.35vw + 0.92rem, 1.0625rem);
+    line-height: 1.58;
+    text-align: left;
+  }
+
+  .about-content__intro--detail {
+    margin-top: 0.75rem;
   }
 
   .about-content__expertise--primary {
-    font-size: clamp(0.78rem, 0.3vw + 0.7rem, 0.9rem);
-    text-align: center;
+    margin-top: 1.35rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--color-border);
+    font-size: clamp(0.78rem, 0.25vw + 0.7rem, 0.9rem);
+    letter-spacing: 0.04em;
+    text-align: left;
   }
 
   .about-content__expertise--secondary {
-    font-size: clamp(0.58rem, 0.2vw + 0.5rem, 0.66rem);
-    letter-spacing: 0.1em;
-    text-align: center;
+    margin-top: 0.7rem;
+    font-size: clamp(0.56rem, 0.2vw + 0.48rem, 0.66rem);
+    letter-spacing: 0.11em;
+    text-align: left;
     white-space: normal;
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 360px) {
   .about-content__profile {
-    max-width: 20.5rem;
-    gap: 1.1rem;
+    gap: 1rem;
   }
 
   .about-portrait {
-    width: min(10.75rem, 52vw);
+    width: clamp(176px, 62vw, 220px);
   }
 
   .about-content__name {
-    font-size: clamp(1.45rem, 6.2vw, 1.75rem);
+    font-size: 1.45rem;
   }
 }
