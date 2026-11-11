@@ -1,0 +1,119 @@
+.projects-section {
+  --projects-inset-x: 6vw;
+  --projects-inset-y: 3vh;
+  --projects-radius: 32px;
+  --projects-panel: #3268e5;
+  --projects-panel-deep: #2a57c7;
+  --projects-panel-lift: #3b74ef;
+  --projects-scene-backdrop: #05070f;
+  --projects-scene-overlap: 100vh;
+  --projects-scene-overlap: 100dvh;
+
+  position: relative;
+  /* Under Skills until the pin activates — Skills stays visible underneath. */
+  z-index: 1;
+  width: 100%;
+  max-width: 100vw;
+  /* Pull over the Skills scene so the wipe covers it in place. */
+  margin-top: calc(-1 * var(--projects-scene-overlap));
+  overflow-x: clip;
+  overflow-anchor: none;
+  background: transparent;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.projects-section[data-projects-active='true'] {
+  z-index: 4;
+}
+
+.projects-section__pin {
+  position: relative;
+  width: 100%;
+  /* JS syncs exact px to window.innerHeight — dvh alone can leave a bottom gap. */
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-height: none;
+  overflow: hidden;
+  isolation: isolate;
+  box-sizing: border-box;
+  background: transparent;
+  pointer-events: none;
+}
+
+.projects-section__panel {
+  position: absolute;
+  inset:
+    var(--projects-inset-y)
+    0
+    var(--projects-inset-y)
+    var(--projects-inset-x);
+  width: auto;
+  height: auto;
+  box-sizing: border-box;
+  border-radius: var(--projects-radius);
+  background:
+    linear-gradient(
+      155deg,
+      var(--projects-panel-lift) 0%,
+      var(--projects-panel) 48%,
+      var(--projects-panel-deep) 100%
+    );
+  pointer-events: none;
+}
+
+.projects-section--static {
+  margin-top: 0;
+  background: var(--projects-scene-backdrop);
+}
+
+.projects-section--static .projects-section__panel {
+  transform: none;
+}
+
+@media (max-width: 1200px) {
+  .projects-section {
+    --projects-inset-x: 4.5vw;
+    --projects-inset-y: 3.25vh;
+    --projects-radius: 28px;
+  }
+}
+
+@media (max-width: 960px) {
+  .projects-section {
+    --projects-inset-x: 1rem;
+    --projects-inset-y: 1rem;
+    --projects-radius: 22px;
+    margin-top: 0;
+  }
+
+  .projects-section__pin {
+    min-height: 100dvh;
+    height: auto;
+    padding: 0;
+  }
+
+  .projects-section__panel {
+    position: relative;
+    inset: auto;
+    width: auto;
+    height: auto;
+    min-height: calc(100dvh - 2rem);
+    margin: var(--projects-inset-y) 0 var(--projects-inset-y) var(--projects-inset-x);
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .projects-section {
+    --projects-inset-x: 0.65rem;
+    --projects-inset-y: 0.65rem;
+    --projects-radius: 18px;
+  }
+
+  .projects-section__panel {
+    min-height: calc(100dvh - 1.3rem);
+  }
+}

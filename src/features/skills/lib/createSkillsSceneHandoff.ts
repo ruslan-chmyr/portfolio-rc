@@ -5,6 +5,7 @@ import {
   PORTFOLIO_SCROLL_HANDOFF_EVENT,
   PORTFOLIO_SCROLL_REENGAGE_EVENT,
 } from '../../intro/lib/createIntroScrollHandoff'
+import { isProjectsSceneActive } from '../../../shared/scene/portfolioScene'
 import {
   isAboutReturnAligned,
   isSkillsAligned,
@@ -275,6 +276,17 @@ export function createSkillsSceneHandoff(
     )
   }
 
+  const isLaterSceneInView = (viewportHeight: number) => {
+    // Experience underlaps Projects — while its top is still in/near the
+    // viewport, reverse must stay on the scrubbed path (not snap to About).
+    const experience = document.getElementById('experience')
+    if (!experience) return false
+    return (
+      experience.getBoundingClientRect().top <
+      viewportHeight * SKILLS_HANDOFF.laterSceneBlockTopFactor
+    )
+  }
+
   const evaluate = (direction: 1 | -1 | 0) => {
     if (disposed || !enabled || selfScrolling) return
     if (isWithinHandoffCooldown(performance.now(), cooldownUntilMs)) return
@@ -283,6 +295,19 @@ export function createSkillsSceneHandoff(
     const blocked = isBlocked?.() === true
     const viewportHeight = window.innerHeight
     const currentScrollY = readScrollY()
+    const projectsActive = isProjectsSceneActive()
+    const laterSceneInView = isLaterSceneInView(viewportHeight)
+
+    // Skills stays pinned at top≈0 under Projects / early Experience. Keep the
+    // handoff in `passed` so reverse re-scrubs Projects→Skills instead of
+    // jump-scrolling all the way to About on a tiny wheel tick.
+    if (projectsActive || laterSceneInView) {
+      if (phase !== 'passed') {
+        killAlign()
+        setPhase('passed')
+      }
+      return
+    }
 
     const skillsInput = {
       enabled,
@@ -324,6 +349,7 @@ export function createSkillsSceneHandoff(
         blocked,
         aboutReturnScrollY: readAboutReturnScrollY(),
         currentScrollY,
+        laterSceneInView,
       })
     ) {
       beginAboutAlign()
@@ -336,8 +362,15 @@ export function createSkillsSceneHandoff(
     }
 
     if (phase === 'passed') {
-      if (isSkillsAligned(top) && direction === -1) setPhase('settled')
-      else if (top > viewportHeight * 0.55) setPhase('idle')
+      // Returning from Projects / Experience: land on Skills before About.
+      if (isSkillsAligned(top) && direction === -1) {
+        setPhase('settled')
+        cooldownUntilMs =
+          performance.now() + SKILLS_HANDOFF.postProjectsSettleCooldownMs
+        notifySkillsAligned()
+      } else if (top > viewportHeight * 0.55) {
+        setPhase('idle')
+      }
     }
   }
 

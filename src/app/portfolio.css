@@ -14,6 +14,15 @@
   --color-border: var(--color-portfolio-border);
 }
 
+/*
+ * Shared sticky containing block for Skills → Projects wipe.
+ * Skills sticks inside this stack while Projects covers it.
+ */
+.skills-projects-stack {
+  position: relative;
+  isolation: isolate;
+}
+
 html.portfolio-native-scroll .pin-spacer {
   background: var(--color-portfolio-background);
 }
@@ -26,4 +35,24 @@ html.portfolio-native-scroll .about-section .pin-spacer {
     var(--color-portfolio-background) 72%,
     #05070f 100%
   );
+}
+
+/*
+ * Projects pin sits over Skills during the wipe. Keep the spacer transparent
+ * so early gutters still show the real Skills scene through the fixed pin.
+ * Experience underlaps this spacer in document flow; time-based reveal is
+ * owned by the Projects scrub timeline (pin autoAlpha), not this gradient.
+ */
+html.portfolio-native-scroll .projects-section .pin-spacer {
+  background: transparent;
+}
+
+/*
+ * While Projects owns the viewport, clip tall Skills content so it cannot
+ * paint a dark strip below the pinned Projects scene.
+ */
+html[data-projects-scene='active'] #expertise {
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
 }
