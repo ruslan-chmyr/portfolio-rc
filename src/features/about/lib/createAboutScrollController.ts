@@ -1,6 +1,9 @@
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { PORTFOLIO_SCROLL_HANDOFF_EVENT } from '../../intro/lib/createIntroScrollHandoff'
+import {
+  PORTFOLIO_SCROLL_HANDOFF_EVENT,
+  PORTFOLIO_SCROLL_REENGAGE_EVENT,
+} from '../../intro/lib/createIntroScrollHandoff'
 import {
   buildAboutScrollTimeline,
   setAboutScrollInitialStates,
@@ -52,19 +55,60 @@ export function createAboutScrollController(
     window.innerHeight * ABOUT_SCROLL.pinViewportFactor,
   )
 
+  let disposed = false
   let scrollTimeline: gsap.core.Timeline | undefined
+  let pendingRelayoutFrame: number | null = null
 
+  /**
+   * Re-measure the centered cluster, then re-seed timeline start values.
+   * Avoids invalidateOnRefresh silently capturing x/y:0 after a deep scrub.
+   */
   const relayoutCluster = () => {
+    if (disposed) return
     const progress = scrollTimeline?.progress() ?? 0
+    if (!scrollTimeline) {
+      syncTypeClusterLayout(stage, typeWords)
+      return
+    }
+
+    scrollTimeline.invalidate()
+    setAboutScrollInitialStates(timelineTargets, indexEl, ambientReveal)
+    // Word x/y after this sync become the scrub "from" values (cluster → corners).
     syncTypeClusterLayout(stage, typeWords)
-    scrollTimeline?.progress(progress)
+    scrollTimeline.progress(0, true)
+    scrollTimeline.progress(progress, true)
   }
 
-  section.classList.remove('about-section--type-ready', 'about-section--static')
+  const cancelPendingRelayout = () => {
+    if (pendingRelayoutFrame == null) return
+    cancelAnimationFrame(pendingRelayoutFrame)
+    pendingRelayoutFrame = null
+  }
+
+  const scheduleRelayout = () => {
+    if (disposed) return
+    cancelPendingRelayout()
+    pendingRelayoutFrame = requestAnimationFrame(() => {
+      pendingRelayoutFrame = null
+      if (disposed) return
+      relayoutCluster()
+      ScrollTrigger.refresh()
+      scrollTimeline?.scrollTrigger?.update()
+    })
+  }
+
+  section.classList.remove(
+    'about-section--type-ready',
+    'about-section--static',
+    'about-section--mobile',
+    'about-section--motion-reduced',
+  )
 
   const ctx = gsap.context(() => {
     syncTypeClusterLayout(stage, typeWords)
     setAboutScrollInitialStates(timelineTargets, indexEl, ambientReveal)
+    // Cluster again after stage entrance set — measure used identity stage inside sync.
+    syncTypeClusterLayout(stage, typeWords)
 
     scrollTimeline = gsap.timeline({
       defaults: { ease: 'none' },
@@ -75,7 +119,8 @@ export function createAboutScrollController(
         pin,
         scrub: ABOUT_SCROLL.scrub,
         anticipatePin: 1,
-        invalidateOnRefresh: true,
+        // Manual relayoutCluster owns start-value refresh (see comment on relayoutCluster).
+        invalidateOnRefresh: false,
       },
     })
 
@@ -86,25 +131,43 @@ export function createAboutScrollController(
     section.classList.add('about-section--type-ready')
   }, section)
 
-  const onHandoff = () => {
-    requestAnimationFrame(() => {
-      ScrollTrigger.refresh(true)
-      scrollTimeline?.scrollTrigger?.update()
-    })
-  }
+  const onHandoff = () => scheduleRelayout()
+  const onReengage = () => scheduleRelayout()
   window.addEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, onHandoff)
+  window.addEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, onReengage)
 
   const onResize = () => {
+    if (disposed) return
     relayoutCluster()
     ScrollTrigger.refresh()
   }
   window.addEventListener('resize', onResize)
 
+  const fontsReady =
+    typeof document !== 'undefined' && document.fonts?.ready
+      ? document.fonts.ready.then(() => {
+          if (disposed || !scrollTimeline) return
+          relayoutCluster()
+          ScrollTrigger.refresh()
+        })
+      : null
+
   const dispose = () => {
+    if (disposed) return
+    disposed = true
+    cancelPendingRelayout()
     window.removeEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, onHandoff)
+    window.removeEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, onReengage)
     window.removeEventListener('resize', onResize)
+    void fontsReady
     ctx.revert()
-    section.classList.remove('about-section--static', 'about-section--type-ready')
+    ScrollTrigger.refresh()
+    section.classList.remove(
+      'about-section--static',
+      'about-section--type-ready',
+      'about-section--mobile',
+      'about-section--motion-reduced',
+    )
   }
 
   return { dispose }

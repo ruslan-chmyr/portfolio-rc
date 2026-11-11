@@ -15,8 +15,8 @@
 .about-section {
   --about-gutter: clamp(1rem, 3vw, 2.25rem);
   --about-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --about-hero-size: clamp(2.85rem, 11.8vw, 10.5rem);
-  --about-engineer-hero-size: clamp(3rem, 12.5vw, 11.25rem);
+  --about-hero-size: clamp(3.2rem, 13.2vw, 11.75rem);
+  --about-engineer-hero-size: clamp(3.35rem, 14vw, 12.6rem);
   --about-headline-top: clamp(4.35rem, 10vh, 6rem);
   --about-content-top: clamp(31vh, 34vh, 37vh);
   --about-engineer-bottom: clamp(2rem, 6vh, 3.5rem);
@@ -84,9 +84,151 @@
   line-height: 1;
 }
 
-.about-section--static .about-content {
+.about-section--static .about-content,
+.about-section--mobile .about-content {
   opacity: 1;
   transform: none;
   visibility: visible;
+}
+
+/* 13–14" laptops (e.g. MacBook 13" ~1440×900): tighten hero so type clears the content band. */
+@media (max-width: 1512px) and (max-height: 920px) {
+  .about-section {
+    --about-hero-size: clamp(2.65rem, 9.65vw, 7.55rem);
+    --about-engineer-hero-size: clamp(2.75rem, 10.2vw, 8rem);
+    --about-headline-top: clamp(3.75rem, 7.5vh, 5.1rem);
+    --about-content-top: clamp(28vh, 30.5vh, 33vh);
+    --about-engineer-bottom: clamp(1.5rem, 4.5vh, 2.75rem);
+    --about-ambient-left: 58%;
+    --about-ambient-right: 72px;
+  }
+}
+
+@media (max-width: 1440px) and (max-height: 820px) {
+  .about-section {
+    --about-hero-size: clamp(2.4rem, 8.75vw, 6.55rem);
+    --about-engineer-hero-size: clamp(2.5rem, 9.2vw, 6.95rem);
+    --about-headline-top: clamp(3.5rem, 6.8vh, 4.75rem);
+    --about-content-top: clamp(27vh, 29.5vh, 32vh);
+    --about-engineer-bottom: clamp(1.25rem, 3.8vh, 2.35rem);
+  }
+}
+
+/* Phone / narrow tablet: static editorial stack, no pin choreography. */
+@media (max-width: 700px) {
+  .about-section {
+    --about-gutter: clamp(1rem, 4.2vw, 1.35rem);
+    --about-hero-size: clamp(2.55rem, 13.5vw, 3.55rem);
+    --about-engineer-hero-size: clamp(2.65rem, 14vw, 3.7rem);
+    --about-headline-top: 0.15rem;
+    --about-engineer-bottom: 0;
+    --about-mobile-type-band: clamp(8.75rem, 34vw, 11.5rem);
+    --about-mobile-portrait-pull: clamp(2.75rem, 10vw, 3.75rem);
+  }
+
+  .about-section__pin {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .about-section__pin > .portfolio-nav {
+    order: 0;
+  }
+
+  .about-section__pin > .about-section__index-column {
+    order: 1;
+  }
+
+  .about-section__pin > .about-hero-type {
+    order: 2;
+  }
+
+  .about-section__pin > .about-content {
+    order: 3;
+  }
+
+  .about-section__pin > .about-section__scroll-label {
+    order: 4;
+  }
+
+  .about-section__pin > .about-tech-ambient {
+    order: 5;
+  }
+
+  .about-section__continuation {
+    min-height: 4vh;
+  }
+
+  .about-section__scroll-label {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    align-self: center;
+    margin: 1.35rem auto 0.35rem;
+    letter-spacing: 0.2em;
+  }
+
+  .about-section--mobile .about-hero-type {
+    position: relative;
+    inset: auto;
+    z-index: 0;
+    width: 100%;
+    height: var(--about-mobile-type-band);
+    margin: 0.35rem 0 0;
+    opacity: 0.28;
+    overflow: hidden;
+  }
+
+  .about-section--mobile.about-section--motion-reduced .about-hero-type {
+    opacity: 0.22;
+  }
+
+  .about-section--mobile .about-hero-type__word--senior,
+  .about-section--mobile .about-hero-type__word--frontend,
+  .about-section--mobile .about-hero-type__word--engineer {
+    left: 50%;
+    right: auto;
+    max-width: min(96vw, 22rem);
+    text-align: center;
+    transform: translateX(-50%);
+  }
+
+  .about-section--mobile .about-hero-type__word--senior {
+    top: var(--about-headline-top);
+  }
+
+  .about-section--mobile .about-hero-type__word--frontend {
+    top: calc(var(--about-headline-top) + var(--about-hero-size) * 0.78);
+  }
+
+  .about-section--mobile .about-hero-type__word--engineer {
+    bottom: auto;
+    top: calc(var(--about-headline-top) + var(--about-hero-size) * 1.56);
+  }
+
+  .about-section--mobile .about-hero-type__line {
+    letter-spacing: -0.05em;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .about-section--mobile:not(.about-section--motion-reduced) .about-content__profile {
+      animation: about-mobile-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+}
+
+@keyframes about-mobile-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 

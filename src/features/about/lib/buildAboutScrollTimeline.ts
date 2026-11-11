@@ -1,11 +1,11 @@
 import gsap from 'gsap'
 import {
   ABOUT_FINAL_SHRINK_START,
-  ABOUT_FINAL_WORD_SCALE,
   ABOUT_FRONTEND_JOIN_DELAY,
   ABOUT_TIMELINE,
   ABOUT_TYPE_ENTRANCE,
   aboutContentRevealStart,
+  aboutFinalWordScale,
 } from './aboutScrollConfig'
 
 export type AboutScrollTimelineTargets = {
@@ -66,7 +66,7 @@ export function buildAboutScrollTimeline(
   timeline.to(
     typeWords,
     {
-      scale: ABOUT_FINAL_WORD_SCALE,
+      scale: aboutFinalWordScale(),
       duration: finalShrinkSpan,
       ease: 'power1.inOut',
     },

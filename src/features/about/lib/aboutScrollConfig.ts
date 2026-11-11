@@ -12,7 +12,16 @@ export const ABOUT_TYPE_ENTRANCE = {
 } as const
 
 /** Final scale for headline words — large but clear of the content band. */
-export const ABOUT_FINAL_WORD_SCALE = 0.54
+export const ABOUT_FINAL_WORD_SCALE = 0.6
+
+/** Slightly smaller settle scale on short laptop viewports (e.g. 13" MacBook). */
+export const ABOUT_FINAL_WORD_SCALE_COMPACT = 0.52
+
+export function aboutFinalWordScale(): number {
+  if (typeof window === 'undefined') return ABOUT_FINAL_WORD_SCALE
+  const compact = window.matchMedia('(max-width: 1512px) and (max-height: 920px)').matches
+  return compact ? ABOUT_FINAL_WORD_SCALE_COMPACT : ABOUT_FINAL_WORD_SCALE
+}
 
 /** Timeline position (0–1) where the final shrink begins — during the split, not after. */
 export const ABOUT_FINAL_SHRINK_START = 0.46
