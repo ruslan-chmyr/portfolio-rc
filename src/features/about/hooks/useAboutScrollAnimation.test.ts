@@ -14,5 +14,7 @@ describe('aboutScrollConfig', () => {
     expect(ABOUT_TIMELINE.introEnd).toBeLessThan(ABOUT_TIMELINE.splitEnd)
     expect(aboutContentRevealStart()).toBeGreaterThan(ABOUT_TIMELINE.splitStart)
     expect(aboutContentRevealStart()).toBeLessThan(ABOUT_TIMELINE.splitEnd)
+    expect(ABOUT_TIMELINE.settledStart).toBeLessThan(ABOUT_TIMELINE.exitStart)
+    expect(ABOUT_TIMELINE.exitStart).toBeLessThan(1)
   })
 })

@@ -57,9 +57,16 @@
   background: var(--color-background);
 }
 
+/*
+ * Post-pin buffer. Desktop handoff aligns Skills to the viewport, so a tall
+ * light continuation only left a visible About strip / gap. Keep zero height
+ * on desktop; mobile static layout still uses a short breath below.
+ */
 .about-section__continuation {
-  min-height: 20vh;
-  background: var(--color-background);
+  min-height: 0;
+  height: 0;
+  overflow: hidden;
+  background: #05070f;
 }
 
 
@@ -159,7 +166,10 @@
   }
 
   .about-section__continuation {
+    height: auto;
     min-height: 4vh;
+    overflow: visible;
+    background: var(--color-background);
   }
 
   .about-section__scroll-label {

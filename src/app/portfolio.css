@@ -17,3 +17,13 @@
 html.portfolio-native-scroll .pin-spacer {
   background: var(--color-portfolio-background);
 }
+
+/* Near the About exit, the pin itself crossfades to Skills navy — keep spacer in sync late. */
+html.portfolio-native-scroll .about-section .pin-spacer {
+  background: linear-gradient(
+    180deg,
+    var(--color-portfolio-background) 0%,
+    var(--color-portfolio-background) 72%,
+    #05070f 100%
+  );
+}

@@ -39,6 +39,7 @@ export function createAboutScrollController(
   const revealEls = section.querySelectorAll<HTMLElement>('.about-content__reveal')
 
   const timelineTargets: AboutScrollTimelineTargets = {
+    pin,
     stage,
     senior,
     frontend,

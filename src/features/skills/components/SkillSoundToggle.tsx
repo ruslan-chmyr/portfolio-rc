@@ -9,38 +9,38 @@ function SpeakerIcon({ muted }: { muted: boolean }) {
     <svg
       className="skills-sound-toggle__icon"
       viewBox="0 0 24 24"
-      width="18"
-      height="18"
+      width="20"
+      height="20"
       aria-hidden
       focusable="false"
     >
       <path
         fill="currentColor"
-        d="M4.5 9.5v5h3.2L12 18.2V5.8L7.7 9.5H4.5Z"
+        d="M4.25 9.25v5.5h3.35L12.2 19V5L7.6 9.25H4.25Z"
       />
       {muted ? (
         <path
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.75"
+          strokeWidth="1.8"
           strokeLinecap="round"
-          d="M15.2 9.2 20 14M20 9.2l-4.8 4.8"
+          d="m14.9 9.1 5 5.1M19.9 9.1l-5 5.1"
         />
       ) : (
         <>
           <path
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.75"
+            strokeWidth="1.8"
             strokeLinecap="round"
-            d="M15.1 9.4a3.2 3.2 0 0 1 0 5.2"
+            d="M15.05 9.15a3.35 3.35 0 0 1 0 5.7"
           />
           <path
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.75"
+            strokeWidth="1.8"
             strokeLinecap="round"
-            d="M17.4 7.2a6.2 6.2 0 0 1 0 9.6"
+            d="M17.55 6.85a6.4 6.4 0 0 1 0 10.3"
           />
         </>
       )}
@@ -69,7 +69,6 @@ export function SkillSoundToggle({
       onClick={onToggle}
     >
       <SpeakerIcon muted={!enabled} />
-      <span className="skills-sound-toggle__text">{enabled ? 'Sound' : 'Muted'}</span>
     </button>
   )
 }

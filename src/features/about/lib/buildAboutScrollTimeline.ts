@@ -1,5 +1,6 @@
 import gsap from 'gsap'
 import {
+  ABOUT_EXIT,
   ABOUT_FINAL_SHRINK_START,
   ABOUT_FRONTEND_JOIN_DELAY,
   ABOUT_TIMELINE,
@@ -9,6 +10,7 @@ import {
 } from './aboutScrollConfig'
 
 export type AboutScrollTimelineTargets = {
+  pin: HTMLElement
   stage: HTMLElement
   senior: HTMLElement
   frontend: HTMLElement
@@ -24,8 +26,18 @@ export function buildAboutScrollTimeline(
   timeline: gsap.core.Timeline,
   targets: AboutScrollTimelineTargets,
 ) {
-  const { stage, senior, frontend, engineer, content, typeWords, revealEls, indexEl, ambientReveal } =
-    targets
+  const {
+    pin,
+    stage,
+    senior,
+    frontend,
+    engineer,
+    content,
+    typeWords,
+    revealEls,
+    indexEl,
+    ambientReveal,
+  } = targets
 
   const {
     scaleRevealEnd,
@@ -34,13 +46,15 @@ export function buildAboutScrollTimeline(
     splitEnd,
     contentRevealDuration,
     settledStart,
+    exitStart,
   } = ABOUT_TIMELINE
   const splitSpan = splitEnd - splitStart
   const holdSpan = introEnd - scaleRevealEnd
   const contentStart = aboutContentRevealStart()
   const frontendJoinAt = splitStart + splitSpan * ABOUT_FRONTEND_JOIN_DELAY
   const frontendMoveSpan = splitSpan * (1 - ABOUT_FRONTEND_JOIN_DELAY)
-  const finalShrinkSpan = Math.max(0.18, 1 - ABOUT_FINAL_SHRINK_START)
+  const finalShrinkSpan = Math.max(0.18, exitStart - ABOUT_FINAL_SHRINK_START)
+  const settleHold = Math.max(0.01, exitStart - settledStart)
 
   timeline.to(
     stage,
@@ -109,7 +123,81 @@ export function buildAboutScrollTimeline(
     )
   }
 
-  timeline.to(revealEls, { autoAlpha: 1, y: 0, duration: 1 - settledStart }, settledStart)
+  // Hold the presented About frame briefly, then exit into Skills.
+  timeline.to(revealEls, { autoAlpha: 1, y: 0, duration: settleHold }, settledStart)
+
+  // Exit — secondary copy first, ambient next, hero type last; pin crossfades to Skills navy.
+  timeline.to(
+    revealEls,
+    {
+      autoAlpha: 0,
+      y: ABOUT_EXIT.secondaryY,
+      duration: ABOUT_EXIT.secondaryDuration,
+      ease: 'power2.inOut',
+    },
+    exitStart,
+  )
+  timeline.to(
+    content,
+    {
+      autoAlpha: 0,
+      duration: ABOUT_EXIT.secondaryDuration,
+      ease: 'power2.inOut',
+    },
+    exitStart,
+  )
+  if (indexEl) {
+    timeline.to(
+      indexEl,
+      {
+        autoAlpha: 0,
+        duration: ABOUT_EXIT.secondaryDuration,
+        ease: 'power2.inOut',
+      },
+      exitStart,
+    )
+  }
+  if (ambientReveal) {
+    timeline.to(
+      ambientReveal,
+      {
+        autoAlpha: 0,
+        y: ABOUT_EXIT.secondaryY * 0.6,
+        duration: ABOUT_EXIT.ambientDuration,
+        ease: 'power2.inOut',
+      },
+      exitStart + 0.01,
+    )
+  }
+  timeline.to(
+    typeWords,
+    {
+      autoAlpha: 0,
+      y: ABOUT_EXIT.typeY,
+      duration: ABOUT_EXIT.typeDuration,
+      ease: 'power2.inOut',
+    },
+    exitStart + 0.02,
+  )
+  timeline.to(
+    stage,
+    {
+      autoAlpha: 0,
+      y: ABOUT_EXIT.typeY * 0.5,
+      duration: ABOUT_EXIT.typeDuration,
+      ease: 'power2.inOut',
+    },
+    exitStart + 0.02,
+  )
+  timeline.to(
+    pin,
+    {
+      backgroundColor: ABOUT_EXIT.pinExitColor,
+      duration: ABOUT_EXIT.pinFadeDuration,
+      ease: 'power2.inOut',
+    },
+    exitStart,
+  )
 }
 
 export function setAboutScrollInitialStates(

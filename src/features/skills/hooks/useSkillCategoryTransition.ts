@@ -24,40 +24,63 @@ export function useSkillCategoryTransition() {
   const activeRef = useRef<SkillBoardCategory>(DEFAULT_SKILL_BOARD_CATEGORY)
   const displayRef = useRef<SkillBoardCategory>(DEFAULT_SKILL_BOARD_CATEGORY)
   const flippingRef = useRef(false)
+  /** Replay a flip after the in-flight one when Story open/close forces another spin. */
+  const pendingForceFlipRef = useRef(false)
 
   const beginFlip = useCallback((target: SkillBoardCategory) => {
     flipTargetRef.current = target
     flippingRef.current = true
+    pendingForceFlipRef.current = false
     setIsFlipping(true)
     setFlipNonce((value) => value + 1)
   }, [])
 
+  const applyCategoryInstant = useCallback((next: SkillBoardCategory) => {
+    flipTargetRef.current = next
+    activeRef.current = next
+    displayRef.current = next
+    flippingRef.current = false
+    pendingForceFlipRef.current = false
+    setActiveCategory(next)
+    setDisplayCategory(next)
+    setIsFlipping(false)
+  }, [])
+
   const selectCategory = useCallback(
-    (next: SkillBoardCategory) => {
+    (
+      next: SkillBoardCategory,
+      options?: { instant?: boolean; forceFlip?: boolean },
+    ) => {
       if (!canSelectSkillBoardCategory(next)) return
-      if (next === activeRef.current && !flippingRef.current) return
+      const forceFlip = options?.forceFlip === true
+      if (
+        next === activeRef.current &&
+        !flippingRef.current &&
+        !options?.instant &&
+        !forceFlip
+      ) {
+        return
+      }
+
+      // Instant path for reduced motion (and rare forced swaps); default is a single flip.
+      if (options?.instant || prefersReducedMotion()) {
+        applyCategoryInstant(next)
+        return
+      }
 
       activeRef.current = next
       setActiveCategory(next)
 
-      if (prefersReducedMotion()) {
-        flipTargetRef.current = next
-        displayRef.current = next
-        flippingRef.current = false
-        setDisplayCategory(next)
-        setIsFlipping(false)
-        return
-      }
-
       if (flippingRef.current) {
-        // In-flight flip keeps its locked target; chase `activeCategory` on complete.
+        // In-flight flip keeps its locked target; chase / replay on complete.
+        if (forceFlip) pendingForceFlipRef.current = true
         return
       }
 
-      if (next === displayRef.current) return
+      if (next === displayRef.current && !forceFlip) return
       beginFlip(next)
     },
-    [beginFlip],
+    [applyCategoryInstant, beginFlip],
   )
 
   const handleFlipSwap = useCallback(() => {
@@ -71,7 +94,12 @@ export function useSkillCategoryTransition() {
     setIsFlipping(false)
 
     const chase = activeRef.current
-    if (chase !== displayRef.current && canSelectSkillBoardCategory(chase)) {
+    const replay = pendingForceFlipRef.current
+    pendingForceFlipRef.current = false
+    if (
+      canSelectSkillBoardCategory(chase) &&
+      (replay || chase !== displayRef.current)
+    ) {
       beginFlip(chase)
     }
   }, [beginFlip])

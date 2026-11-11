@@ -1,6 +1,7 @@
 export const ABOUT_SCROLL = {
-  pinViewportFactor: 3.15,
-  minPinPx: 1680,
+  /** Slightly longer than the storytelling span so the exit phase has scrub room. */
+  pinViewportFactor: 3.35,
+  minPinPx: 1760,
   scrub: 0.9,
   triggerStart: 'top top',
 } as const
@@ -37,9 +38,35 @@ export const ABOUT_TIMELINE = {
   splitEnd: 0.78,
   contentRevealStart: 0.52,
   contentRevealDuration: 0.24,
-  settledStart: 0.92,
+  /** Brief hold after content is fully presented. */
+  settledStart: 0.86,
+  /** Restrained exit toward Skills — after storytelling, before pin release. */
+  exitStart: 0.9,
 } as const
+
+/** Exit motion (scrubbed). Values are starting points for tuning. */
+export const ABOUT_EXIT = {
+  secondaryY: -28,
+  typeY: -36,
+  secondaryDuration: 0.045,
+  ambientDuration: 0.05,
+  typeDuration: 0.055,
+  /** Tight pin fade so reverse scrub restores the theme surface quickly. */
+  pinFadeDuration: 0.04,
+  /** Skills deep navy — bridges the theme About pin into the dark scene. */
+  pinExitColor: '#05070f',
+} as const
+
+/**
+ * About scrub progress to land on when returning from Skills in one gesture.
+ * Settled content is visible; exit darkening has not taken over yet.
+ */
+export const ABOUT_RETURN_PROGRESS = ABOUT_TIMELINE.settledStart
 
 export function aboutContentRevealStart(): number {
   return ABOUT_TIMELINE.contentRevealStart
+}
+
+export function aboutExitStart(): number {
+  return ABOUT_TIMELINE.exitStart
 }

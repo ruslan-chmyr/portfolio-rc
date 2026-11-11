@@ -5,8 +5,6 @@ import {
   type KeyboardEvent,
 } from 'react'
 import {
-  SKILL_BOARD_CATEGORIES,
-  SKILL_BOARD_CATEGORY_CONFIG,
   canSelectSkillBoardCategory,
   type SkillBoardCategory,
 } from '../model/skillsConfig'
@@ -16,18 +14,14 @@ type SkillCategorySelectorProps = {
   onSelect: (category: SkillBoardCategory) => void
   /**
    * Interaction lock during the 360° flip.
-   * Keeps the active button focusable (not HTML-disabled) so focus is not dropped to <body>.
+   * Keeps the control focusable so focus is not dropped to <body>.
    */
   locked?: boolean
 }
 
-function enabledCategories() {
-  return SKILL_BOARD_CATEGORIES.filter((category) => canSelectSkillBoardCategory(category))
-}
-
 /**
- * Category control — button group with roving tabindex and arrow-key movement.
- * Focus always follows the selected enabled category.
+ * Neumorphic FE ↔ AI board switch.
+ * Single control with a sliding knob; arrows also move between boards.
  */
 export function SkillCategorySelector({
   activeCategory,
@@ -35,110 +29,96 @@ export function SkillCategorySelector({
   locked = false,
 }: SkillCategorySelectorProps) {
   const labelId = useId()
-  const buttonRefs = useRef<Partial<Record<SkillBoardCategory, HTMLButtonElement | null>>>(
-    {},
-  )
-
-  const focusCategory = useCallback((category: SkillBoardCategory) => {
-    const node = buttonRefs.current[category]
-    if (!node || node.disabled) return
-    // Defer so React can commit aria-pressed / tabIndex before focus moves.
-    requestAnimationFrame(() => {
-      buttonRefs.current[category]?.focus()
-    })
-  }, [])
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const isFe = activeCategory === 'fe'
+  const feAvailable = canSelectSkillBoardCategory('fe')
+  const aiAvailable = canSelectSkillBoardCategory('ai')
+  const canToggle = feAvailable && aiAvailable
 
   const selectCategory = useCallback(
     (category: SkillBoardCategory) => {
       if (locked) return
       if (!canSelectSkillBoardCategory(category)) return
       if (category !== activeCategory) onSelect(category)
-      focusCategory(category)
     },
-    [activeCategory, focusCategory, locked, onSelect],
+    [activeCategory, locked, onSelect],
   )
 
-  const moveSelection = useCallback(
-    (direction: 1 | -1) => {
-      if (locked) return
-      const enabled = enabledCategories()
-      if (enabled.length === 0) return
-      const currentIndex = Math.max(0, enabled.indexOf(activeCategory))
-      const next = enabled[(currentIndex + direction + enabled.length) % enabled.length]
-      if (next) selectCategory(next)
-    },
-    [activeCategory, locked, selectCategory],
-  )
+  const toggle = useCallback(() => {
+    if (locked || !canToggle) return
+    selectCategory(isFe ? 'ai' : 'fe')
+  }, [canToggle, isFe, locked, selectCategory])
 
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
       event.preventDefault()
-      moveSelection(1)
-    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      selectCategory('ai')
+      return
+    }
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
       event.preventDefault()
-      moveSelection(-1)
-    } else if (event.key === 'Home') {
+      selectCategory('fe')
+      return
+    }
+    if (event.key === 'Home') {
       event.preventDefault()
-      const first = enabledCategories()[0]
-      if (first) selectCategory(first)
-    } else if (event.key === 'End') {
+      selectCategory('fe')
+      return
+    }
+    if (event.key === 'End') {
       event.preventDefault()
-      const enabled = enabledCategories()
-      const last = enabled[enabled.length - 1]
-      if (last) selectCategory(last)
+      selectCategory('ai')
     }
   }
 
   return (
-    <div
-      className="skills-category-selector"
-      role="group"
-      aria-labelledby={labelId}
-      aria-busy={locked || undefined}
-      onKeyDown={onKeyDown}
-    >
+    <div className="skills-category-selector" aria-labelledby={labelId}>
       <span id={labelId} className="skills-keyboard-a11y">
-        Skill categories
+        Skill board category
       </span>
-      {SKILL_BOARD_CATEGORIES.map((category) => {
-        const config = SKILL_BOARD_CATEGORY_CONFIG[category]
-        const available = canSelectSkillBoardCategory(category)
-        const selected = activeCategory === category
-        // Only permanently unavailable options use HTML disabled (e.g. Node.js).
-        // Flip lock uses aria-disabled so the focused control is not removed from the tab order.
-        const htmlDisabled = !available
-
-        return (
-          <button
-            key={category}
-            ref={(node) => {
-              buttonRefs.current[category] = node
-            }}
-            type="button"
-            aria-pressed={selected}
-            aria-disabled={!available || locked}
-            disabled={htmlDisabled}
-            tabIndex={htmlDisabled ? -1 : selected ? 0 : -1}
-            className={[
-              'skills-category-selector__key',
-              selected ? 'skills-category-selector__key--active' : '',
-              !available ? 'skills-category-selector__key--disabled' : '',
-              locked ? 'skills-category-selector__key--locked' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            onClick={() => {
-              if (!available || locked || selected) return
-              selectCategory(category)
-            }}
-          >
-            <span className="skills-category-selector__label">{config.label}</span>
-            {!available && config.soonLabel ? (
-              <span className="skills-category-selector__soon">{config.soonLabel}</span>
-            ) : null}
-          </button>
-        )
-      })}
+      <button
+        ref={buttonRef}
+        type="button"
+        className={[
+          'skills-category-toggle',
+          isFe ? 'skills-category-toggle--fe' : 'skills-category-toggle--ai',
+          locked ? 'skills-category-toggle--locked' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        role="switch"
+        aria-checked={!isFe}
+        aria-label="Toggle skill board between FE and AI"
+        aria-disabled={locked || !canToggle}
+        aria-busy={locked || undefined}
+        disabled={!canToggle}
+        onClick={toggle}
+        onKeyDown={onKeyDown}
+      >
+        <span className="skills-category-toggle__switch" aria-hidden />
+        <span
+          className={[
+            'skills-category-toggle__side',
+            'skills-category-toggle__side--fe',
+            isFe ? 'skills-category-toggle__side--active' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          FE
+        </span>
+        <span
+          className={[
+            'skills-category-toggle__side',
+            'skills-category-toggle__side--ai',
+            !isFe ? 'skills-category-toggle__side--active' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          AI
+        </span>
+      </button>
     </div>
   )
 }
