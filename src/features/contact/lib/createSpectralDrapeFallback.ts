@@ -18,6 +18,7 @@ import {
   ShaderMaterial,
   WebGLRenderer,
 } from 'three'
+import { readTrailingCursorRing } from '../../../shared/pointer/trailingCursorBridge'
 import {
   SPECTRAL_DRAPE,
   selectSpectralDrapeProfile,
@@ -111,20 +112,29 @@ void main() {
   // Bias fabric slightly left / lower (Contact composition).
   vec3 pos = vec3(
     (uv.x - 0.4) * 2.7 * uZoom + swing,
-    lift * 1.15 - 0.32,
-    (uv.y - 0.38) * 3.05 * uZoom + drift
+    lift * 1.15 - 0.62,
+    (uv.y - 0.28) * 3.05 * uZoom + drift
   );
 
-  vec2 p = uPointer;
-  float dist = distance(uv, p);
-  float brush = uBrush * smoothstep(uBrushRadius, 0.0, dist);
-  vec2 away = normalize(uv - p + 1e-5);
-  pos.x += away.x * brush * 0.2;
-  pos.z += away.y * brush * 0.16;
-  pos.y += brush * 0.07;
+  // Pointer is canvas UV (x left→right, y top→bottom).
+  vec2 pointer = uPointer;
+  pos.x += (pointer.x - 0.5) * uParallax * 0.1;
+  pos.y += (0.5 - pointer.y) * uParallax * 0.07;
 
-  pos.x += (p.x - 0.65) * uParallax * 0.12;
-  pos.y += (0.35 - p.y) * uParallax * 0.08;
+  // Deform in projected screen space so the dent follows the cursor
+  // even with mesh tilt/turn/roll.
+  vec4 mvPreview = modelViewMatrix * vec4(pos, 1.0);
+  vec4 clipPreview = projectionMatrix * mvPreview;
+  vec2 screenUv = clipPreview.xy / max(clipPreview.w, 1e-4);
+  screenUv = screenUv * 0.5 + 0.5;
+  // X matches canvas; Y is flipped (NDC up vs CSS down).
+  vec2 pointerNdc = vec2(pointer.x, 1.0 - pointer.y);
+  float dist = distance(screenUv, pointerNdc);
+  float brush = uBrush * smoothstep(uBrushRadius * 1.4, 0.0, dist);
+  vec2 away = normalize(screenUv - pointerNdc + 1e-5);
+  pos.x += away.x * brush * 0.28;
+  pos.z += away.y * brush * 0.22;
+  pos.y += brush * 0.1;
 
   vec4 mv = modelViewMatrix * vec4(pos, 1.0);
   gl_Position = projectionMatrix * mv;
@@ -252,8 +262,9 @@ export function createSpectralDrapeFallback(
 
   const scene = new Scene()
   const camera = new PerspectiveCamera(44, 1, 0.1, 40)
-  camera.position.set(0.75, 1.05, 2.55)
-  camera.lookAt(0.05, -0.15, 0)
+  // Slightly left/low framing (replaces the old CSS canvas translate).
+  camera.position.set(0.62, 0.72, 2.55)
+  camera.lookAt(-0.05, -0.48, 0)
 
   let geometry: BufferGeometry | null = null
   let material: ShaderMaterial | null = null
@@ -307,12 +318,36 @@ export function createSpectralDrapeFallback(
     renderer.render(scene, camera)
   }
 
-  const onPointer = (event: PointerEvent) => {
-    if (disposed || !profile.interactive || !material) return
+  let fallbackPointer = { x: 0.72, y: 0.32 }
+
+  const applyPointerClient = (clientX: number, clientY: number) => {
+    if (!material) return
     const rect = canvas.getBoundingClientRect()
     if (rect.width <= 0 || rect.height <= 0) return
-    material.uniforms.uPointer!.value.x = (event.clientX - rect.left) / rect.width
-    material.uniforms.uPointer!.value.y = (event.clientY - rect.top) / rect.height
+    const x = (clientX - rect.left) / rect.width
+    const y = (clientY - rect.top) / rect.height
+    material.uniforms.uPointer!.value.x = x
+    material.uniforms.uPointer!.value.y = y
+  }
+
+  const onPointer = (event: PointerEvent) => {
+    if (disposed || !profile.interactive) return
+    fallbackPointer = { x: event.clientX, y: event.clientY }
+    // Prefer the lagging ring when available; otherwise use the raw tip.
+    const ring = readTrailingCursorRing()
+    if (!ring.active) {
+      applyPointerClient(event.clientX, event.clientY)
+    }
+  }
+
+  const syncBrushPointer = () => {
+    if (!profile.interactive || !material) return
+    const ring = readTrailingCursorRing()
+    if (ring.active) {
+      applyPointerClient(ring.x, ring.y)
+    } else {
+      applyPointerClient(fallbackPointer.x, fallbackPointer.y)
+    }
   }
 
   const tick = (ts: number) => {
@@ -322,6 +357,7 @@ export function createSpectralDrapeFallback(
       lastTs = ts
       time += dt
       material.uniforms.uTime!.value = time
+      syncBrushPointer()
       renderer.render(scene, camera)
       raf = window.requestAnimationFrame(tick)
     } else {

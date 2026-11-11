@@ -33,10 +33,10 @@ export const SPECTRAL_DRAPE = {
   zoom: 1.15,
   flow: 0.9,
   speed: 0.68,
-  /** Keep brush mild so the Contact form stays usable. */
-  brush: 0.35,
-  brushRadius: 0.18,
-  parallax: 0.28,
+  /** Strong enough to read under the cursor; still mild for form use. */
+  brush: 0.55,
+  brushRadius: 0.22,
+  parallax: 0.22,
   seed: 2.4,
   tabletMaxWidthPx: 960,
   mobileMaxWidthPx: 640,

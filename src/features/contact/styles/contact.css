@@ -97,9 +97,10 @@
   display: block;
   width: 100%;
   height: 100%;
-  /* Keep the shimmer low, only slightly left of center. */
-  transform: scale(1.1) translate(-5%, 12%);
-  transform-origin: 42% 68%;
+  /*
+   * Keep the canvas untransformed so pointer coords match the WebGL buffer.
+   * Composition bias lives in the mesh/camera instead.
+   */
   opacity: var(--contact-fabric-opacity);
 }
 

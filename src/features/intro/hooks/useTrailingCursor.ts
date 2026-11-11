@@ -1,4 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react'
+import { publishTrailingCursorRing } from '../../../shared/pointer/trailingCursorBridge'
 
 const RING_FOLLOW_RATE = 9.5
 
@@ -36,6 +37,9 @@ export function useTrailingCursor(enabled: boolean): {
       const opacity = on ? '1' : '0'
       dotRef.current?.style.setProperty('opacity', opacity)
       ringRef.current?.style.setProperty('opacity', opacity)
+      if (!on) {
+        publishTrailingCursorRing(ring.current.x, ring.current.y, false)
+      }
     }
 
     const placeDot = (x: number, y: number) => {
@@ -60,6 +64,7 @@ export function useTrailingCursor(enabled: boolean): {
         ring.current.y = event.clientY
         seeded.current = true
         placeRing(ring.current.x, ring.current.y)
+        publishTrailingCursorRing(ring.current.x, ring.current.y, true)
       }
       placeDot(event.clientX, event.clientY)
       setVisible(true)
@@ -80,6 +85,7 @@ export function useTrailingCursor(enabled: boolean): {
         ring.current.x += (target.current.x - ring.current.x) * follow
         ring.current.y += (target.current.y - ring.current.y) * follow
         placeRing(ring.current.x, ring.current.y)
+        publishTrailingCursorRing(ring.current.x, ring.current.y, true)
         const lag = Math.hypot(
           target.current.x - ring.current.x,
           target.current.y - ring.current.y,
@@ -99,6 +105,7 @@ export function useTrailingCursor(enabled: boolean): {
       window.removeEventListener('blur', onLeave)
       document.documentElement.removeEventListener('pointerleave', onLeave)
       document.documentElement.classList.remove('intro-custom-cursor')
+      publishTrailingCursorRing(-100, -100, false)
     }
   }, [supported])
 
