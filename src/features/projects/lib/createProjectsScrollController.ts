@@ -97,7 +97,11 @@ export function createProjectsScrollController(
 
   const ctx = gsap.context(() => {
     syncPinViewportHeight()
+    // Lock pixel x/y to 0 — ScrollTrigger invalidateOnRefresh can otherwise
+    // bake the live matrix into `x` while xPercent keeps tweening (double offset).
     gsap.set(panel, {
+      x: 0,
+      y: 0,
       xPercent: 100,
       yPercent: 0,
       force3D: true,
@@ -107,7 +111,9 @@ export function createProjectsScrollController(
       autoAlpha: 1,
     })
     if (experienceMotion) {
-      gsap.set(experienceMotion, { y: 0, force3D: true })
+      // Use marginTop — not transform. A transform on this wrapper breaks
+      // position:sticky for the Experience intro sidebar.
+      gsap.set(experienceMotion, { marginTop: 0 })
     }
 
     // Skills pin: hold the scene under Projects without adding document spacing.
@@ -159,8 +165,10 @@ export function createProjectsScrollController(
     // 1) Blue panel wipes in over the pinned Skills scene.
     timeline.fromTo(
       panel,
-      { xPercent: 100, yPercent: 0 },
+      { x: 0, y: 0, xPercent: 100, yPercent: 0 },
       {
+        x: 0,
+        y: 0,
         xPercent: 0,
         yPercent: 0,
         duration: PROJECTS_SCROLL.panelSlideDuration,
@@ -225,6 +233,8 @@ export function createProjectsScrollController(
     timeline.to(
       panel,
       {
+        x: 0,
+        y: 0,
         xPercent: PROJECTS_SCROLL.exitXPercent,
         yPercent: PROJECTS_SCROLL.exitYPercent,
         duration: PROJECTS_SCROLL.exitDuration,
@@ -244,18 +254,16 @@ export function createProjectsScrollController(
       exitAt + PROJECTS_SCROLL.exitFadeAt,
     )
 
-    // Animate the inner motion wrapper only — section keeps document-flow geometry.
+    // Soft rise for Experience — marginTop keeps sticky intro working.
     if (experienceMotion) {
       timeline.fromTo(
         experienceMotion,
         {
-          y: PROJECTS_SCROLL.experienceRevealY,
-          force3D: true,
+          marginTop: PROJECTS_SCROLL.experienceRevealY,
         },
         {
-          y: 0,
+          marginTop: 0,
           duration: PROJECTS_SCROLL.exitDuration,
-          force3D: true,
           immediateRender: false,
         },
         exitAt,
@@ -306,7 +314,7 @@ export function createProjectsScrollController(
         gsap.set(skillsFadeTargets, { clearProps: 'opacity,visibility' })
       }
       if (experienceMotion) {
-        gsap.set(experienceMotion, { clearProps: 'transform' })
+        gsap.set(experienceMotion, { clearProps: 'marginTop' })
       }
 
       setProjectsSceneActive(section, false)
@@ -325,6 +333,6 @@ function syncWillChange(
   const active = progress > 0.001 && progress < 0.999
   panel.style.willChange = active ? 'transform' : ''
   if (experienceMotion) {
-    experienceMotion.style.willChange = active ? 'transform' : ''
+    experienceMotion.style.willChange = active ? 'margin-top' : ''
   }
 }
