@@ -77,11 +77,26 @@
   top: 0;
 }
 
+.circular-carousel__card--ghost {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden;
+}
+
 .circular-carousel__tile {
   position: absolute;
   outline: 1px solid transparent;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+}
+
+/* Hit/FLIP measure only — never paints content. */
+.circular-carousel__measure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .circular-carousel__frame {
@@ -90,6 +105,13 @@
   top: 0;
   width: 100%;
   overflow: hidden;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  /* Avoid subpixel gaps between adjacent curved strips. */
+  margin: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
 }
 
 .circular-carousel__photo {

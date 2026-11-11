@@ -19,148 +19,149 @@ export type EngineeringStory = {
   outcome?: string
 }
 
+/**
+ * Abstract cover art only — number/title/subtitle are baked into the curved card texture.
+ * Keep gradients and decorative shapes without story copy in the SVG itself.
+ */
 function coverGradient(args: {
   from: string
   via: string
   to: string
-  title: string
-  eyebrow: string
+  accent: string
 }): string {
-  const { from, via, to, title, eyebrow } = args
+  const { from, via, to, accent } = args
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
   <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="g" x1="8%" y1="0%" x2="92%" y2="100%">
       <stop offset="0%" stop-color="${from}"/>
-      <stop offset="52%" stop-color="${via}"/>
+      <stop offset="48%" stop-color="${via}"/>
       <stop offset="100%" stop-color="${to}"/>
     </linearGradient>
-    <radialGradient id="glow" cx="30%" cy="20%" r="70%">
-      <stop offset="0%" stop-color="rgba(94,231,255,0.28)"/>
-      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    <radialGradient id="glow" cx="28%" cy="18%" r="62%">
+      <stop offset="0%" stop-color="${accent}" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="${accent}" stop-opacity="0"/>
     </radialGradient>
+    <linearGradient id="sheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="38%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.22"/>
+    </linearGradient>
   </defs>
-  <rect width="900" height="1200" fill="url(#g)"/>
-  <rect width="900" height="1200" fill="url(#glow)"/>
-  <circle cx="720" cy="260" r="180" fill="rgba(255,255,255,0.04)"/>
-  <circle cx="160" cy="980" r="220" fill="rgba(0,0,0,0.18)"/>
-  <text x="72" y="160" fill="rgba(244,247,251,0.55)" font-family="ui-sans-serif, system-ui, sans-serif" font-size="28" letter-spacing="6" font-weight="500">${eyebrow}</text>
-  <text x="72" y="980" fill="#F4F7FB" font-family="ui-sans-serif, system-ui, sans-serif" font-size="54" font-weight="650">${title}</text>
+  <rect width="900" height="1200" rx="48" fill="url(#g)"/>
+  <rect width="900" height="1200" rx="48" fill="url(#glow)"/>
+  <rect width="900" height="1200" rx="48" fill="url(#sheen)"/>
+  <circle cx="740" cy="220" r="210" fill="#ffffff" fill-opacity="0.06"/>
+  <circle cx="140" cy="980" r="260" fill="#000000" fill-opacity="0.22"/>
+  <path d="M80 320 C260 240, 420 400, 620 300 S860 220, 860 220" fill="none" stroke="${accent}" stroke-opacity="0.35" stroke-width="3"/>
+  <path d="M80 380 C300 300, 480 460, 700 360" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="2"/>
 </svg>`
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }
 
+/** Display label for highlight cards / expanded detail (toggle stays FE / AI). */
+export function storyCategoryLabel(
+  category: EngineeringStory['category'],
+): string {
+  return category === 'fe' ? 'Frontend' : 'AI'
+}
+
 /**
- * Central Engineering Stories catalog.
- * Detailed copy is intentionally light — expand fields later without reshaping the UI.
+ * Central Engineering Highlights catalog.
+ * Expand fields later without reshaping the UI.
  */
 export const engineeringStories: EngineeringStory[] = [
   {
     id: 'architecture-reusability',
     title: 'Architecture & Reusability',
-    subtitle: 'Shared contracts across interactive surfaces',
+    subtitle: 'One shared core. 10+ interactive experiences.',
     category: 'fe',
     cover: coverGradient({
-      from: '#0B1730',
-      via: '#132445',
-      to: '#1A1030',
-      title: 'Architecture',
-      eyebrow: 'STORY 01',
+      from: '#1A3A6B',
+      via: '#243F78',
+      to: '#3A2A6A',
+      accent: '#7AD7FF',
     }),
     relatedSkillIds: [
+      'javascript',
       'typescript',
-      'react',
       'system-design',
-      'micro-frontends',
-      'module-federation',
       'nx-monorepos',
     ],
     challenge:
-      'Keep complex React surfaces coherent when widgets, admin tools, and shared libraries evolve together.',
+      'Multiple interactive widgets needed different web and mobile interfaces while sharing much of the same business logic. Duplicating that logic would make the system harder to maintain.',
     approach:
-      'Centralize typed contracts, reuse presentation primitives, and place skills/config as a single source of truth.',
+      'I separated business logic from presentation by building a framework-independent JavaScript core with reusable state models and consistent data contracts.',
     outcome:
-      'A maintainable FE stack where new interactive modules plug into existing patterns instead of forking them.',
+      'Using shared modules within an Nx monorepo, I established a common foundation for 10+ interactive widgets across web and mobile, reducing duplication and keeping their behavior consistent.',
   },
   {
     id: 'performance-engineering',
     title: 'Performance Engineering',
-    subtitle: 'Smooth interaction under real rendering cost',
+    subtitle: 'Rendering less. Keeping complex interfaces responsive.',
     category: 'fe',
     cover: coverGradient({
-      from: '#071820',
-      via: '#0E2A38',
-      to: '#122018',
-      title: 'Performance',
-      eyebrow: 'STORY 02',
+      from: '#0E3A42',
+      via: '#155566',
+      to: '#1A4A3A',
+      accent: '#5EE7C8',
     }),
     relatedSkillIds: [
       'react',
-      'performance-optimization',
+      'typescript',
       'virtualization',
-      'vite',
-      'nextjs',
+      'performance-optimization',
     ],
     challenge:
-      'Interactive 3D and dense UI work must stay responsive without burning the main thread or the GPU while idle.',
+      'Large editable tables were becoming expensive to render, with complex input components and unnecessary React updates affecting responsiveness.',
     approach:
-      'Demand-driven rendering, visibility-aware pauses, and careful invalidation so animation only runs when it matters.',
+      'Rather than relying on virtualization alone, I combined visible-row rendering with lightweight display cells and mounted expensive inputs only when users started editing.',
     outcome:
-      'Skills interactions remain smooth while idle frames and offscreen work stay constrained.',
+      'I optimized component boundaries and state updates to reduce unnecessary rendering while preserving full editing functionality. The result was a more responsive, maintainable interface for data-heavy workflows.',
   },
   {
     id: 'configurable-systems',
     title: 'Configurable Systems',
-    subtitle: 'Behavior driven by typed catalogs',
+    subtitle: 'Flexible products without duplicated frontends.',
     category: 'fe',
     cover: coverGradient({
-      from: '#101828',
-      via: '#1C2440',
-      to: '#241830',
-      title: 'Configurable',
-      eyebrow: 'STORY 03',
+      from: '#243056',
+      via: '#334878',
+      to: '#4A3060',
+      accent: '#A8B8FF',
     }),
-    relatedSkillIds: [
-      'typescript',
-      'redux-toolkit',
-      'rtk-query',
-      'material-ui',
-      'system-design',
-    ],
+    relatedSkillIds: ['react', 'nextjs', 'typescript', 'system-design'],
     challenge:
-      'Product surfaces need flexible layouts and content without scattering one-off conditionals through the UI.',
+      'Customer-facing applications needed to support different branding, content, and interface requirements without maintaining separate implementations for every client.',
     approach:
-      'Model boards, keys, and stories as typed configuration that components consume instead of hardcoding.',
+      'I separated product-specific configuration from reusable React and Next.js components, allowing interfaces to adapt without scattering client-specific conditions throughout the codebase.',
     outcome:
-      'New skills, categories, and stories can be authored by extending catalogs rather than rewriting interaction code.',
+      'I worked on customer-facing applications and administrative interfaces using shared UI patterns and explicit data contracts. This created a more flexible foundation for customization while keeping frontend development maintainable.',
   },
   {
     id: 'reliable-ai-automation',
     title: 'Reliable AI Automation',
-    subtitle: 'Agents and workflows with guarded integrations',
+    subtitle: 'Beyond prompts: building a reliable AI review workflow.',
     category: 'ai',
     cover: coverGradient({
-      from: '#120C24',
-      via: '#1C1440',
-      to: '#0C2030',
-      title: 'AI Automation',
-      eyebrow: 'STORY 04',
+      from: '#2A1A58',
+      via: '#3A2878',
+      to: '#1A3858',
+      accent: '#C9A0FF',
     }),
     relatedSkillIds: [
       'n8n',
       'workflow-automation',
       'llm-apis',
-      'prompt-engineering',
-      'ai-agents',
-      'mcp',
-      'api-integrations',
+      'github-integration',
+      'jira-integration',
     ],
     challenge:
-      'Automation must connect LLMs, tools, and third-party systems without brittle, opaque pipelines.',
+      'Automated code reviews became difficult when pull requests contained large diffs, missing task context, or incomplete LLM responses.',
     approach:
-      'Compose workflows around explicit integrations, prompts, and agent boundaries that stay inspectable.',
+      'Instead of relying on a single AI prompt, I designed a structured review pipeline that separates context collection, code analysis, and output validation.',
     outcome:
-      'AI-assisted flows that can grow with new tools while remaining understandable and operable.',
+      'I connected n8n, GitHub, Jira, and LLM APIs, using diff chunking, shared context, retries, and completeness checks. The result was a repeatable AI-assisted review workflow with more structured, context-aware feedback.',
   },
 ]
 
@@ -173,7 +174,7 @@ export function getStoryCarouselItems() {
   return engineeringStories.map((story) => ({
     id: story.id,
     src: story.cover,
-    alt: story.title,
+    alt: `${story.title}. ${story.subtitle}`,
     title: story.title,
     subtitle: story.subtitle,
   }))

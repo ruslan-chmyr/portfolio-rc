@@ -60,7 +60,8 @@ export function Keycap({
   /** True when pointerenter already engaged this stay (mouse); touch may engage on up. */
   const engagedThisStayRef = useRef(false)
   const [hovered, setHovered] = useState(false)
-  const interactive = Boolean(skill) && !interactionsLocked
+  const storyMuted = storyVisual === 'muted'
+  const interactive = Boolean(skill) && !interactionsLocked && !storyMuted
   const visual = skill ? getSkillVisual(skill) : null
   const label = skill?.shortLabel ?? keyDef.label
   const accessibleName = skill?.name ?? label ?? 'Decorative key'
@@ -70,8 +71,9 @@ export function Keycap({
     visual?.legend ?? '#FFFFFF',
   )
   const legendMode = resolveKeycapLegendMode(hasIcon, iconStatus)
-  const showIcon = legendMode === 'icon' && Boolean(iconTexture)
-  const showText = Boolean(label) && !showIcon
+  // Story Focus: only related keys keep legend artwork / text.
+  const showIcon = !storyMuted && legendMode === 'icon' && Boolean(iconTexture)
+  const showText = !storyMuted && Boolean(label) && !showIcon
 
   useEffect(() => {
     if (iconTexture || iconStatus === 'error') onInvalidate()
@@ -94,11 +96,11 @@ export function Keycap({
   const faceColor = useMemo(() => {
     if (liveHeld) return COLOR_PRESSED
     if (!visual) return COLOR_DECORATIVE
+    if (storyMuted) return mixHex(COLOR_DECORATIVE, '#05070f', 0.55)
     let accent = liveSelected ? mixHex(visual.accent, '#FFFFFF', 0.22) : visual.accent
     if (storyVisual === 'related') accent = mixHex(accent, '#FFFFFF', 0.16)
-    if (storyVisual === 'muted') accent = mixHex(accent, '#05070f', 0.58)
     return accent
-  }, [liveHeld, liveSelected, storyVisual, visual])
+  }, [liveHeld, liveSelected, storyMuted, storyVisual, visual])
 
   const storyEmissive =
     storyVisual === 'related' && visual && !liveHeld

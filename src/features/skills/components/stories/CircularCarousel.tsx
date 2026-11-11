@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createStoryCardFaceTexture } from '../../lib/createStoryCardFaceTexture';
 
 import './CircularCarousel.css';
 
@@ -8,6 +9,10 @@ export interface CircularCarouselItem {
   alt?: string;
   title?: string;
   subtitle?: string;
+  /** Top-of-card label (e.g. Story 01 · FE). */
+  eyebrow?: string;
+  /** Subtle open affordance inside the card. */
+  cta?: string;
 }
 
 export type CircularCarouselPreset = 'cylinder' | 'orbit' | 'wheel' | 'panorama';
@@ -42,6 +47,19 @@ export interface CircularCarouselProps {
   captions?: boolean;
   /** Freeze autoplay / drift while a Story is open or the panel is inspecting. */
   paused?: boolean;
+  /**
+   * How aggressively the ring fills the container (0.7–1).
+   * Higher values enlarge the front card without CSS scale().
+   */
+  fitFill?: number;
+  /** Render title/subtitle/cta overlays on each card face. */
+  cardContent?: boolean;
+  /** Override preset backface tiles — hide to avoid mirrored overlays through the ring. */
+  backfaces?: boolean;
+  /** Hide a card during shared-element expansion (keeps layout, removes duplicate). */
+  ghostIndex?: number | null;
+  /** Block drag / click while a Story focus transition runs. */
+  interactionLocked?: boolean;
   ariaLabel?: string;
   onChange?: (index: number) => void;
   onItemClick?: (item: CircularCarouselItem, index: number) => void;
@@ -133,6 +151,8 @@ interface Settings {
   depthFade: number;
   captions: boolean;
   paused: boolean;
+  fitFill: number;
+  cardContent: boolean;
   reduced: boolean;
 }
 
@@ -197,8 +217,9 @@ const PRESETS: Record<CircularCarouselPreset, Layout> = {
 };
 
 const INTRO_LENGTH: Record<CircularCarouselIntro, number> = { assemble: 1500, rise: 1400, spin: 1800, none: 0 };
-const TILES = 8;
-const OVERLAP = 2.5;
+/** More strips + overlap = smoother large-card bend with fewer visible seams. */
+const TILES = 12;
+const OVERLAP = 4.5;
 const DRAG_THRESHOLD = 5;
 const SPRING = 118;
 const SETTLE_SPEED = 9;
@@ -283,7 +304,12 @@ const CircularCarousel = ({
   cornerRadius = 12,
   captions = false,
   paused = false,
-  ariaLabel = 'Engineering stories carousel',
+  fitFill = 0.93,
+  cardContent = false,
+  backfaces,
+  ghostIndex = null,
+  interactionLocked = false,
+  ariaLabel = 'Engineering highlights carousel',
   onChange,
   onItemClick,
   className = '',
@@ -294,9 +320,17 @@ const CircularCarousel = ({
   const [leaving, setLeaving] = useState<Leaving | null>(null);
   const count = list.length;
   const shape: CircularCarouselPreset = PRESETS[preset] ? preset : 'cylinder';
-  const layout = PRESETS[shape];
+  const layout = useMemo(() => {
+    const base = PRESETS[shape];
+    return {
+      ...base,
+      backfaces: backfaces ?? base.backfaces,
+    };
+  }, [shape, backfaces]);
   const axis = layout.axis;
   const tiltValue = tilt ?? layout.tilt;
+  // Match React Bits: curve follows the preset unless billboard mode flattens it.
+  // Story copy is baked into the same texture as the cover, so tiles stay unified.
   const curveValue = layout.billboard ? 0 : clamp(curve ?? layout.curve, 0, 1);
   const reduced = usePrefersReducedMotion();
 
@@ -304,6 +338,9 @@ const CircularCarousel = ({
   const cardH = cardW / clamp(aspectRatio, 0.2, 5);
   const along = axis === 'x' ? cardH : cardW;
   const step = 360 / count;
+
+  const [composedSrcByKey, setComposedSrcByKey] = useState<Record<string, string>>({});
+  const composedUrlsRef = useRef<string[]>([]);
 
   const radius = useMemo(() => {
     const n = Math.max(count, 3);
@@ -393,6 +430,8 @@ const CircularCarousel = ({
     depthFade: clamp(depthFade, 0, 1),
     captions,
     paused,
+    fitFill: clamp(fitFill, 0.72, 1),
+    cardContent,
     reduced
   };
   const settingsRef = useRef(settings);
@@ -489,6 +528,70 @@ const CircularCarousel = ({
     return () => clearTimeout(timer);
   }, [leaving]);
 
+  // Bake cover + typography into one texture per card when cardContent is enabled.
+  useEffect(() => {
+    if (!cardContent) return undefined;
+    let cancelled = false;
+    const pixelRatio =
+      typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2.25) : 1;
+    const previousUrls = composedUrlsRef.current;
+
+    const run = async () => {
+      const next: Record<string, string> = {};
+      const created: string[] = [];
+      for (const item of list) {
+        if (!item.title && !item.subtitle && !item.eyebrow) continue;
+        const key = item.id || item.src;
+        try {
+          const url = await createStoryCardFaceTexture(
+            {
+              coverSrc: item.src,
+              eyebrow: item.eyebrow,
+              title: item.title,
+              subtitle: item.subtitle,
+              cta: item.cta,
+            },
+            { width: cardW, height: cardH, pixelRatio, cornerRadius },
+          );
+          if (cancelled) {
+            if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+            return;
+          }
+          next[key] = url;
+          created.push(url);
+        } catch {
+          // Keep raw cover if composition fails for a card.
+        }
+      }
+      if (cancelled) {
+        for (const url of created) {
+          if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+        }
+        return;
+      }
+      composedUrlsRef.current = created;
+      setComposedSrcByKey(next);
+      for (const url of previousUrls) {
+        if (url.startsWith('blob:') && !created.includes(url)) URL.revokeObjectURL(url);
+      }
+      wakeRef.current();
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [cardContent, cardH, cardW, cornerRadius, list]);
+
+  useEffect(() => {
+    return () => {
+      for (const url of composedUrlsRef.current) {
+        if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+      }
+      composedUrlsRef.current = [];
+    };
+  }, []);
+
   useLayoutEffect(() => {
     const root = rootRef.current;
     const stage = stageRef.current;
@@ -506,8 +609,9 @@ const CircularCarousel = ({
       const rect = root.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
       const room = s.captions ? CAPTION_SPACE : 0;
-      const width = rect.width * 0.94;
-      const height = (rect.height - room) * 0.92;
+      const fill = s.fitFill;
+      const width = rect.width * fill;
+      const height = (rect.height - room) * fill;
       const P = s.perspective;
       let minX = Infinity;
       let maxX = -Infinity;
@@ -784,7 +888,7 @@ const CircularCarousel = ({
   useLayoutEffect(() => {
     measureRef.current();
     wakeRef.current();
-  }, [radius, cardW, cardH, tiltValue, perspective, preset, captions, count]);
+  }, [radius, cardW, cardH, tiltValue, perspective, preset, captions, count, fitFill]);
 
   useEffect(() => {
     wakeRef.current();
@@ -833,7 +937,7 @@ const CircularCarousel = ({
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     const state = stateRef.current;
     state.suppressClick = false;
-    if (!draggable || event.button !== 0) return;
+    if (interactionLocked || !draggable || event.button !== 0) return;
     state.press = {
       id: event.pointerId,
       x: event.clientX,
@@ -923,6 +1027,7 @@ const CircularCarousel = ({
   };
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (interactionLocked) return;
     const state = stateRef.current;
     if (state.suppressClick) {
       state.suppressClick = false;
@@ -936,6 +1041,7 @@ const CircularCarousel = ({
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (interactionLocked) return;
     const forward = axis === 'x' ? 'ArrowDown' : 'ArrowRight';
     const backward = axis === 'x' ? 'ArrowUp' : 'ArrowLeft';
     if (event.key === forward) stepBy(1);
@@ -950,27 +1056,52 @@ const CircularCarousel = ({
   const current = list[active] || list[0];
   const label = current ? current.title || current.alt || `Image ${active + 1}` : '';
 
+  const resolveCardSrc = (item: CircularCarouselItem) => {
+    if (!cardContent) return item.src;
+    const key = item.id || item.src;
+    return composedSrcByKey[key] || item.src;
+  };
+
   const renderTile = (item: CircularCarouselItem, tile: Tile, back: boolean, index: number) => {
     const strip = back ? tile.total - 1 - tile.index : tile.index;
     const first = strip === 0;
     const last = strip === tile.total - 1;
     const r = 'var(--cc-radius)';
+    // Multi-tile strips only round the outer edges of the first/last strip.
+    // Single-tile (curve = 0) uses a full rounded rectangle.
     const frameRadius =
-      axis === 'x'
-        ? `${first ? r : 0} ${first ? r : 0} ${last ? r : 0} ${last ? r : 0}`
-        : `${first ? r : 0} ${last ? r : 0} ${last ? r : 0} ${first ? r : 0}`;
+      tile.total === 1
+        ? r
+        : axis === 'x'
+          ? `${first ? r : 0} ${first ? r : 0} ${last ? r : 0} ${last ? r : 0}`
+          : `${first ? r : 0} ${last ? r : 0} ${last ? r : 0} ${first ? r : 0}`;
     const offset = back ? along - tile.end : tile.start;
     const size = tile.size;
     const box: React.CSSProperties =
       axis === 'x'
         ? { left: -cardW / 2, top: -size / 2, width: cardW, height: size }
         : { left: -size / 2, top: -cardH / 2, width: size, height: cardH };
+    // Slight overscan hides 1px hairlines between adjacent curved strips.
+    const overscan = tile.total > 1 ? 1.25 : 0;
     const photoStyle: React.CSSProperties =
       axis === 'x'
-        ? { left: 0, top: -offset, width: cardW, height: cardH }
-        : { left: -offset, top: 0, width: cardW, height: cardH };
+        ? {
+            left: -overscan,
+            top: -offset - overscan,
+            width: cardW + overscan * 2,
+            height: cardH + overscan * 2,
+          }
+        : {
+            left: -offset - overscan,
+            top: -overscan,
+            width: cardW + overscan * 2,
+            height: cardH + overscan * 2,
+          };
     const flip = axis === 'x' ? ' rotateX(180deg)' : ' rotateY(180deg)';
     const gone = leaving?.items[index];
+    // Front: composed face (art + type). Back: cover only so rear cards stay visible without mirrored text.
+    const photoSrc = back ? item.src : resolveCardSrc(item);
+    const leavingSrc = gone ? (back ? gone.src : resolveCardSrc(gone)) : null;
     return (
       <div
         key={`${back ? 'b' : 'f'}${tile.index}`}
@@ -980,27 +1111,30 @@ const CircularCarousel = ({
       >
         <div
           className="circular-carousel__frame"
-          style={{ height: axis === 'x' ? size : cardH, borderRadius: frameRadius }}
+          style={{
+            height: axis === 'x' ? size : cardH,
+            borderRadius: frameRadius,
+          }}
         >
           <img
             className="circular-carousel__photo"
-            src={item.src}
+            src={photoSrc}
             alt=""
             draggable={false}
             decoding="async"
             style={photoStyle}
           />
-          {gone && (
+          {gone && leavingSrc ? (
             <img
               key={`leaving-${leaving.id}`}
               className="circular-carousel__photo circular-carousel__photo--leaving"
-              src={gone.src}
+              src={leavingSrc}
               alt=""
               draggable={false}
               decoding="async"
               style={{ ...photoStyle, animationDelay: `${Math.round(leaving.delays[index])}ms` }}
             />
-          )}
+          ) : null}
           {back && <div className="circular-carousel__inner" />}
           <div className="circular-carousel__shade" />
         </div>
@@ -1048,14 +1182,31 @@ const CircularCarousel = ({
                   ref={element => {
                     cardRefs.current[index] = element;
                   }}
-                  className="circular-carousel__card"
+                  className={[
+                    'circular-carousel__card',
+                    ghostIndex === index ? 'circular-carousel__card--ghost' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                   data-cc-index={index}
                   role="group"
                   aria-roledescription="slide"
                   aria-label={`${item.title || item.alt || `Image ${index + 1}`}, ${index + 1} of ${count}`}
+                  aria-hidden={ghostIndex === index || undefined}
                 >
                   {tiles.map(tile => renderTile(item, tile, false, index))}
                   {layout.backfaces && tiles.map(tile => renderTile(item, tile, true, index))}
+                  {/* Invisible measure surface for FLIP — not painted, no competing typography. */}
+                  <div
+                    className="circular-carousel__measure"
+                    style={{
+                      left: -cardW / 2,
+                      top: -cardH / 2,
+                      width: cardW,
+                      height: cardH,
+                    }}
+                    aria-hidden="true"
+                  />
                 </div>
               ))}
             </div>

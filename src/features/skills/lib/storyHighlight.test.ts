@@ -13,6 +13,10 @@ describe('resolveStoryKeyVisual', () => {
     expect(resolveStoryKeyVisual('vite', related)).toBe('muted')
     expect(resolveStoryKeyVisual(null, related)).toBe('muted')
   })
+
+  it('treats empty related sets as inactive story focus', () => {
+    expect(resolveStoryKeyVisual('react', new Set())).toBe('idle')
+  })
 })
 
 describe('toRelatedSkillSet', () => {

@@ -6,16 +6,23 @@
   --skills-bg-navy: #0a1020;
   --skills-text: #f4f7fb;
   --skills-text-muted: #9aa6b8;
-  /* Explore Mode defaults — Story Focus can override via data-skills-mode. */
+  /* Explore Mode defaults — Story Focus can override via data-skills-mode / GSAP. */
   --skills-keyboard-track: 1fr;
   --skills-stories-track: 1fr;
-  --skills-shell-gap: clamp(1.25rem, 2.5vw, 2.5rem);
-  --skills-panel-gap: 0.35rem;
+  --skills-shell-gap: clamp(1.1rem, 2.2vw, 2.1rem);
+  --skills-panel-gap: 0.3rem;
   --skills-inspection-tilt: -6deg;
+  --skills-stage-min: clamp(20rem, 42vh, 30rem);
   position: relative;
   width: 100%;
   max-width: 100vw;
   overflow-x: clip;
+  /* Prevent browser scroll anchoring from jumping the page during focus transitions. */
+  overflow-anchor: none;
+  /* Fullscreen scene floor — content may still grow taller (Story Focus, short laptops). */
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: 100svh;
   padding:
     clamp(2.25rem, 5vh, 3.75rem)
     clamp(1rem, 3vw, 2.25rem)
@@ -29,9 +36,24 @@
   box-sizing: border-box;
 }
 
-.skills-section[data-skills-mode='story-focus'] {
-  --skills-keyboard-track: 35fr;
-  --skills-stories-track: 65fr;
+/* Entrance seeds opacity via GSAP; keep pending shells non-interactive briefly. */
+.skills-section[data-skills-entrance='pending'] .skills-section__inspection-slot,
+.skills-section[data-skills-entrance='pending'] .skills-section__board-footer,
+.skills-section[data-skills-entrance='pending'] .skills-section__stage,
+.skills-section[data-skills-entrance='pending'] .skills-section__stories-panel,
+.skills-section[data-skills-entrance='playing'] .skills-section__inspection-slot,
+.skills-section[data-skills-entrance='playing'] .skills-section__board-footer,
+.skills-section[data-skills-entrance='playing'] .skills-section__stage,
+.skills-section[data-skills-entrance='playing'] .skills-section__stories-panel {
+  pointer-events: none;
+}
+
+/*
+ * Column tracks for Story Focus are owned by the shared GSAP Story Focus timeline.
+ * Do NOT snap --skills-*-track here — that fights the open animation and jerks the R3F camera.
+ */
+.skills-section[data-skills-mode='story-focus'] .skills-section__stage {
+  overflow: hidden;
 }
 
 .skills-section__shell {
@@ -40,9 +62,10 @@
   display: grid;
   grid-template-columns: minmax(0, var(--skills-keyboard-track)) minmax(0, var(--skills-stories-track));
   gap: var(--skills-shell-gap);
-  align-items: start;
-  min-height: 0;
-  transition: grid-template-columns 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  align-items: stretch;
+  /* Fill the scene viewport on desktop; allow growth when Story Focus needs it. */
+  min-height: clamp(40rem, calc(100svh - 7.5rem), 54rem);
+  /* Grid track changes are animated by GSAP (avoids competing CSS transitions). */
 }
 
 .skills-section__keyboard-panel {
@@ -59,6 +82,8 @@
   flex: 1 1 auto;
   min-width: 0;
   min-height: 100%;
+  /* Keep macropad + footer visually centered against the Stories stage. */
+  justify-content: center;
 }
 
 .skills-section__stories-panel {
@@ -67,58 +92,196 @@
   flex-direction: column;
   min-width: 0;
   min-height: 100%;
+  /* Bleed into section padding so the ring can reach the viewport edge. */
+  margin-right: calc(-1 * clamp(1rem, 3vw, 2.25rem));
+  padding-right: 0.35rem;
 }
 
-.skills-section__header {
-  max-width: 34rem;
-}
-
-.skills-section__eyebrow {
-  margin: 0 0 0.2rem;
-  font-size: clamp(0.56rem, 0.28vw + 0.46rem, 0.66rem);
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--skills-text-muted);
-}
-
-.skills-section__title {
-  margin: 0;
-  font-size: clamp(1.35rem, 1.2vw + 0.9rem, 1.85rem);
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.08;
-  color: var(--skills-text);
-}
-
-.skills-section__controls {
+/* FE / AI + Sound sit under the macropad. Category tabs hide in Story Focus. */
+.skills-section__board-footer {
   position: relative;
   z-index: 3;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.45rem 0.65rem;
-  margin-top: 0.15rem;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+  flex: 0 0 auto;
+  min-height: 2.9rem;
 }
 
 .skills-category-selector {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
-  align-items: stretch;
+  align-items: center;
+}
+
+/*
+ * Neumorphic FE ↔ AI switch — soft extruded track + sliding knob,
+ * tuned for the dark Skills scene (not the cream demo palette).
+ */
+.skills-category-toggle {
+  --cat-bg: #101826;
+  --cat-light: rgba(255, 255, 255, 0.1);
+  --cat-shadow: rgba(0, 0, 0, 0.55);
+  --cat-fe: #5ee7ff;
+  --cat-ai: #9eb6ff;
+  --cat-muted: rgba(154, 166, 184, 0.72);
+  --cat-pad: 0.26rem;
+  --cat-knob: 2.35rem;
+  --cat-gap: 0.4rem;
+  position: relative;
+  appearance: none;
+  box-sizing: border-box;
+  display: grid;
+  /* Columns match the knob exactly so FE/AI sit on the knob centers. */
+  grid-template-columns: var(--cat-knob) var(--cat-knob);
+  column-gap: var(--cat-gap);
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--cat-knob) * 2 + var(--cat-pad) * 2 + var(--cat-gap));
+  height: calc(var(--cat-knob) + var(--cat-pad) * 2);
+  padding: var(--cat-pad);
+  border-radius: 999px;
+  border: 2px solid #0c131f;
+  background: var(--cat-bg);
+  box-shadow:
+    -2px -2px 4px var(--cat-light),
+    3px 3px 6px var(--cat-shadow),
+    inset 1px 1px 3px rgba(0, 0, 0, 0.45),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.04);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  outline: none;
+  overflow: hidden;
+  transition: box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.skills-category-toggle:hover:not(:disabled):not(.skills-category-toggle--locked) {
+  border-color: color-mix(in srgb, var(--skills-cyan) 28%, #0c131f);
+}
+
+.skills-category-toggle:focus-visible {
+  box-shadow:
+    -2px -2px 4px var(--cat-light),
+    3px 3px 6px var(--cat-shadow),
+    inset 1px 1px 3px rgba(0, 0, 0, 0.45),
+    0 0 0 2px color-mix(in srgb, var(--skills-cyan) 55%, transparent);
+}
+
+.skills-category-toggle:disabled,
+.skills-category-toggle--locked {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.skills-category-toggle__switch {
+  /* Span the track so this absolute layer does not steal a label column. */
+  grid-column: 1 / -1;
+  grid-row: 1;
+  position: absolute;
+  top: 50%;
+  left: var(--cat-pad);
+  right: auto;
+  width: var(--cat-knob);
+  height: var(--cat-knob);
+  border-radius: 50%;
+  background: linear-gradient(160deg, #1a2536 0%, #121b29 100%);
+  box-shadow:
+    inset 1px 1px 2px rgba(255, 255, 255, 0.12),
+    4px 5px 8px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  transform: translateY(-50%);
+  transition:
+    left 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    right 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 180ms ease,
+    background 180ms ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.skills-category-toggle--ai .skills-category-toggle__switch {
+  left: auto;
+  right: var(--cat-pad);
+  box-shadow:
+    inset 1px 1px 2px rgba(255, 255, 255, 0.14),
+    4px 5px 8px rgba(0, 0, 0, 0.45),
+    0 0 14px color-mix(in srgb, var(--cat-ai) 28%, transparent);
+}
+
+.skills-category-toggle--fe .skills-category-toggle__switch {
+  box-shadow:
+    inset 1px 1px 2px rgba(255, 255, 255, 0.14),
+    4px 5px 8px rgba(0, 0, 0, 0.45),
+    0 0 14px color-mix(in srgb, var(--cat-fe) 26%, transparent);
+}
+
+.skills-category-toggle__side {
+  position: relative;
+  z-index: 2;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--cat-knob);
+  height: var(--cat-knob);
+  margin: 0;
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: uppercase;
+  line-height: 1;
+  text-align: center;
+  color: var(--cat-muted);
+  transition: color 220ms ease, opacity 220ms ease, text-shadow 220ms ease;
+  opacity: 0.62;
+  user-select: none;
+}
+
+.skills-category-toggle__side--fe {
+  grid-column: 1;
+}
+
+.skills-category-toggle__side--ai {
+  grid-column: 2;
+}
+
+.skills-category-toggle__side--active {
+  opacity: 1;
+}
+
+.skills-category-toggle--fe .skills-category-toggle__side--fe {
+  color: var(--cat-fe);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--cat-fe) 35%, transparent);
+}
+
+.skills-category-toggle--ai .skills-category-toggle__side--ai {
+  color: var(--cat-ai);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--cat-ai) 35%, transparent);
 }
 
 .skills-sound-toggle {
+  --sound-size: 2.87rem;
   appearance: none;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  min-height: 2.15rem;
-  padding: 0.35rem 0.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  justify-content: center;
+  width: var(--sound-size);
+  height: var(--sound-size);
+  padding: 0;
+  border: 2px solid #0c131f;
+  border-radius: 50%;
+  background: #101826;
+  box-shadow:
+    -2px -2px 4px rgba(255, 255, 255, 0.08),
+    3px 3px 6px rgba(0, 0, 0, 0.5),
+    inset 1px 1px 2px rgba(0, 0, 0, 0.4),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.04);
   color: var(--skills-text-muted);
   cursor: pointer;
   font: inherit;
@@ -126,12 +289,24 @@
     border-color 180ms ease,
     color 180ms ease,
     background 180ms ease,
-    box-shadow 180ms ease;
+    box-shadow 180ms ease,
+    transform 160ms ease;
 }
 
 .skills-sound-toggle:hover:not(:disabled) {
-  border-color: rgba(94, 231, 255, 0.35);
+  border-color: color-mix(in srgb, var(--skills-cyan) 30%, #0c131f);
   color: var(--skills-text);
+}
+
+.skills-sound-toggle:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.skills-sound-toggle:focus-visible {
+  box-shadow:
+    -2px -2px 4px rgba(255, 255, 255, 0.08),
+    3px 3px 6px rgba(0, 0, 0, 0.5),
+    0 0 0 2px color-mix(in srgb, var(--skills-cyan) 55%, transparent);
 }
 
 .skills-sound-toggle:disabled {
@@ -140,23 +315,22 @@
 }
 
 .skills-sound-toggle--on {
-  border-color: var(--skills-cyan-soft);
-  color: var(--skills-text);
+  border-color: color-mix(in srgb, var(--skills-cyan) 42%, #0c131f);
+  color: var(--skills-cyan);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px color-mix(in srgb, var(--skills-cyan) 22%, transparent);
+    -2px -2px 4px rgba(255, 255, 255, 0.08),
+    3px 3px 6px rgba(0, 0, 0, 0.5),
+    inset 1px 1px 2px rgba(0, 0, 0, 0.35),
+    0 0 16px color-mix(in srgb, var(--skills-cyan) 22%, transparent);
+}
+
+.skills-sound-toggle--muted {
+  color: rgba(154, 166, 184, 0.55);
 }
 
 .skills-sound-toggle__icon {
   display: block;
   flex: 0 0 auto;
-}
-
-.skills-sound-toggle__text {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
 }
 
 .skills-keyboard-a11y {
@@ -172,73 +346,6 @@
   list-style: none;
 }
 
-.skills-category-selector__key {
-  position: relative;
-  appearance: none;
-  min-width: clamp(3.85rem, 9vw, 5rem);
-  min-height: 2.15rem;
-  padding: 0.4rem 0.72rem 0.48rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  color: var(--skills-text-muted);
-  cursor: pointer;
-  transition:
-    transform 160ms ease,
-    box-shadow 180ms ease,
-    border-color 180ms ease,
-    color 180ms ease,
-    background 180ms ease;
-}
-
-.skills-category-selector__key:hover:not(:disabled) {
-  border-color: rgba(94, 231, 255, 0.35);
-  color: var(--skills-text);
-}
-
-.skills-category-selector__key:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.skills-category-selector__key--active {
-  border-color: var(--skills-cyan-soft);
-  color: var(--skills-text);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px color-mix(in srgb, var(--skills-cyan) 28%, transparent),
-    0 0 18px color-mix(in srgb, var(--skills-cyan) 16%, transparent);
-}
-
-.skills-category-selector__key--disabled,
-.skills-category-selector__key:disabled {
-  cursor: not-allowed;
-  opacity: 0.42;
-  color: var(--skills-text-muted);
-  box-shadow: none;
-}
-
-/* Flip lock — still focusable; blocks activation via handlers, not HTML disabled. */
-.skills-category-selector__key--locked:not(:disabled) {
-  cursor: default;
-}
-
-.skills-category-selector__label {
-  display: block;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.skills-category-selector__soon {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.54rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--skills-text-muted);
-}
 
 /*
  * Fixed inspection band — content crossfades inside without changing height,
@@ -250,9 +357,10 @@
   z-index: 1;
   flex: 0 0 auto;
   width: 100%;
-  margin: 0.1rem 0 0;
-  padding-top: clamp(2rem, 6.5vw, 3.25rem);
-  height: clamp(6.75rem, 13vh, 8.25rem);
+  margin: 0;
+  /* Tighter band — reduces dead space above the macropad. */
+  padding-top: clamp(1.05rem, 3.8vw, 1.9rem);
+  height: clamp(5.5rem, 11vh, 7rem);
   box-sizing: content-box;
   overflow: hidden;
 }
@@ -260,12 +368,11 @@
 /* Transparent stage — blends into the section background (no card seam). */
 .skills-section__stage {
   position: relative;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   width: 100%;
-  /* Landscape stage matching the isometric macropad silhouette. */
+  min-height: var(--skills-stage-min);
+  max-height: min(36rem, 58vh);
   aspect-ratio: 1.28 / 1;
-  min-height: clamp(18rem, 38vh, 28rem);
-  max-height: min(34rem, 52vh);
   isolation: isolate;
   overflow: visible;
   background: transparent;
@@ -453,24 +560,26 @@
 
 /* Stack below desktop split rather than forcing 50/50. */
 @media (max-width: 960px) {
+  .skills-section {
+    min-height: 0;
+  }
+
   .skills-section__shell {
     grid-template-columns: minmax(0, 1fr);
     min-height: 0;
     gap: 1.35rem;
-    transition: none;
+    align-items: start;
   }
 
   .skills-section__stories-panel {
     display: flex;
     order: 2;
+    margin-right: 0;
+    padding-right: 0;
   }
 
   .skills-section__keyboard-panel {
     order: 1;
-  }
-
-  .skills-stories__stage {
-    height: clamp(20rem, 52vh, 28rem);
   }
 
   .skills-section__stage {
@@ -531,7 +640,9 @@
     transition: none;
   }
 
-  .skills-category-selector__key,
+  .skills-category-toggle,
+  .skills-category-toggle__switch,
+  .skills-category-toggle__side,
   .skills-sound-toggle {
     transition: none;
   }

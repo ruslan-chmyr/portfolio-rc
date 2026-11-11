@@ -145,6 +145,7 @@ function SkillsKeyboardCanvasInner({
       <SkillsKeyboardA11y
         category={displayCategory}
         selectedSkillId={selectedSkillId}
+        relatedSkillIds={relatedSkillIds}
         disabled={isFlipping}
         onEngageSkill={onEngageSkill}
       />

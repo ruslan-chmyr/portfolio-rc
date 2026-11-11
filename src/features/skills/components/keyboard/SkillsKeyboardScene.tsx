@@ -51,6 +51,8 @@ type FlipAnimation = {
   lastOpacity: number
 }
 
+type FramingPose = ReturnType<typeof computeKeyboardCameraFraming>
+
 export function SkillsKeyboardScene({
   displayCategory,
   selectedSkillId,
@@ -107,8 +109,8 @@ export function SkillsKeyboardScene({
   )
 
   const applyCameraFraming = (
-    from: typeof restFraming,
-    to: typeof flipFraming,
+    from: FramingPose,
+    to: FramingPose,
     blend: number,
   ) => {
     const camera = cameraRef.current
@@ -129,6 +131,8 @@ export function SkillsKeyboardScene({
   }
 
   useLayoutEffect(() => {
+    // Follow the canvas size in lockstep with the GSAP column shrink.
+    // A lagged camera chase made the board shrink a beat after its panel.
     if (isFlipping && !reducedMotion) return
     applyCameraFraming(restFraming, restFraming, 0)
     labelOpacityRef.current = 1
@@ -139,6 +143,7 @@ export function SkillsKeyboardScene({
     invalidate()
   }, [displayCategory, selectedSkillId, isFlipping, sectionVisible, invalidate])
 
+  // Only (re)start the flip when the nonce changes — not when framing/aspect updates mid-flip.
   useLayoutEffect(() => {
     if (reducedMotion || !isFlipping) {
       if (!isFlipping && flipRef.current) {
@@ -148,7 +153,9 @@ export function SkillsKeyboardScene({
       }
       flipAnimRef.current = null
       labelOpacityRef.current = 1
-      applyCameraFraming(restFraming, restFraming, 0)
+      if (!isFlipping) {
+        applyCameraFraming(restFraming, restFraming, 0)
+      }
       invalidate()
       return
     }
@@ -167,7 +174,8 @@ export function SkillsKeyboardScene({
       flipRef.current.rotation.z = 0
     }
     invalidate()
-  }, [flipNonce, isFlipping, reducedMotion, restFraming, invalidate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restFraming must not restart the flip
+  }, [flipNonce, isFlipping, reducedMotion, invalidate])
 
   useFrame((_, delta) => {
     // Demand/never frameloop already stops frames while offscreen; also freeze
@@ -187,6 +195,7 @@ export function SkillsKeyboardScene({
       flip.rotation.y = 0
       flip.rotation.z = 0
 
+      // rest/flip framing already track live aspect — board shrinks with the panel mid-flip.
       const zoomBlend = Math.sin(progress * Math.PI)
       applyCameraFraming(restFraming, flipFraming, zoomBlend)
 

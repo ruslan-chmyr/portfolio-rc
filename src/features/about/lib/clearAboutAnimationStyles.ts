@@ -19,4 +19,6 @@ export function clearAboutAnimationStyles(
   if (ambientReveal) gsap.set(ambientReveal, { clearProps: 'all', autoAlpha: 1 })
   const indexEl = section.querySelector<HTMLElement>('.about-section__index-column')
   if (indexEl) gsap.set(indexEl, { clearProps: 'all', autoAlpha: 1 })
+  const pin = section.querySelector<HTMLElement>('.about-section__pin')
+  if (pin) gsap.set(pin, { clearProps: 'backgroundColor' })
 }

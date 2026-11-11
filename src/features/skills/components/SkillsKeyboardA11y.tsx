@@ -5,6 +5,7 @@ import { getSkillsForBoard, type SkillBoardCategory, type SkillId } from '../mod
 type SkillsKeyboardA11yProps = {
   category: SkillBoardCategory
   selectedSkillId: SkillId | null
+  relatedSkillIds?: ReadonlySet<string> | null
   disabled?: boolean
   onEngageSkill: (skillId: SkillId, options?: SkillEngageOptions) => void
 }
@@ -16,6 +17,7 @@ type SkillsKeyboardA11yProps = {
 export function SkillsKeyboardA11y({
   category,
   selectedSkillId,
+  relatedSkillIds = null,
   disabled = false,
   onEngageSkill,
 }: SkillsKeyboardA11yProps) {
@@ -26,9 +28,11 @@ export function SkillsKeyboardA11y({
       {skills.map((skill) => {
         const selected = selectedSkillId === skill.id
         const skillId = skill.id as SkillId
+        const storyMuted = Boolean(relatedSkillIds && !relatedSkillIds.has(skillId))
+        const keyDisabled = disabled || storyMuted
 
         const activate = (withSound: boolean) => {
-          if (disabled) return
+          if (keyDisabled) return
           onEngageSkill(skillId, { playSound: withSound, modality: 'keyboard' })
         }
 
@@ -37,7 +41,7 @@ export function SkillsKeyboardA11y({
             <button
               type="button"
               className="skills-keyboard-a11y__key"
-              disabled={disabled}
+              disabled={keyDisabled}
               aria-pressed={selected}
               aria-label={skill.name}
               onFocus={() => activate(false)}

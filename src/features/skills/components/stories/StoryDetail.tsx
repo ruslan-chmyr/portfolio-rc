@@ -1,8 +1,8 @@
+import { getSkill } from '../../model/skillsConfig'
 import {
-  SKILL_BOARD_CATEGORY_CONFIG,
-  getSkill,
-} from '../../model/skillsConfig'
-import type { EngineeringStory } from '../../model/storiesConfig'
+  storyCategoryLabel,
+  type EngineeringStory,
+} from '../../model/storiesConfig'
 
 type StoryDetailProps = {
   story: EngineeringStory
@@ -20,7 +20,7 @@ function StorySection({ title, body }: { title: string; body?: string }) {
 }
 
 export function StoryDetail({ story, onClose }: StoryDetailProps) {
-  const categoryLabel = SKILL_BOARD_CATEGORY_CONFIG[story.category].label
+  const categoryLabel = storyCategoryLabel(story.category)
   const related = story.relatedSkillIds
     .map((id) => getSkill(id))
     .filter((skill): skill is NonNullable<typeof skill> => Boolean(skill))
@@ -32,7 +32,7 @@ export function StoryDetail({ story, onClose }: StoryDetailProps) {
     >
       <header className="skills-story-detail__header">
         <div className="skills-story-detail__meta">
-          <p className="skills-story-detail__eyebrow">Engineering Story</p>
+          <p className="skills-story-detail__eyebrow">Engineering Highlight</p>
           <p className="skills-story-detail__category">{categoryLabel}</p>
         </div>
         <button
@@ -51,8 +51,11 @@ export function StoryDetail({ story, onClose }: StoryDetailProps) {
 
       <div className="skills-story-detail__body">
         <StorySection title="Challenge" body={story.challenge} />
-        <StorySection title="Approach" body={story.approach} />
-        <StorySection title="Outcome" body={story.outcome} />
+        <StorySection title="Engineering Decision" body={story.approach} />
+        <StorySection
+          title="Implementation & Outcome"
+          body={story.outcome}
+        />
       </div>
 
       {related.length > 0 ? (

@@ -23,14 +23,14 @@ import { hasSkillDescription, resolveSkillSelection } from '../lib/skillSelectio
 import { SkillInspection } from '../components/SkillInspection'
 
 describe('skillsConfig boards', () => {
-  it('defaults to FE and keeps Node.js disabled until configured', () => {
+  it('defaults to FE and exposes only FE / AI boards', () => {
     expect(DEFAULT_SKILL_BOARD_CATEGORY).toBe('fe')
     expect(SKILL_BOARD_CATEGORY_CONFIG.fe.enabled).toBe(true)
     expect(SKILL_BOARD_CATEGORY_CONFIG.ai.enabled).toBe(true)
-    expect(SKILL_BOARD_CATEGORY_CONFIG.nodejs.enabled).toBe(false)
-    expect(canSelectSkillBoardCategory('nodejs')).toBe(false)
-    expect(getSkillsForBoard('nodejs')).toHaveLength(0)
-    expect(skills.nodejs).toHaveLength(0)
+    expect(Object.keys(SKILL_BOARD_CATEGORY_CONFIG)).toEqual(['fe', 'ai'])
+    expect(canSelectSkillBoardCategory('fe')).toBe(true)
+    expect(canSelectSkillBoardCategory('ai')).toBe(true)
+    expect(Object.keys(skills)).toEqual(['fe', 'ai'])
   })
 
   it('includes exactly the approved FE skills', () => {
@@ -102,7 +102,6 @@ describe('skillsConfig boards', () => {
     expect(SKILLS['system-design'].description).toContain('reusable frontend systems')
     expect(SKILLS.n8n.description).toContain('multi-step AI automations')
     expect(SKILLS.mcp.description).toContain('Model Context Protocol')
-    expect(skills.nodejs).toHaveLength(0)
   })
 })
 
@@ -110,7 +109,6 @@ describe('variable-width macropad placement', () => {
   it('fills exactly 20 cells for FE and AI with valid wide keys', () => {
     expect(getSkillMapCoverage('fe').complete).toBe(true)
     expect(getSkillMapCoverage('ai').complete).toBe(true)
-    expect(getSkillMapCoverage('nodejs').occupiedCells).toBe(0)
 
     const fe = getBoardKeyLayout('fe')
     const ai = getBoardKeyLayout('ai')

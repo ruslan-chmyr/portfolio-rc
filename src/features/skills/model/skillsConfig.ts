@@ -8,7 +8,7 @@ import {
   type KeySpan,
 } from './keyboardLayout'
 
-export const SKILL_BOARD_CATEGORIES = ['fe', 'ai', 'nodejs'] as const
+export const SKILL_BOARD_CATEGORIES = ['fe', 'ai'] as const
 
 export type SkillBoardCategory = (typeof SKILL_BOARD_CATEGORIES)[number]
 
@@ -62,17 +62,11 @@ export type SkillBoardCategoryConfig = {
   soonLabel?: string
 }
 
-/** Selector metadata — enable Node.js later by flipping `enabled` and adding skills. */
+/** Selector metadata for the active skill boards. */
 export const SKILL_BOARD_CATEGORY_CONFIG: Record<SkillBoardCategory, SkillBoardCategoryConfig> =
   {
     fe: { id: 'fe', label: 'FE', enabled: true },
     ai: { id: 'ai', label: 'AI', enabled: true },
-    nodejs: {
-      id: 'nodejs',
-      label: 'Node.js',
-      enabled: false,
-      soonLabel: 'Soon',
-    },
   }
 
 export const DEFAULT_SKILL_BOARD_CATEGORY: SkillBoardCategory = 'fe'
@@ -437,7 +431,6 @@ export const skills = {
       group: 'ai-dev',
     },
   ],
-  nodejs: [],
 } as const satisfies Record<SkillBoardCategory, readonly SkillDefinition[]>
 
 export type SkillId = (typeof skills)['fe'][number]['id'] | (typeof skills)['ai'][number]['id']
@@ -486,7 +479,7 @@ export function getSkillMapCoverage(board: SkillBoardCategory) {
       !underfilled &&
       ids.length === unique.size &&
       placed.length === boardSkills.length &&
-      occupied === (boardSkills.length === 0 ? 0 : MACROPAD_CELLS),
+      occupied === MACROPAD_CELLS,
   }
 }
 

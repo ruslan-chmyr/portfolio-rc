@@ -4,15 +4,24 @@ import {
   engineeringStories,
   getEngineeringStory,
   getStoryCarouselItems,
+  storyCategoryLabel,
 } from './storiesConfig'
 
 describe('engineeringStories', () => {
-  it('provides four typed stories with replaceable covers', () => {
+  it('provides four typed highlights with replaceable covers', () => {
     expect(engineeringStories).toHaveLength(4)
+    expect(engineeringStories.map((story) => story.id)).toEqual([
+      'architecture-reusability',
+      'performance-engineering',
+      'configurable-systems',
+      'reliable-ai-automation',
+    ])
     for (const story of engineeringStories) {
       expect(story.id).toBeTruthy()
       expect(story.title).toBeTruthy()
       expect(story.cover.startsWith('data:image/svg+xml')).toBe(true)
+      // Covers stay abstract — full titles live in the panel hierarchy.
+      expect(decodeURIComponent(story.cover)).not.toContain(story.title)
       expect(['fe', 'ai']).toContain(story.category)
       expect(story.relatedSkillIds.length).toBeGreaterThan(0)
     }
@@ -37,7 +46,17 @@ describe('engineeringStories', () => {
   it('maps carousel items from the central catalog', () => {
     const items = getStoryCarouselItems()
     expect(items).toHaveLength(engineeringStories.length)
-    expect(getEngineeringStory('performance-engineering')?.title).toMatch(/Performance/)
+    expect(getEngineeringStory('performance-engineering')?.title).toMatch(
+      /Performance/,
+    )
+    expect(getEngineeringStory('architecture-reusability')?.title).toMatch(
+      /Architecture/,
+    )
     expect(getEngineeringStory('missing')).toBeNull()
+  })
+
+  it('labels FE highlights as Frontend for display', () => {
+    expect(storyCategoryLabel('fe')).toBe('Frontend')
+    expect(storyCategoryLabel('ai')).toBe('AI')
   })
 })

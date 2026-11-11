@@ -194,21 +194,83 @@ describe('useSkillCategoryTransition', () => {
     expect(hook.current.flipNonce).toBe(0)
   })
 
-  it('ignores disabled Node.js and redundant current-category selection', () => {
+  it('ignores redundant current-category selection', () => {
     hook = renderTransitionHook()
     const nonce = hook.current.flipNonce
 
     act(() => {
-      hook.current.selectCategory('nodejs')
+      hook.current.selectCategory('fe')
     })
     expect(hook.current.activeCategory).toBe('fe')
     expect(hook.current.isFlipping).toBe(false)
     expect(hook.current.flipNonce).toBe(nonce)
+  })
+
+  it('forceFlip spins even when the category is unchanged', () => {
+    hook = renderTransitionHook()
+    const nonce = hook.current.flipNonce
 
     act(() => {
-      hook.current.selectCategory('fe')
+      hook.current.selectCategory('fe', { forceFlip: true })
+    })
+
+    expect(hook.current.activeCategory).toBe('fe')
+    expect(hook.current.displayCategory).toBe('fe')
+    expect(hook.current.isFlipping).toBe(true)
+    expect(hook.current.flipNonce).toBe(nonce + 1)
+
+    act(() => {
+      hook.current.handleFlipSwap()
+      hook.current.handleFlipComplete()
+    })
+
+    expect(hook.current.isFlipping).toBe(false)
+    expect(hook.current.displayCategory).toBe('fe')
+  })
+
+  it('queues a forceFlip replay when a flip is already in flight', () => {
+    hook = renderTransitionHook()
+
+    act(() => {
+      hook.current.selectCategory('ai')
+    })
+    const nonce = hook.current.flipNonce
+
+    act(() => {
+      hook.current.selectCategory('ai', { forceFlip: true })
+    })
+    expect(hook.current.flipNonce).toBe(nonce)
+    expect(hook.current.isFlipping).toBe(true)
+
+    act(() => {
+      hook.current.handleFlipSwap()
+      hook.current.handleFlipComplete()
+    })
+
+    expect(hook.current.isFlipping).toBe(true)
+    expect(hook.current.flipNonce).toBe(nonce + 1)
+    expect(hook.current.activeCategory).toBe('ai')
+
+    act(() => {
+      hook.current.handleFlipSwap()
+      hook.current.handleFlipComplete()
     })
     expect(hook.current.isFlipping).toBe(false)
-    expect(hook.current.flipNonce).toBe(nonce)
+  })
+
+  it('supports instant category swaps without starting a flip', () => {
+    hook = renderTransitionHook()
+
+    act(() => {
+      hook.current.selectCategory('ai')
+    })
+    expect(hook.current.isFlipping).toBe(true)
+
+    act(() => {
+      hook.current.selectCategory('fe', { instant: true })
+    })
+    expect(hook.current.activeCategory).toBe('fe')
+    expect(hook.current.displayCategory).toBe('fe')
+    expect(hook.current.isFlipping).toBe(false)
   })
 })
