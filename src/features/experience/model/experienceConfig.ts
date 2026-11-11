@@ -73,7 +73,9 @@ export const EXPERIENCE_ENTRIES: readonly ExperienceEntry[] = [
 export const EXPERIENCE_CV_PDF_URL = '' as const
 
 export const EXPERIENCE_CV_CTA = {
-  description: 'Explore more in my CV',
+  heading: 'Want the full picture?',
+  description:
+    'Explore my complete experience, skills, and professional background in my CV.',
   buttonLabel: 'View Full CV',
 } as const
 

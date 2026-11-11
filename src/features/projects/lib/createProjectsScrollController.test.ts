@@ -141,15 +141,26 @@ describe('createProjectsScrollController', () => {
     expect(ScrollTrigger.create).toHaveBeenCalled()
   })
 
-  it('animates Experience motion wrapper instead of the section', () => {
+  it('does not animate Experience layout during the Projects scrub', () => {
     const { section, pin, panel } = mountProjectsDom({ withExperience: true })
     createProjectsScrollController({ section, pin, panel }).dispose()
 
     const motion = document.querySelector('.experience-section__motion')
-    const motionTween = timelineApi.fromTo.mock.calls.some(
-      (call) => call[0] === motion,
+    const experience = document.getElementById('experience')
+    const layoutTween = [...timelineApi.fromTo.mock.calls, ...timelineApi.to.mock.calls].some(
+      (call) => call[0] === motion || call[0] === experience,
     )
-    expect(motionTween).toBe(true)
+    expect(layoutTween).toBe(false)
+
+    const marginTween = gsapSet.mock.calls.some((call) => {
+      const vars = call[1] as { marginTop?: number; clearProps?: string } | undefined
+      return (
+        call[0] === motion &&
+        (vars?.marginTop !== undefined ||
+          Boolean(vars?.clearProps?.includes('marginTop')))
+      )
+    })
+    expect(marginTween).toBe(false)
   })
 
   it('coalesces refresh after portfolio scroll handoff', () => {

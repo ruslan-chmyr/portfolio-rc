@@ -40,10 +40,15 @@ describe('ExperienceCvCta', () => {
       root.render(createElement(ExperienceCvCta))
     })
 
-    expect(container.textContent).toContain('Explore more in my CV')
+    expect(container.textContent).toContain('Want the full picture?')
+    expect(container.textContent).toContain(
+      'Explore my complete experience, skills, and professional background in my CV.',
+    )
     expect(container.querySelector('a')).toBeNull()
     const disabled = container.querySelector('[aria-disabled="true"]')
     expect(disabled?.tagName).toBe('SPAN')
     expect(disabled?.textContent).toContain('View Full CV')
+    const rootCta = container.querySelector('[data-experience-cta]')
+    expect(rootCta?.hasAttribute('inert')).toBe(true)
   })
 })

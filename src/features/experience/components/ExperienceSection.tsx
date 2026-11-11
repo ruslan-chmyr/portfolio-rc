@@ -1,11 +1,8 @@
-import { useMemo } from 'react'
 import { EXPERIENCE_ENTRIES } from '../model/experienceConfig'
 import { ExperienceTimeline } from './ExperienceTimeline'
 import '../styles/experience.css'
 
 export function ExperienceSection() {
-  const entries = useMemo(() => EXPERIENCE_ENTRIES, [])
-
   return (
     <section
       id="experience"
@@ -15,7 +12,7 @@ export function ExperienceSection() {
       <div className="experience-section__motion">
         <div className="experience-section__inner">
           <ExperienceTimeline
-            entries={entries}
+            entries={EXPERIENCE_ENTRIES}
             intro={
               <header className="experience-section__header">
                 <p className="experience-section__label">05 / Career</p>

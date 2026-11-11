@@ -44,7 +44,11 @@ export type ProjectsScrollController = {
  * - Skills entrance owns initial opacity/visibility of Skills chrome.
  * - This controller only fades Skills after entrance is done (scrubbed fromTo,
  *   never forced visible on init).
- * - Experience motion lives on an inner wrapper, not the section layout box.
+ * - Experience stays in stable document flow. The section CSS underlap
+ *   (`--experience-underlap`) already places it under Projects; we do not
+ *   animate Experience layout (margin/transform) during the scrub — that would
+ *   shift ScrollTrigger geometry and break the Experience sidebar pin
+ *   (transform creates a containing block for `position: fixed` pins).
  */
 export function createProjectsScrollController(
   elements: ProjectsScrollControllerElements,
@@ -60,9 +64,6 @@ export function createProjectsScrollController(
   setProjectsSceneActive(section, false)
 
   const skills = document.getElementById('expertise')
-  const experienceMotion = document.querySelector<HTMLElement>(
-    '#experience .experience-section__motion',
-  )
   const skillsKeyboard = skills?.querySelector<HTMLElement>(
     '.skills-section__keyboard-panel',
   )
@@ -110,11 +111,6 @@ export function createProjectsScrollController(
       backgroundColor: 'transparent',
       autoAlpha: 1,
     })
-    if (experienceMotion) {
-      // Use marginTop — not transform. A transform on this wrapper breaks
-      // position:sticky for the Experience intro sidebar.
-      gsap.set(experienceMotion, { marginTop: 0 })
-    }
 
     // Skills pin: hold the scene under Projects without adding document spacing.
     // End covers Projects trigger offset (top+=12vh) + full entrance/exit scrub.
@@ -148,7 +144,7 @@ export function createProjectsScrollController(
           syncPinViewportHeight()
           setProjectsSceneActive(section, self.isActive)
           syncSkillsViewportClip(self.isActive)
-          syncWillChange(panel, experienceMotion, self.progress)
+          syncWillChange(panel, self.progress)
         },
         onToggle: (self) => {
           setProjectsSceneActive(section, self.isActive)
@@ -157,7 +153,7 @@ export function createProjectsScrollController(
         onUpdate: (self) => {
           setProjectsSceneActive(section, self.isActive)
           syncSkillsViewportClip(self.isActive)
-          syncWillChange(panel, experienceMotion, self.progress)
+          syncWillChange(panel, self.progress)
         },
       },
     })
@@ -253,22 +249,6 @@ export function createProjectsScrollController(
       },
       exitAt + PROJECTS_SCROLL.exitFadeAt,
     )
-
-    // Soft rise for Experience — marginTop keeps sticky intro working.
-    if (experienceMotion) {
-      timeline.fromTo(
-        experienceMotion,
-        {
-          marginTop: PROJECTS_SCROLL.experienceRevealY,
-        },
-        {
-          marginTop: 0,
-          duration: PROJECTS_SCROLL.exitDuration,
-          immediateRender: false,
-        },
-        exitAt,
-      )
-    }
   }, section)
 
   const runRefresh = () => {
@@ -299,7 +279,6 @@ export function createProjectsScrollController(
       window.removeEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, requestRefresh)
       window.removeEventListener(SKILLS_ENTRANCE_DONE_EVENT, requestRefresh)
       panel.style.willChange = ''
-      if (experienceMotion) experienceMotion.style.willChange = ''
       pin.style.height = ''
       pin.style.minHeight = ''
       syncSkillsViewportClip(false)
@@ -313,9 +292,6 @@ export function createProjectsScrollController(
       ) {
         gsap.set(skillsFadeTargets, { clearProps: 'opacity,visibility' })
       }
-      if (experienceMotion) {
-        gsap.set(experienceMotion, { clearProps: 'marginTop' })
-      }
 
       setProjectsSceneActive(section, false)
       ctx.revert()
@@ -325,14 +301,7 @@ export function createProjectsScrollController(
   }
 }
 
-function syncWillChange(
-  panel: HTMLElement,
-  experienceMotion: HTMLElement | null,
-  progress: number,
-) {
+function syncWillChange(panel: HTMLElement, progress: number) {
   const active = progress > 0.001 && progress < 0.999
   panel.style.willChange = active ? 'transform' : ''
-  if (experienceMotion) {
-    experienceMotion.style.willChange = active ? 'margin-top' : ''
-  }
 }

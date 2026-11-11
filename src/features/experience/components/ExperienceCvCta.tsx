@@ -53,7 +53,8 @@ function ExternalArrowIcon() {
 }
 
 /**
- * CV invite at the end of the left timeline column — under the final year.
+ * CV invite under the year inside the pinned left meta stack.
+ * Visibility/inert are owned by the timeline controller (endpoint node).
  * Disabled when no public PDF URL is configured.
  */
 export function ExperienceCvCta() {
@@ -67,7 +68,8 @@ export function ExperienceCvCta() {
   )
 
   return (
-    <div className="experience-cv-cta" data-experience-cta>
+    <div className="experience-cv-cta" data-experience-cta inert>
+      <p className="experience-cv-cta__heading">{EXPERIENCE_CV_CTA.heading}</p>
       <p className="experience-cv-cta__text">{EXPERIENCE_CV_CTA.description}</p>
       {enabled ? (
         <a

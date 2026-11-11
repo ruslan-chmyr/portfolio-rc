@@ -56,7 +56,10 @@ describe('experienceConfig', () => {
   })
 
   it('keeps CV CTA copy and an unset PDF URL by default', () => {
-    expect(EXPERIENCE_CV_CTA.description).toBe('Explore more in my CV')
+    expect(EXPERIENCE_CV_CTA.heading).toBe('Want the full picture?')
+    expect(EXPERIENCE_CV_CTA.description).toBe(
+      'Explore my complete experience, skills, and professional background in my CV.',
+    )
     expect(EXPERIENCE_CV_CTA.buttonLabel).toBe('View Full CV')
     expect(EXPERIENCE_CV_PDF_URL).toBe('')
     expect(isExperienceCvPdfConfigured()).toBe(false)

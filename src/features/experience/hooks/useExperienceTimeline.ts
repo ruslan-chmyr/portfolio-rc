@@ -1,6 +1,7 @@
 import { useLayoutEffect, type RefObject } from 'react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
+  applyExperienceStaticPresentation,
   createExperienceTimelineController,
   type ExperienceTimelineController,
 } from '../lib/createExperienceTimelineController'
@@ -18,6 +19,25 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
+function collectTimelineNodes(track: HTMLElement): {
+  careerNodes: HTMLElement[]
+  nodes: HTMLElement[]
+} {
+  const careerNodes = Array.from(
+    track.querySelectorAll<HTMLElement>(
+      '[data-experience-node]:not([data-experience-endpoint-node])',
+    ),
+  )
+  const endpointNodes = Array.from(
+    track.querySelectorAll<HTMLElement>('[data-experience-endpoint-node]'),
+  )
+  return { careerNodes, nodes: [...careerNodes, ...endpointNodes] }
+}
+
+/**
+ * Mount the Experience scroll timeline. Fail-open: missing nodes or init
+ * errors leave a fully readable static section.
+ */
 export function useExperienceTimeline(targets: ExperienceTimelineTargets) {
   const { trackRef, progressRef, yearRef, entries } = targets
 
@@ -34,22 +54,34 @@ export function useExperienceTimeline(targets: ExperienceTimelineTargets) {
     let cancelled = false
     const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)')
 
+    const years = entries.map((entry) => entry.year)
+
+    const failOpen = (motion: 'unready' | 'error') => {
+      const cards = Array.from(
+        section.querySelectorAll<HTMLElement>('[data-experience-card]'),
+      )
+      const { nodes } = collectTimelineNodes(track)
+      applyExperienceStaticPresentation(
+        { section, progress, year, nodes, cards, years },
+        motion,
+      )
+    }
+
     const setup = () => {
       controller?.dispose()
       controller = undefined
       if (cancelled) return
 
-      const nodes = Array.from(
-        track.querySelectorAll<HTMLElement>('[data-experience-node]'),
-      )
       const cards = Array.from(
         section.querySelectorAll<HTMLElement>('[data-experience-card]'),
       )
+      const { careerNodes, nodes } = collectTimelineNodes(track)
       const intro = section.querySelector<HTMLElement>(
         '.experience-timeline__sidebar-sticky',
       )
-      if (nodes.length === 0 || cards.length !== nodes.length) {
-        section.dataset.experienceMotion = 'unready'
+
+      if (careerNodes.length === 0 || cards.length !== careerNodes.length) {
+        failOpen('unready')
         return
       }
 
@@ -62,7 +94,7 @@ export function useExperienceTimeline(targets: ExperienceTimelineTargets) {
             year,
             nodes,
             cards,
-            years: entries.map((entry) => entry.year),
+            years,
             intro,
           },
           {
@@ -70,10 +102,10 @@ export function useExperienceTimeline(targets: ExperienceTimelineTargets) {
           },
         )
         delete section.dataset.experienceError
-      } catch (error) {
-        section.dataset.experienceMotion = 'error'
-        section.dataset.experienceError =
-          error instanceof Error ? error.message : 'timeline-init-failed'
+      } catch {
+        // Fail-open: keep content readable. Avoid leaking exception text to DOM.
+        failOpen('error')
+        section.dataset.experienceError = 'timeline-init-failed'
       }
     }
 

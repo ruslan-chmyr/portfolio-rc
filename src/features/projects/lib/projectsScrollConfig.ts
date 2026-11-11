@@ -51,8 +51,6 @@ export const PROJECTS_SCROLL = {
    */
   exitFadeAt: 0,
   exitFadeDuration: 0.9,
-  /** Soft rise for Experience motion wrapper while it is uncovered. */
-  experienceRevealY: 72,
 } as const
 
 /** @deprecated Prefer `shared/scene/portfolioScene`. */

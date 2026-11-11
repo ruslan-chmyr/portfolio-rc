@@ -19,10 +19,11 @@ export type ExperienceTimelineElements = {
   track: HTMLElement
   progress: HTMLElement
   year: HTMLElement
+  /** Career + CV endpoint nodes, in document order. */
   nodes: HTMLElement[]
   cards: HTMLElement[]
   years: readonly string[]
-  /** Sticky intro (header + year). Pinned for the timeline scroll on desktop. */
+  /** Sticky intro (header + year + CTA). Pinned on desktop only. */
   intro?: HTMLElement | null
 }
 
@@ -30,9 +31,49 @@ export type ExperienceTimelineController = {
   dispose: () => void
 }
 
+/** Apply a fully readable Experience presentation (no scroll animation). */
+export function applyExperienceStaticPresentation(
+  elements: Pick<
+    ExperienceTimelineElements,
+    'section' | 'progress' | 'year' | 'nodes' | 'cards' | 'years'
+  >,
+  motion: 'static' | 'unready' | 'error' = 'static',
+): void {
+  const { section, progress, year, nodes, cards, years } = elements
+  gsap.set(progress, { scaleY: 1, transformOrigin: 'top center' })
+  nodes.forEach((node) => node.classList.add('is-active'))
+  cards.forEach((card) => card.classList.add('is-active'))
+  const cta = section.querySelector<HTMLElement>('[data-experience-cta]')
+  if (cta) {
+    cta.classList.add('is-active')
+    cta.removeAttribute('inert')
+  }
+  if (years[0]) year.textContent = years[0]!
+  section.dataset.experienceMotion = motion
+}
+
+function clearExperienceActiveClasses(
+  elements: Pick<ExperienceTimelineElements, 'nodes' | 'cards' | 'section' | 'progress'>,
+): void {
+  const { nodes, cards, section, progress } = elements
+  nodes.forEach((node) => {
+    node.classList.remove('is-active')
+    node.style.willChange = ''
+  })
+  cards.forEach((card) => {
+    card.classList.remove('is-active')
+    card.style.willChange = ''
+  })
+  const cta = section.querySelector<HTMLElement>('[data-experience-cta]')
+  cta?.classList.remove('is-active')
+  cta?.setAttribute('inert', '')
+  progress.style.willChange = ''
+}
+
 /**
- * Scrubs the cyan progress line and toggles milestone/card active states.
- * Natural document flow only — no extra pin (Projects owns the prior pin).
+ * Scrubs the cyan progress line and toggles milestone/card/CTA states.
+ * Activation follows the *animated* progress (tween), not raw scroll progress,
+ * so nodes light when the visible line reaches them under scrub lag.
  */
 export function createExperienceTimelineController(
   elements: ExperienceTimelineElements,
@@ -46,30 +87,17 @@ export function createExperienceTimelineController(
   let disposed = false
   const thresholds: number[] = []
   let lastActive = -2
+  let ctaWasActive = false
   const refreshState = { raf: 0, pending: false }
-  const isMobile = () =>
-    window.matchMedia(
-      `(max-width: ${EXPERIENCE_TIMELINE.mobileMaxWidthPx}px)`,
-    ).matches
-
-  const applyStatic = () => {
-    gsap.set(progress, { scaleY: 1, transformOrigin: 'top center' })
-    nodes.forEach((node) => node.classList.add('is-active'))
-    cards.forEach((card) => card.classList.add('is-active'))
-    section
-      .querySelector<HTMLElement>('[data-experience-cta]')
-      ?.classList.add('is-active')
-    if (years[0]) year.textContent = years[0]!
-    section.dataset.experienceMotion = 'static'
-  }
+  const careerCount = cards.length
+  const desktopQuery = `(min-width: ${EXPERIENCE_TIMELINE.mobileMaxWidthPx + 1}px)`
 
   if (mode === 'static') {
-    applyStatic()
+    applyExperienceStaticPresentation(elements, 'static')
     return {
       dispose: () => {
         disposed = true
-        nodes.forEach((node) => node.classList.remove('is-active'))
-        cards.forEach((card) => card.classList.remove('is-active'))
+        clearExperienceActiveClasses(elements)
         delete section.dataset.experienceMotion
       },
     }
@@ -78,8 +106,7 @@ export function createExperienceTimelineController(
   section.dataset.experienceMotion = 'scroll'
 
   const measureThresholds = () => {
-    // Nodes are position:absolute inside each item — offsetTop is local to the
-    // item, not the track. Measure against the track's bounding box instead.
+    // Nodes are position:absolute inside each item — measure vs track box.
     const trackRect = track.getBoundingClientRect()
     const trackHeight = Math.max(track.offsetHeight, 1)
     thresholds.length = 0
@@ -97,26 +124,47 @@ export function createExperienceTimelineController(
 
   const cta = section.querySelector<HTMLElement>('[data-experience-cta]')
 
-  const syncActive = (progressValue: number) => {
-    const active = activeMilestoneIndex(progressValue, thresholds)
+  const setCtaActive = (active: boolean) => {
+    if (!cta) return
+    cta.classList.toggle('is-active', active)
+    if (active) cta.removeAttribute('inert')
+    else cta.setAttribute('inert', '')
+
+    if (active !== ctaWasActive) {
+      ctaWasActive = active
+      // Pin end depends on sticky height — refresh when CTA expands/collapses.
+      scheduleScrollTriggerRefresh(() => {
+        if (!disposed) ScrollTrigger.refresh()
+      }, refreshState)
+    }
+  }
+
+  const syncActive = (animatedProgress: number) => {
+    const active = activeMilestoneIndex(animatedProgress, thresholds)
     nodes.forEach((node, index) => {
       node.classList.toggle('is-active', index <= active)
     })
     cards.forEach((card, index) => {
       card.classList.toggle('is-active', index <= active)
     })
-    // Reveal CV invite once the final career milestone is reached.
-    if (cta) {
-      cta.classList.toggle('is-active', active >= nodes.length - 1 && active >= 0)
-    }
+    // CV endpoint is the last measured node — after the final career milestone.
+    setCtaActive(active >= nodes.length - 1 && active >= 0)
+
     if (active !== lastActive) {
       lastActive = active
       const yearIndex =
-        active < 0 ? 0 : Math.min(active, Math.max(years.length - 1, 0))
-      const nextYear = years[yearIndex]
+        active < 0
+          ? 0
+          : Math.min(active, Math.max(years.length - 1, 0), careerCount - 1)
+      const nextYear = years[Math.max(yearIndex, 0)]
       if (nextYear) year.textContent = nextYear
     }
   }
+
+  // Start inert until the endpoint illuminates.
+  setCtaActive(false)
+  // Avoid a refresh storm from the initial inert/collapse.
+  ctaWasActive = false
 
   const ctx = gsap.context(() => {
     gsap.set(progress, { scaleY: 0, transformOrigin: 'top center' })
@@ -135,32 +183,41 @@ export function createExperienceTimelineController(
           end: EXPERIENCE_TIMELINE.progressEnd,
           scrub: EXPERIENCE_TIMELINE.scrub,
           invalidateOnRefresh: true,
-          onRefresh: () => {
-            measureThresholds()
-          },
           onUpdate: (self) => {
-            syncActive(self.progress)
+            // Prefer the tween's scrubbed progress (matches rendered scaleY),
+            // not raw ScrollTrigger progress which leads the visible line.
+            const animated = self.animation?.progress()
+            syncActive(
+              typeof animated === 'number' ? animated : self.progress,
+            )
+          },
+          onRefresh: (self) => {
+            measureThresholds()
+            const animated = self.animation?.progress()
+            if (typeof animated === 'number') syncActive(animated)
           },
         },
       },
     )
 
-    // Keep header + year in view for the full timeline column height.
-    const introParent = intro?.parentElement
-    if (intro && introParent instanceof HTMLElement && !isMobile()) {
+    // Desktop-only sidebar pin — matchMedia creates/destroys on breakpoint cross.
+    const mm = gsap.matchMedia()
+    mm.add(desktopQuery, () => {
+      if (!intro) return
+      const introParent = intro.parentElement
+      if (!(introParent instanceof HTMLElement)) return
+
       const pinTop = EXPERIENCE_TIMELINE.introPinTopPx
       ScrollTrigger.create({
         trigger: intro,
         start: () => `top top+=${pinTop}`,
         endTrigger: introParent,
-        // Release when the column bottom reaches the pinned intro bottom
-        // (true sticky behavior through the full timeline height).
         end: () => `bottom top+=${pinTop + intro.offsetHeight}`,
         pin: intro,
         pinSpacing: false,
         invalidateOnRefresh: true,
       })
-    }
+    })
   }, section)
 
   const runRefresh = () => {
@@ -191,16 +248,7 @@ export function createExperienceTimelineController(
       window.removeEventListener('resize', requestRefresh)
       window.removeEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, requestRefresh)
       window.removeEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, requestRefresh)
-      nodes.forEach((node) => {
-        node.classList.remove('is-active')
-        node.style.willChange = ''
-      })
-      cards.forEach((card) => {
-        card.classList.remove('is-active')
-        card.style.willChange = ''
-      })
-      cta?.classList.remove('is-active')
-      progress.style.willChange = ''
+      clearExperienceActiveClasses(elements)
       ctx.revert()
       delete section.dataset.experienceMotion
       ScrollTrigger.refresh()

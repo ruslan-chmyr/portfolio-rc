@@ -38,8 +38,8 @@ export function ExperienceTimeline({
     <div className="experience-timeline">
       <aside className="experience-timeline__sidebar">
         {/*
-          Sidebar stretches to the track height; intro pins through the
-          scroll, CTA sits at the column end (under the final year).
+          Sidebar stretches with the track. Intro + year + CTA pin as one
+          stack so the final year never lands on top of the CV invite.
         */}
         <div className="experience-timeline__sidebar-sticky">
           {intro}
@@ -48,8 +48,8 @@ export function ExperienceTimeline({
               {entries[0]?.year ?? ''}
             </p>
           </div>
+          <ExperienceCvCta />
         </div>
-        <ExperienceCvCta />
       </aside>
 
       <div ref={trackRef} className="experience-timeline__track">
@@ -75,6 +75,17 @@ export function ExperienceTimeline({
               </li>
             )
           })}
+          {/* Measured CV endpoint — line continues past the last career node. */}
+          <li
+            className="experience-timeline__item experience-timeline__item--endpoint"
+            aria-hidden="true"
+          >
+            <span
+              className="experience-timeline__node experience-timeline__node--endpoint"
+              data-experience-node
+              data-experience-endpoint-node
+            />
+          </li>
         </ol>
       </div>
     </div>

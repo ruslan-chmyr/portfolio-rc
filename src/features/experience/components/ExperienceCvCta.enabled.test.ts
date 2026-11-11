@@ -48,5 +48,9 @@ describe('ExperienceCvCta enabled', () => {
     expect(link?.getAttribute('target')).toBe('_blank')
     expect(link?.getAttribute('rel')).toBe('noopener noreferrer')
     expect(link?.textContent).toContain('View Full CV')
+    expect(container.textContent).toContain('Want the full picture?')
+    const rootCta = container.querySelector('[data-experience-cta]')
+    // Controller removes inert when the endpoint activates; default markup starts inert.
+    expect(rootCta?.hasAttribute('inert')).toBe(true)
   })
 })
