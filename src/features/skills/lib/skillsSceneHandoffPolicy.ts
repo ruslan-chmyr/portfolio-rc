@@ -33,12 +33,17 @@ export const SKILLS_HANDOFF = {
    */
   postAlignCooldownMs: 220,
   /**
-   * After returning from Projects / deeper Skills into settled, ignore residual
+   * After returning from Projects / Experience into settled, ignore residual
    * upward momentum so About does not steal the same reverse gesture.
    */
-  postProjectsSettleCooldownMs: 480,
+  postProjectsSettleCooldownMs: 720,
   /** Deep past Skills — later sections own scroll; do not yank back to About. */
   aboutAlignMinTopFactor: -0.18,
+  /**
+   * If Experience (or another later scene) still occupies this much of the
+   * viewport from the top, About snap must not run — reverse stays scrubbed.
+   */
+  laterSceneBlockTopFactor: 0.88,
 } as const
 
 export type SkillsAlignDecisionInput = {
@@ -92,6 +97,12 @@ export type AboutAlignDecisionInput = {
   /** Absolute document Y for the About return target (settled scrub). */
   aboutReturnScrollY: number | null
   currentScrollY: number
+  /**
+   * True while Experience (or another post-Skills scene) still occupies the
+   * viewport. Skills can be pinned at top≈0 underneath — that must not look
+   * like a settled Skills scene for About snap.
+   */
+  laterSceneInView: boolean
 }
 
 /**
@@ -99,7 +110,7 @@ export type AboutAlignDecisionInput = {
  * back to the settled About frame (theme surface), not an intermediate dark band.
  *
  * Phase `passed` (later sections / Projects wipe) must re-settle on Skills first —
- * About must not steal the reverse while Skills is still pinned under the cover.
+ * About must not steal reverse while Skills is pinned under Projects/Experience.
  */
 export function shouldBeginAboutAlign(input: AboutAlignDecisionInput): boolean {
   if (!input.enabled || input.reducedMotion || input.isMobile || input.blocked) {
@@ -107,6 +118,7 @@ export function shouldBeginAboutAlign(input: AboutAlignDecisionInput): boolean {
   }
   if (input.direction !== -1) return false
   if (input.phase !== 'settled') return false
+  if (input.laterSceneInView) return false
   if (input.aboutReturnScrollY == null) return false
   // Already at/above the return frame.
   if (input.currentScrollY <= input.aboutReturnScrollY + SKILLS_HANDOFF.settleTolerancePx) {

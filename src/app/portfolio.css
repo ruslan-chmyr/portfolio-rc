@@ -39,15 +39,20 @@ html.portfolio-native-scroll .about-section .pin-spacer {
 
 /*
  * Projects pin sits over Skills during the wipe. Keep the spacer transparent
- * so Skills stays visible in the uncovered gutters — navy arrives only via
- * the scrubbed pin backdrop later in the timeline. Near the end of the pin
- * distance, blend toward the portfolio surface so Experience does not flash.
+ * so early gutters still show the real Skills scene through the fixed pin.
+ * Experience underlaps this spacer in document flow; time-based reveal is
+ * owned by the Projects scrub timeline (pin autoAlpha), not this gradient.
  */
 html.portfolio-native-scroll .projects-section .pin-spacer {
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    transparent 62%,
-    var(--color-portfolio-background) 100%
-  );
+  background: transparent;
+}
+
+/*
+ * While Projects owns the viewport, clip tall Skills content so it cannot
+ * paint a dark strip below the pinned Projects scene.
+ */
+html[data-projects-scene='active'] #expertise {
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
 }

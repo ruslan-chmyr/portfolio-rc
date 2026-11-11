@@ -5,8 +5,14 @@ import {
   PORTFOLIO_SCROLL_REENGAGE_EVENT,
 } from '../../intro/lib/createIntroScrollHandoff'
 import {
-  PROJECTS_SCROLL,
   SKILLS_ENTRANCE_DONE_EVENT,
+  cancelScheduledScrollTriggerRefresh,
+  isSkillsEntranceDone,
+  scheduleScrollTriggerRefresh,
+  setProjectsSceneActive,
+} from '../../../shared/scene/portfolioScene'
+import {
+  PROJECTS_SCROLL,
   projectsExitStartsAt,
   projectsTotalPinDistancePx,
   resolveProjectsTriggerStart,
@@ -14,8 +20,11 @@ import {
 
 gsap.registerPlugin(ScrollTrigger)
 
-/** Document marker so Skills handoff does not steal reverse scroll mid-Projects. */
-export const PROJECTS_SCENE_DATASET_KEY = 'projectsScene'
+/** @deprecated Prefer shared/scene/portfolioScene — kept for existing imports. */
+export {
+  PROJECTS_SCENE_DATASET_KEY,
+  isProjectsSceneActive,
+} from '../../../shared/scene/portfolioScene'
 
 export type ProjectsScrollControllerElements = {
   section: HTMLElement
@@ -27,15 +36,15 @@ export type ProjectsScrollController = {
   dispose: () => void
 }
 
-export function isProjectsSceneActive(root: ParentNode = document.documentElement): boolean {
-  if (!(root instanceof HTMLElement)) return false
-  return root.dataset[PROJECTS_SCENE_DATASET_KEY] === 'active'
-}
-
 /**
- * Pins Projects and scrubs the blue panel over Skills.
- * Skills is pinned in place (no extra spacer) so the wipe covers the same scene,
- * then fades out and restores on reverse.
+ * Pins Projects and scrubs the blue panel over Skills, then exits left/up
+ * into Experience. Skills is pinned without spacer so the wipe shares one scene.
+ *
+ * Ownership:
+ * - Skills entrance owns initial opacity/visibility of Skills chrome.
+ * - This controller only fades Skills after entrance is done (scrubbed fromTo,
+ *   never forced visible on init).
+ * - Experience motion lives on an inner wrapper, not the section layout box.
  */
 export function createProjectsScrollController(
   elements: ProjectsScrollControllerElements,
@@ -43,13 +52,17 @@ export function createProjectsScrollController(
   const { section, pin, panel } = elements
 
   let disposed = false
+  /** True once we have applied scrubbed fades to Skills (entrance already done). */
+  let ownedSkillsFade = false
 
   section.classList.remove('projects-section--static')
   section.dataset.projectsMotion = 'scroll'
   setProjectsSceneActive(section, false)
 
   const skills = document.getElementById('expertise')
-  const experience = document.getElementById('experience')
+  const experienceMotion = document.querySelector<HTMLElement>(
+    '#experience .experience-section__motion',
+  )
   const skillsKeyboard = skills?.querySelector<HTMLElement>(
     '.skills-section__keyboard-panel',
   )
@@ -60,6 +73,8 @@ export function createProjectsScrollController(
     (node): node is HTMLElement => Boolean(node),
   )
 
+  const refreshState = { raf: 0, pending: false }
+
   const syncPinViewportHeight = () => {
     // Match the live layout viewport — CSS dvh can undershoot and leave a
     // dark strip of Skills painted under the pinned Projects scene.
@@ -68,29 +83,43 @@ export function createProjectsScrollController(
     pin.style.minHeight = `${height}px`
   }
 
+  const syncSkillsViewportClip = (active: boolean) => {
+    if (!skills) return
+    if (active) {
+      // Tall Skills content must not paint past the pinned Projects viewport.
+      skills.style.maxHeight = `${Math.round(window.innerHeight)}px`
+      skills.style.overflow = 'hidden'
+    } else {
+      skills.style.maxHeight = ''
+      skills.style.overflow = ''
+    }
+  }
+
   const ctx = gsap.context(() => {
     syncPinViewportHeight()
     gsap.set(panel, {
       xPercent: 100,
+      yPercent: 0,
       force3D: true,
     })
     gsap.set(pin, {
       backgroundColor: 'transparent',
+      autoAlpha: 1,
     })
-    if (skillsFadeTargets.length > 0) {
-      gsap.set(skillsFadeTargets, { autoAlpha: 1 })
+    if (experienceMotion) {
+      gsap.set(experienceMotion, { y: 0, force3D: true })
     }
 
-    // Hold Skills in the viewport without adding pin-spacing, so Projects
-    // can slide over the same scene instead of revealing a blank page.
+    // Skills pin: hold the scene under Projects without adding document spacing.
+    // End covers Projects trigger offset (top+=12vh) + full entrance/exit scrub.
     if (skills) {
       ScrollTrigger.create({
         trigger: skills,
         start: 'top top',
         end: () => {
           const total = projectsTotalPinDistancePx(window.innerHeight)
-          // Cover the Projects start offset + entrance/exit scrub + brief settle.
-          return `+=${total + window.innerHeight * 0.25}`
+          const triggerPad = window.innerHeight * 0.12
+          return `+=${total + triggerPad}`
         },
         pin: true,
         pinSpacing: false,
@@ -112,14 +141,17 @@ export function createProjectsScrollController(
         onRefresh: (self) => {
           syncPinViewportHeight()
           setProjectsSceneActive(section, self.isActive)
-          syncWillChange(panel, self.progress)
+          syncSkillsViewportClip(self.isActive)
+          syncWillChange(panel, experienceMotion, self.progress)
         },
         onToggle: (self) => {
           setProjectsSceneActive(section, self.isActive)
+          syncSkillsViewportClip(self.isActive)
         },
         onUpdate: (self) => {
           setProjectsSceneActive(section, self.isActive)
-          syncWillChange(panel, self.progress)
+          syncSkillsViewportClip(self.isActive)
+          syncWillChange(panel, experienceMotion, self.progress)
         },
       },
     })
@@ -138,8 +170,10 @@ export function createProjectsScrollController(
       0,
     )
 
-    // 2) Highlights ease out with the leading edge of the wipe.
+    // 2–3) Skills fades — only after entrance owns reveal (gated by trigger start).
+    // Never gsap.set(... autoAlpha: 1) here; that races the entrance controller.
     if (skillsHighlights) {
+      ownedSkillsFade = true
       timeline.fromTo(
         skillsHighlights,
         { autoAlpha: 1 },
@@ -152,8 +186,8 @@ export function createProjectsScrollController(
       )
     }
 
-    // 3) Keyboard / left Skills fade later — reverse restores both.
     if (skillsKeyboard) {
+      ownedSkillsFade = true
       timeline.fromTo(
         skillsKeyboard,
         { autoAlpha: 1 },
@@ -187,7 +221,7 @@ export function createProjectsScrollController(
       exitAt - PROJECTS_SCROLL.settleHoldDuration,
     )
 
-    // 5) Projects leaves left + up while Experience is already underneath.
+    // 5) Projects leaves left + up; pin fades to uncover underlapped Experience.
     timeline.to(
       panel,
       {
@@ -210,10 +244,10 @@ export function createProjectsScrollController(
       exitAt + PROJECTS_SCROLL.exitFadeAt,
     )
 
-    if (experience) {
-      gsap.set(experience, { y: 0, force3D: true })
+    // Animate the inner motion wrapper only — section keeps document-flow geometry.
+    if (experienceMotion) {
       timeline.fromTo(
-        experience,
+        experienceMotion,
         {
           y: PROJECTS_SCROLL.experienceRevealY,
           force3D: true,
@@ -229,39 +263,52 @@ export function createProjectsScrollController(
     }
   }, section)
 
-  const refresh = () => {
+  const runRefresh = () => {
     if (disposed) return
     syncPinViewportHeight()
     ScrollTrigger.refresh()
   }
 
-  const onResize = () => refresh()
-  const onEntranceDone = () => refresh()
-  window.addEventListener('resize', onResize)
-  window.addEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, refresh)
-  window.addEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, refresh)
-  window.addEventListener(SKILLS_ENTRANCE_DONE_EVENT, onEntranceDone)
+  const requestRefresh = () => {
+    if (disposed) return
+    scheduleScrollTriggerRefresh(runRefresh, refreshState)
+  }
 
-  const refreshRaf = window.requestAnimationFrame(refresh)
+  window.addEventListener('resize', requestRefresh)
+  window.addEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, requestRefresh)
+  window.addEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, requestRefresh)
+  window.addEventListener(SKILLS_ENTRANCE_DONE_EVENT, requestRefresh)
+
+  requestRefresh()
 
   return {
     dispose: () => {
       if (disposed) return
       disposed = true
-      window.cancelAnimationFrame(refreshRaf)
-      window.removeEventListener('resize', onResize)
-      window.removeEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, refresh)
-      window.removeEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, refresh)
-      window.removeEventListener(SKILLS_ENTRANCE_DONE_EVENT, onEntranceDone)
+      cancelScheduledScrollTriggerRefresh(refreshState)
+      window.removeEventListener('resize', requestRefresh)
+      window.removeEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, requestRefresh)
+      window.removeEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, requestRefresh)
+      window.removeEventListener(SKILLS_ENTRANCE_DONE_EVENT, requestRefresh)
       panel.style.willChange = ''
+      if (experienceMotion) experienceMotion.style.willChange = ''
       pin.style.height = ''
       pin.style.minHeight = ''
-      if (skillsFadeTargets.length > 0) {
+      syncSkillsViewportClip(false)
+
+      // Only clear Skills fade props when we owned them and entrance is settled —
+      // never wipe a pending Skills entrance.
+      if (
+        ownedSkillsFade &&
+        isSkillsEntranceDone(skills) &&
+        skillsFadeTargets.length > 0
+      ) {
         gsap.set(skillsFadeTargets, { clearProps: 'opacity,visibility' })
       }
-      if (experience) {
-        gsap.set(experience, { clearProps: 'transform' })
+      if (experienceMotion) {
+        gsap.set(experienceMotion, { clearProps: 'transform' })
       }
+
       setProjectsSceneActive(section, false)
       ctx.revert()
       delete section.dataset.projectsMotion
@@ -270,17 +317,14 @@ export function createProjectsScrollController(
   }
 }
 
-function setProjectsSceneActive(section: HTMLElement, active: boolean) {
-  if (active) {
-    document.documentElement.dataset[PROJECTS_SCENE_DATASET_KEY] = 'active'
-    section.dataset.projectsActive = 'true'
-  } else {
-    delete document.documentElement.dataset[PROJECTS_SCENE_DATASET_KEY]
-    delete section.dataset.projectsActive
-  }
-}
-
-function syncWillChange(panel: HTMLElement, progress: number) {
+function syncWillChange(
+  panel: HTMLElement,
+  experienceMotion: HTMLElement | null,
+  progress: number,
+) {
   const active = progress > 0.001 && progress < 0.999
   panel.style.willChange = active ? 'transform' : ''
+  if (experienceMotion) {
+    experienceMotion.style.willChange = active ? 'transform' : ''
+  }
 }

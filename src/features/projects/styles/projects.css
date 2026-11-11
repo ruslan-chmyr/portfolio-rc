@@ -1,7 +1,7 @@
 .projects-section {
-  --projects-inset-x: 2vw;
+  --projects-inset-x: 6vw;
   --projects-inset-y: 3vh;
-  --projects-radius: 32px 0 0 32px;
+  --projects-radius: 32px;
   --projects-panel: #3268e5;
   --projects-panel-deep: #2a57c7;
   --projects-panel-lift: #3b74ef;
@@ -14,7 +14,7 @@
   z-index: 1;
   width: 100%;
   max-width: 100vw;
-  /* Pull over the sticky Skills scene so the wipe covers it in place. */
+  /* Pull over the Skills scene so the wipe covers it in place. */
   margin-top: calc(-1 * var(--projects-scene-overlap));
   overflow-x: clip;
   overflow-anchor: none;
@@ -45,13 +45,15 @@
 
 .projects-section__panel {
   position: absolute;
-  top: var(--projects-inset-y);
-  right: 0;
-  bottom: var(--projects-inset-y);
-  left: var(--projects-inset-x);
+  inset:
+    var(--projects-inset-y)
+    0
+    var(--projects-inset-y)
+    var(--projects-inset-x);
+  width: auto;
+  height: auto;
   box-sizing: border-box;
   border-radius: var(--projects-radius);
-  height: calc(100% - var(--projects-inset-y));
   background:
     linear-gradient(
       155deg,
@@ -75,7 +77,7 @@
   .projects-section {
     --projects-inset-x: 4.5vw;
     --projects-inset-y: 3.25vh;
-    --projects-radius: 28px 0 0 28px;
+    --projects-radius: 28px;
   }
 }
 
@@ -95,11 +97,9 @@
 
   .projects-section__panel {
     position: relative;
-    top: auto;
-    right: auto;
-    bottom: auto;
-    left: auto;
+    inset: auto;
     width: auto;
+    height: auto;
     min-height: calc(100dvh - 2rem);
     margin: var(--projects-inset-y) 0 var(--projects-inset-y) var(--projects-inset-x);
     transform: none;

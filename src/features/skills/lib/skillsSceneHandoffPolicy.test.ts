@@ -60,6 +60,7 @@ describe('shouldBeginAboutAlign', () => {
     blocked: false,
     aboutReturnScrollY: 2400,
     currentScrollY: 3100,
+    laterSceneInView: false,
   }
 
   it('starts reverse align on one upward gesture from Skills', () => {
@@ -94,6 +95,16 @@ describe('shouldBeginAboutAlign', () => {
       shouldBeginAboutAlign({
         ...base,
         phase: 'passed',
+        skillsTop: 0,
+      }),
+    ).toBe(false)
+  })
+
+  it('does not jump Experience/Projects → About while a later scene is in view', () => {
+    expect(
+      shouldBeginAboutAlign({
+        ...base,
+        laterSceneInView: true,
         skillsTop: 0,
       }),
     ).toBe(false)

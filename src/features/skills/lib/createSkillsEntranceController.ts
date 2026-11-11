@@ -1,5 +1,5 @@
 import gsap from 'gsap'
-import { SKILLS_ENTRANCE_DONE_EVENT } from '../../projects/lib/projectsScrollConfig'
+import { SKILLS_ENTRANCE_DONE_EVENT } from '../../../shared/scene/portfolioScene'
 import { SKILLS_ENTRANCE } from './skillsEntranceConfig'
 import { decideSkillsEntrance } from './skillsSceneHandoffPolicy'
 

@@ -31,7 +31,10 @@
     );
   color: var(--color-portfolio-foreground);
   overflow-x: clip;
-  will-change: transform;
+}
+
+.experience-section__motion {
+  width: 100%;
 }
 
 .experience-section__inner {
@@ -125,7 +128,6 @@
 @media (max-width: 960px) {
   .experience-section {
     --experience-underlap: 0px;
-    will-change: auto;
   }
 }
 

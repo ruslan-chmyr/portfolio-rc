@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react'
-import { isProjectsSceneActive } from '../../projects/lib/createProjectsScrollController'
+import { isProjectsSceneActive } from '../../../shared/scene/portfolioScene'
 import { isStoryFocusBusy, type StoryFocusPhase } from '../lib/storyFocusTransition'
 import { createSkillsEntranceController } from '../lib/createSkillsEntranceController'
 import { createSkillsSceneHandoff } from '../lib/createSkillsSceneHandoff'

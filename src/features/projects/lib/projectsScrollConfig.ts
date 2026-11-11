@@ -1,4 +1,6 @@
-/** Scroll / geometry tokens for the Projects blue-panel entrance. */
+import { isSkillsEntranceDone } from '../../../shared/scene/portfolioScene'
+
+/** Scroll / geometry tokens for the Projects blue-panel entrance + exit. */
 export const PROJECTS_SCROLL = {
   /**
    * Longer scrub distance so the cover reads as a deliberate wipe
@@ -49,12 +51,15 @@ export const PROJECTS_SCROLL = {
    */
   exitFadeAt: 0,
   exitFadeDuration: 0.9,
-  /** Soft rise for Experience while it is uncovered. */
+  /** Soft rise for Experience motion wrapper while it is uncovered. */
   experienceRevealY: 72,
 } as const
 
-/** Fired when Skills entrance reaches `done` — Projects refreshes its start gate. */
-export const SKILLS_ENTRANCE_DONE_EVENT = 'skills-entrance-done'
+/** @deprecated Prefer `shared/scene/portfolioScene`. */
+export {
+  SKILLS_ENTRANCE_DONE_EVENT,
+  isSkillsEntranceDone,
+} from '../../../shared/scene/portfolioScene'
 
 export type ProjectsPresentationMode = 'scroll' | 'static'
 
@@ -97,11 +102,6 @@ export function projectsExitStartsAt(): number {
       PROJECTS_SCROLL.pinBackdropAt + PROJECTS_SCROLL.pinBackdropDuration,
     ) + PROJECTS_SCROLL.settleHoldDuration
   )
-}
-
-export function isSkillsEntranceDone(skills: HTMLElement | null): boolean {
-  if (!skills) return true
-  return skills.dataset.skillsEntrance === 'done'
 }
 
 /** Park the trigger until Skills has finished entering, then use the normal start. */
