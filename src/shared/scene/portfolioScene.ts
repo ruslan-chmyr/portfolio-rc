@@ -3,6 +3,8 @@
  * from importing each other's controllers for readiness and ownership flags.
  */
 
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
 /** Fired when Skills entrance reaches `done`. */
 export const SKILLS_ENTRANCE_DONE_EVENT = 'skills-entrance-done'
 
@@ -39,32 +41,64 @@ export type ScrollTriggerRefreshState = {
   pending: boolean
 }
 
+type RefreshWaiter = {
+  state: ScrollTriggerRefreshState
+  isActive: () => boolean
+  before?: () => void
+}
+
+const refreshWaiters: RefreshWaiter[] = []
+let sharedRefreshRaf = 0
+let sharedRefreshPending = false
+
 /**
- * Coalesce ScrollTrigger.refresh() calls that fire in the same frame
- * (resize + handoff + entrance-done often arrive together).
- *
- * Uses an explicit `pending` flag — not the rAF id alone — so sync rAF
- * polyfills/tests cannot leave a stuck lock after the callback runs.
+ * Coalesce global ScrollTrigger.refresh() across section controllers into one
+ * call per animation frame. Optional `before` runs for active waiters only
+ * (e.g. remasure thresholds) and must not call ScrollTrigger.refresh itself.
  */
 export function scheduleScrollTriggerRefresh(
-  refresh: () => void,
   state: ScrollTriggerRefreshState,
+  isActive: () => boolean = () => true,
+  before?: () => void,
 ): void {
   if (state.pending) return
   state.pending = true
-  state.raf = window.requestAnimationFrame(() => {
-    state.raf = 0
-    state.pending = false
-    refresh()
+  refreshWaiters.push({ state, isActive, before })
+
+  if (sharedRefreshPending) {
+    state.raf = sharedRefreshRaf
+    return
+  }
+
+  sharedRefreshPending = true
+  sharedRefreshRaf = window.requestAnimationFrame(() => {
+    sharedRefreshRaf = 0
+    sharedRefreshPending = false
+    const batch = refreshWaiters.splice(0, refreshWaiters.length)
+    let shouldRefresh = false
+    for (const waiter of batch) {
+      waiter.state.pending = false
+      waiter.state.raf = 0
+      if (!waiter.isActive()) continue
+      waiter.before?.()
+      shouldRefresh = true
+    }
+    if (shouldRefresh) ScrollTrigger.refresh()
   })
+  state.raf = sharedRefreshRaf
 }
 
 export function cancelScheduledScrollTriggerRefresh(
   state: ScrollTriggerRefreshState,
 ): void {
-  if (state.raf) {
-    window.cancelAnimationFrame(state.raf)
-    state.raf = 0
-  }
   state.pending = false
+  state.raf = 0
+  for (let i = refreshWaiters.length - 1; i >= 0; i -= 1) {
+    if (refreshWaiters[i]?.state === state) refreshWaiters.splice(i, 1)
+  }
+  if (refreshWaiters.length === 0 && sharedRefreshRaf) {
+    window.cancelAnimationFrame(sharedRefreshRaf)
+    sharedRefreshRaf = 0
+    sharedRefreshPending = false
+  }
 }

@@ -11,6 +11,6 @@ export default defineConfig({
       ['src/features/skills/lib/createSkillsSceneHandoff.test.ts', 'jsdom'],
       ['src/features/projects/lib/createProjectsScrollController.test.ts', 'jsdom'],
     ],
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'api/**/*.test.ts'],
   },
 })

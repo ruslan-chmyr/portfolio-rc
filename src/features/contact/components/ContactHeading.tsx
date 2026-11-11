@@ -12,14 +12,25 @@ export function ContactHeading() {
   useEffect(() => {
     const root = interactiveRef.current
     if (!root) return
-    const reducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches
-    const isCoarse = window.matchMedia('(pointer: coarse)').matches
+
+    const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const coarseMq = window.matchMedia('(pointer: coarse)')
     const controller = createGravityLettersFallback(root, {
-      reducedMotion: reducedMotion || isCoarse,
+      reducedMotion: motionMq.matches || coarseMq.matches,
     })
-    return () => controller.dispose()
+
+    const syncEnabled = () => {
+      controller.setEnabled(!(motionMq.matches || coarseMq.matches))
+    }
+
+    motionMq.addEventListener('change', syncEnabled)
+    coarseMq.addEventListener('change', syncEnabled)
+
+    return () => {
+      motionMq.removeEventListener('change', syncEnabled)
+      coarseMq.removeEventListener('change', syncEnabled)
+      controller.dispose()
+    }
   }, [])
 
   const interactive = CONTACT_CONFIG.headingLineTwo

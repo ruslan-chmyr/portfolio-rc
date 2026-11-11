@@ -93,6 +93,22 @@
   overflow: hidden;
 }
 
+.contact-background__fallback {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+  transition: opacity 280ms ease;
+  background:
+    radial-gradient(ellipse 55% 45% at 72% 58%, rgba(75, 111, 255, 0.34), transparent 62%),
+    radial-gradient(ellipse 40% 35% at 28% 72%, rgba(159, 232, 255, 0.18), transparent 60%),
+    radial-gradient(ellipse 30% 25% at 60% 40%, rgba(84, 217, 255, 0.12), transparent 70%),
+    transparent;
+}
+
+.contact-background[data-fabric='webgl'] .contact-background__fallback {
+  opacity: 0;
+}
+
 .contact-background__canvas {
   display: block;
   width: 100%;
@@ -101,10 +117,15 @@
    * Keep the canvas untransformed so pointer coords match the WebGL buffer.
    * Composition bias lives in the mesh/camera instead.
    */
+  opacity: 0;
+  transition: opacity 280ms ease;
+}
+
+.contact-background[data-fabric='webgl'] .contact-background__canvas {
   opacity: var(--contact-fabric-opacity);
 }
 
-[data-theme='dark'] .contact-background__canvas {
+[data-theme='dark'] .contact-background[data-fabric='webgl'] .contact-background__canvas {
   /* Stronger chroma so the fabric reads on white Contact. */
   filter: saturate(1.35) contrast(1.08);
 }
@@ -263,7 +284,6 @@
 
 .contact-heading__letter {
   display: inline-block;
-  will-change: transform;
 }
 
 .contact-heading__space {

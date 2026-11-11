@@ -110,17 +110,26 @@ Use the **Network** URL from the Vite output.
 
 Under active development.
 
-**Implemented:** interactive intro (fluid + transition + handoff) and About (typography timeline, content, ambient marks, responsive modes).
+**Implemented:** Intro, About, Skills, Projects, Experience, and Contact (form + fabric backdrop).
 
-**Planned** (listed in portfolio section chrome; not built as full sections yet):
+## Contact form deployment
 
-- Expertise & Skills
-- Projects
-- Experience
-- Learning & Growth
-- Contact
+The frontend posts to same-origin `/api/contact` by default (`VITE_CONTACT_API_URL` is an optional override only).
 
-Resume / Contact nav labels are placeholders.
+**Server env (Vercel — never use `VITE_` for secrets):**
+
+| Variable | Purpose |
+| --- | --- |
+| `RESEND_API_KEY` | Resend API key |
+| `CONTACT_FROM_EMAIL` | Verified Resend sender |
+| `CONTACT_TO_EMAIL` | Inbox for inquiries |
+| `CONTACT_RATE_LIMIT_MAX` | Optional soft per-isolate limit (default `5`) |
+| `CONTACT_RATE_LIMIT_WINDOW_MS` | Optional window (default `60000`) |
+| `CONTACT_RESEND_TIMEOUT_MS` | Optional provider timeout (default `10000`) |
+
+**Local development:** without Resend credentials the API returns `503` / unavailable. Set `VITE_CONTACT_ALLOW_MOCK=true` only for local fake success when no API URL override is set.
+
+**Abuse protection:** `api/contact.ts` includes a per-isolate soft rate limit. For production, also enable **Vercel Firewall / WAF rate limiting** on `POST /api/contact` — in-memory limits are not global across serverless instances.
 
 ## Development notes
 

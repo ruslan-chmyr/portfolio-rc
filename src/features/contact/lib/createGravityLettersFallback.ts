@@ -7,6 +7,7 @@ import gsap from 'gsap'
 
 export type GravityLettersFallback = {
   dispose: () => void
+  setEnabled: (enabled: boolean) => void
 }
 
 export function createGravityLettersFallback(
@@ -16,18 +17,29 @@ export function createGravityLettersFallback(
   const letters = Array.from(
     root.querySelectorAll<HTMLElement>('[data-gravity-letter]'),
   )
-  if (letters.length === 0 || options?.reducedMotion) {
-    return { dispose: () => undefined }
-  }
 
   let disposed = false
-  const home = letters.map((el) => {
-    gsap.set(el, { x: 0, y: 0, rotation: 0, display3D: true })
-    return el
+  let enabled = letters.length > 0 && !options?.reducedMotion
+  const home = letters
+
+  const clearTransforms = () => {
+    gsap.killTweensOf(home)
+    gsap.set(home, { x: 0, y: 0, rotation: 0, clearProps: 'transform' })
+  }
+
+  if (letters.length === 0) {
+    return {
+      dispose: () => undefined,
+      setEnabled: () => undefined,
+    }
+  }
+
+  home.forEach((el) => {
+    gsap.set(el, { x: 0, y: 0, rotation: 0, force3D: true })
   })
 
   const onMove = (event: PointerEvent) => {
-    if (disposed) return
+    if (disposed || !enabled) return
     const mx = event.clientX
     const my = event.clientY
 
@@ -63,7 +75,7 @@ export function createGravityLettersFallback(
   }
 
   const onLeave = () => {
-    if (disposed) return
+    if (disposed || !enabled) return
     home.forEach((el) => {
       gsap.to(el, {
         x: 0,
@@ -76,17 +88,38 @@ export function createGravityLettersFallback(
     })
   }
 
-  root.addEventListener('pointermove', onMove)
-  root.addEventListener('pointerleave', onLeave)
+  const bind = () => {
+    root.addEventListener('pointermove', onMove)
+    root.addEventListener('pointerleave', onLeave)
+  }
+
+  const unbind = () => {
+    root.removeEventListener('pointermove', onMove)
+    root.removeEventListener('pointerleave', onLeave)
+  }
+
+  if (enabled) bind()
 
   return {
+    setEnabled: (next) => {
+      if (disposed) return
+      if (next === enabled) return
+      enabled = next
+      if (!enabled) {
+        unbind()
+        clearTransforms()
+        return
+      }
+      home.forEach((el) => {
+        gsap.set(el, { x: 0, y: 0, rotation: 0, force3D: true })
+      })
+      bind()
+    },
     dispose: () => {
       if (disposed) return
       disposed = true
-      root.removeEventListener('pointermove', onMove)
-      root.removeEventListener('pointerleave', onLeave)
-      gsap.killTweensOf(home)
-      gsap.set(home, { clearProps: 'transform' })
+      unbind()
+      clearTransforms()
     },
   }
 }

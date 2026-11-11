@@ -28,6 +28,8 @@ import {
 export type SpectralDrapeFallback = {
   dispose: () => void
   setPaused: (paused: boolean) => void
+  setReducedMotion: (reduced: boolean) => void
+  resize: () => void
 }
 
 type FabricOptions = {
@@ -245,19 +247,35 @@ export function createSpectralDrapeFallback(
   canvas: HTMLCanvasElement,
   options?: FabricOptions,
 ): SpectralDrapeFallback {
-  const reducedMotion = Boolean(options?.reducedMotion)
+  let reducedMotion = Boolean(options?.reducedMotion)
   let disposed = false
-  let paused = reducedMotion
+  let userPaused = false
+  let paused = reducedMotion || userPaused
   let raf = 0
   let lastTs = 0
   let time = 0
+  let lastGeometryKey = ''
+  let contextLost = false
 
-  const renderer = new WebGLRenderer({
-    canvas,
-    alpha: true,
-    antialias: false,
-    powerPreference: 'high-performance',
-  })
+  let renderer: WebGLRenderer
+  try {
+    renderer = new WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: false,
+      powerPreference: 'high-performance',
+      failIfMajorPerformanceCaveat: false,
+    })
+  } catch (error) {
+    throw new Error('webgl_unavailable', { cause: error })
+  }
+
+  const gl = renderer.getContext()
+  if (!gl) {
+    renderer.dispose()
+    throw new Error('webgl_unavailable')
+  }
+
   renderer.setClearColor(0x000000, 0)
 
   const scene = new Scene()
@@ -276,32 +294,29 @@ export function createSpectralDrapeFallback(
     viewportWidth: window.innerWidth,
   })
 
-  const rebuild = () => {
-    const rect = canvas.getBoundingClientRect()
-    const width = Math.max(1, Math.floor(rect.width))
-    const height = Math.max(1, Math.floor(rect.height))
+  const disposeMesh = () => {
+    if (points) scene.remove(points)
+    geometry?.dispose()
+    material?.dispose()
+    points = null
+    geometry = null
+    material = null
+  }
+
+  const rebuildGeometry = (width: number, height: number, dpr: number) => {
     profile = selectSpectralDrapeProfile({
       width,
       height,
       prefersReducedMotion: reducedMotion,
       viewportWidth: window.innerWidth,
     })
-
-    const dpr = Math.min(window.devicePixelRatio || 1, profile.maxDpr)
-    renderer.setPixelRatio(dpr)
-    renderer.setSize(width, height, false)
-    camera.aspect = width / height
-    camera.updateProjectionMatrix()
-
-    if (points) {
-      scene.remove(points)
-      geometry?.dispose()
-      material?.dispose()
-      points = null
-      geometry = null
-      material = null
+    const key = `${profile.cols}x${profile.rows}@${dpr.toFixed(2)}:${profile.interactive ? 1 : 0}`
+    if (key === lastGeometryKey && points && material && geometry) {
+      material.uniforms.uPixelRatio!.value = dpr
+      return
     }
-
+    lastGeometryKey = key
+    disposeMesh()
     geometry = buildGeometry(profile.cols, profile.rows)
     material = createMaterial(profile, dpr)
     points = new Points(geometry, material)
@@ -312,28 +327,44 @@ export function createSpectralDrapeFallback(
     )
     points.frustumCulled = false
     scene.add(points)
+  }
 
-    // Seed a static frame for reduced-motion / first paint.
-    material.uniforms.uTime!.value = reducedMotion ? 1.8 : time
-    renderer.render(scene, camera)
+  const resize = () => {
+    if (disposed || contextLost) return
+    const rect = canvas.getBoundingClientRect()
+    const width = Math.max(1, Math.floor(rect.width))
+    const height = Math.max(1, Math.floor(rect.height))
+    profile = selectSpectralDrapeProfile({
+      width,
+      height,
+      prefersReducedMotion: reducedMotion,
+      viewportWidth: window.innerWidth,
+    })
+    const dpr = Math.min(window.devicePixelRatio || 1, profile.maxDpr)
+    renderer.setPixelRatio(dpr)
+    renderer.setSize(width, height, false)
+    camera.aspect = width / height
+    camera.updateProjectionMatrix()
+    rebuildGeometry(width, height, dpr)
+    if (material) {
+      material.uniforms.uTime!.value = reducedMotion ? 1.8 : time
+      renderer.render(scene, camera)
+    }
   }
 
   let fallbackPointer = { x: 0.72, y: 0.32 }
 
   const applyPointerClient = (clientX: number, clientY: number) => {
-    if (!material) return
+    if (!material || contextLost) return
     const rect = canvas.getBoundingClientRect()
     if (rect.width <= 0 || rect.height <= 0) return
-    const x = (clientX - rect.left) / rect.width
-    const y = (clientY - rect.top) / rect.height
-    material.uniforms.uPointer!.value.x = x
-    material.uniforms.uPointer!.value.y = y
+    material.uniforms.uPointer!.value.x = (clientX - rect.left) / rect.width
+    material.uniforms.uPointer!.value.y = (clientY - rect.top) / rect.height
   }
 
   const onPointer = (event: PointerEvent) => {
-    if (disposed || !profile.interactive) return
+    if (disposed || !profile.interactive || contextLost) return
     fallbackPointer = { x: event.clientX, y: event.clientY }
-    // Prefer the lagging ring when available; otherwise use the raw tip.
     const ring = readTrailingCursorRing()
     if (!ring.active) {
       applyPointerClient(event.clientX, event.clientY)
@@ -341,18 +372,15 @@ export function createSpectralDrapeFallback(
   }
 
   const syncBrushPointer = () => {
-    if (!profile.interactive || !material) return
+    if (!profile.interactive || !material || contextLost) return
     const ring = readTrailingCursorRing()
-    if (ring.active) {
-      applyPointerClient(ring.x, ring.y)
-    } else {
-      applyPointerClient(fallbackPointer.x, fallbackPointer.y)
-    }
+    if (ring.active) applyPointerClient(ring.x, ring.y)
+    else applyPointerClient(fallbackPointer.x, fallbackPointer.y)
   }
 
   const tick = (ts: number) => {
     if (disposed) return
-    if (!paused && material) {
+    if (!paused && material && !contextLost) {
       const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016
       lastTs = ts
       time += dt
@@ -366,45 +394,83 @@ export function createSpectralDrapeFallback(
   }
 
   const start = () => {
-    if (disposed || paused) return
+    if (disposed || paused || contextLost) return
     cancelAnimationFrame(raf)
     lastTs = 0
     raf = window.requestAnimationFrame(tick)
   }
 
-  rebuild()
-  window.addEventListener('resize', rebuild)
+  const stopLoop = () => {
+    cancelAnimationFrame(raf)
+    raf = 0
+    lastTs = 0
+  }
+
+  const renderStatic = () => {
+    if (!material || contextLost || disposed) return
+    material.uniforms.uTime!.value = reducedMotion ? 1.8 : time
+    renderer.render(scene, camera)
+  }
+
+  const syncPaused = () => {
+    paused = userPaused || reducedMotion || contextLost
+    if (paused) {
+      stopLoop()
+      renderStatic()
+    } else {
+      start()
+    }
+  }
+
+  const onContextLost = (event: Event) => {
+    event.preventDefault()
+    contextLost = true
+    stopLoop()
+  }
+
+  const onContextRestored = () => {
+    if (disposed) return
+    contextLost = false
+    lastGeometryKey = ''
+    resize()
+    syncPaused()
+  }
+
+  resize()
   window.addEventListener('pointermove', onPointer, { passive: true })
+  canvas.addEventListener('webglcontextlost', onContextLost, false)
+  canvas.addEventListener('webglcontextrestored', onContextRestored, false)
   if (!paused) start()
 
   return {
     setPaused: (next) => {
       if (disposed) return
-      if (next === paused) return
-      paused = next || reducedMotion
-      if (paused) {
-        cancelAnimationFrame(raf)
-        lastTs = 0
-        if (material) {
-          material.uniforms.uTime!.value = time
-          renderer.render(scene, camera)
-        }
-      } else {
-        start()
+      userPaused = next
+      syncPaused()
+    },
+    setReducedMotion: (next) => {
+      if (disposed) return
+      if (next === reducedMotion) {
+        syncPaused()
+        return
       }
+      reducedMotion = next
+      lastGeometryKey = ''
+      resize()
+      syncPaused()
+    },
+    resize: () => {
+      resize()
     },
     dispose: () => {
       if (disposed) return
       disposed = true
-      cancelAnimationFrame(raf)
-      window.removeEventListener('resize', rebuild)
+      stopLoop()
       window.removeEventListener('pointermove', onPointer)
-      if (points) scene.remove(points)
-      geometry?.dispose()
-      material?.dispose()
+      canvas.removeEventListener('webglcontextlost', onContextLost)
+      canvas.removeEventListener('webglcontextrestored', onContextRestored)
+      disposeMesh()
       renderer.dispose()
-      // Release GL context when the browser supports it.
-      const gl = renderer.getContext()
       const lose = (
         gl as WebGLRenderingContext & {
           getExtension?: (name: string) => { loseContext?: () => void } | null

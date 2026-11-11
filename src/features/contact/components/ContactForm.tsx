@@ -1,14 +1,11 @@
-import { useId, useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import {
   hasContactErrors,
   validateContactForm,
   type ContactFieldErrors,
   type ContactFormValues,
 } from '../lib/contactValidation'
-import {
-  resolveContactSubmitMode,
-  submitContactMessage,
-} from '../lib/submitContactMessage'
+import { submitContactMessage } from '../lib/submitContactMessage'
 import { CONTACT_CONFIG, CONTACT_FIELD_LIMITS } from '../model/contactConfig'
 
 function SendIcon() {
@@ -37,9 +34,17 @@ export function ContactForm() {
   const formId = useId()
   const [values, setValues] = useState<ContactFormValues>(INITIAL)
   const [errors, setErrors] = useState<ContactFieldErrors>({})
-  const [status, setStatus] = useState<FormStatus>(() =>
-    resolveContactSubmitMode() === 'unavailable' ? 'unavailable' : 'idle',
-  )
+  const [status, setStatus] = useState<FormStatus>('idle')
+  const abortRef = useRef<AbortController | null>(null)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      abortRef.current?.abort()
+    }
+  }, [])
 
   const disabled = status === 'sending' || status === 'unavailable'
 
@@ -54,8 +59,14 @@ export function ContactForm() {
       return
     }
 
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     setStatus('sending')
-    const result = await submitContactMessage(values)
+    const result = await submitContactMessage(values, { signal: controller.signal })
+    if (!mountedRef.current || controller.signal.aborted) return
+
     if (result.ok) {
       setValues(INITIAL)
       setErrors({})
@@ -74,6 +85,7 @@ export function ContactForm() {
       return
     }
 
+    // Keep field values on failure so the visitor can retry.
     setStatus('error')
   }
 

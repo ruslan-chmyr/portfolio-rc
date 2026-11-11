@@ -1,5 +1,16 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
+const { refresh } = vi.hoisted(() => ({
+  refresh: vi.fn(),
+}))
+
+vi.mock('gsap/ScrollTrigger', () => ({
+  ScrollTrigger: {
+    refresh,
+  },
+}))
+
 import {
   PROJECTS_SCENE_DATASET_KEY,
   cancelScheduledScrollTriggerRefresh,
@@ -14,6 +25,7 @@ describe('portfolioScene coordination', () => {
     delete document.documentElement.dataset[PROJECTS_SCENE_DATASET_KEY]
     document.body.innerHTML = ''
     vi.unstubAllGlobals()
+    refresh.mockClear()
   })
 
   it('tracks projects scene active on the document root', () => {
@@ -34,7 +46,7 @@ describe('portfolioScene coordination', () => {
     expect(isSkillsEntranceDone(skills)).toBe(true)
   })
 
-  it('coalesces refresh scheduling into one animation frame', () => {
+  it('coalesces refreshes from multiple controllers into one ScrollTrigger.refresh', () => {
     const frames: FrameRequestCallback[] = []
     vi.stubGlobal(
       'requestAnimationFrame',
@@ -45,17 +57,36 @@ describe('portfolioScene coordination', () => {
     )
     vi.stubGlobal('cancelAnimationFrame', vi.fn())
 
-    const refresh = vi.fn()
-    const state = { raf: 0, pending: false }
-    scheduleScrollTriggerRefresh(refresh, state)
-    scheduleScrollTriggerRefresh(refresh, state)
-    expect(frames).toHaveLength(1)
-    frames[0]?.(0)
-    expect(refresh).toHaveBeenCalledTimes(1)
-    expect(state.pending).toBe(false)
+    const beforeA = vi.fn()
+    const beforeB = vi.fn()
+    const stateA = { raf: 0, pending: false }
+    const stateB = { raf: 0, pending: false }
 
-    scheduleScrollTriggerRefresh(refresh, state)
-    expect(frames).toHaveLength(2)
+    scheduleScrollTriggerRefresh(stateA, () => true, beforeA)
+    scheduleScrollTriggerRefresh(stateB, () => true, beforeB)
+    expect(frames).toHaveLength(1)
+
+    frames[0]?.(0)
+    expect(beforeA).toHaveBeenCalledTimes(1)
+    expect(beforeB).toHaveBeenCalledTimes(1)
+    expect(refresh).toHaveBeenCalledTimes(1)
+    expect(stateA.pending).toBe(false)
+    expect(stateB.pending).toBe(false)
+  })
+
+  it('can cancel a pending owner before the shared frame runs', () => {
+    const frames: FrameRequestCallback[] = []
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((cb: FrameRequestCallback) => {
+        frames.push(cb)
+        return frames.length
+      }),
+    )
+    vi.stubGlobal('cancelAnimationFrame', vi.fn())
+
+    const state = { raf: 0, pending: false }
+    scheduleScrollTriggerRefresh(state, () => true)
     cancelScheduledScrollTriggerRefresh(state)
     expect(state.raf).toBe(0)
     expect(state.pending).toBe(false)

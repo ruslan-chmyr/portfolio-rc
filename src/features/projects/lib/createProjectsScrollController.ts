@@ -251,15 +251,15 @@ export function createProjectsScrollController(
     )
   }, section)
 
-  const runRefresh = () => {
-    if (disposed) return
-    syncPinViewportHeight()
-    ScrollTrigger.refresh()
-  }
-
   const requestRefresh = () => {
     if (disposed) return
-    scheduleScrollTriggerRefresh(runRefresh, refreshState)
+    scheduleScrollTriggerRefresh(
+      refreshState,
+      () => !disposed,
+      () => {
+        syncPinViewportHeight()
+      },
+    )
   }
 
   window.addEventListener('resize', requestRefresh)

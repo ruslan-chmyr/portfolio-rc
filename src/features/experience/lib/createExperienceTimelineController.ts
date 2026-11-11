@@ -4,7 +4,10 @@ import {
   PORTFOLIO_SCROLL_HANDOFF_EVENT,
   PORTFOLIO_SCROLL_REENGAGE_EVENT,
 } from '../../intro/lib/createIntroScrollHandoff'
-import { scheduleScrollTriggerRefresh } from '../../../shared/scene/portfolioScene'
+import {
+  cancelScheduledScrollTriggerRefresh,
+  scheduleScrollTriggerRefresh,
+} from '../../../shared/scene/portfolioScene'
 import {
   EXPERIENCE_TIMELINE,
   activeMilestoneIndex,
@@ -87,7 +90,6 @@ export function createExperienceTimelineController(
   let disposed = false
   const thresholds: number[] = []
   let lastActive = -2
-  let ctaWasActive = false
   const refreshState = { raf: 0, pending: false }
   const careerCount = cards.length
   const desktopQuery = `(min-width: ${EXPERIENCE_TIMELINE.mobileMaxWidthPx + 1}px)`
@@ -129,14 +131,7 @@ export function createExperienceTimelineController(
     cta.classList.toggle('is-active', active)
     if (active) cta.removeAttribute('inert')
     else cta.setAttribute('inert', '')
-
-    if (active !== ctaWasActive) {
-      ctaWasActive = active
-      // Pin end depends on sticky height — refresh when CTA expands/collapses.
-      scheduleScrollTriggerRefresh(() => {
-        if (!disposed) ScrollTrigger.refresh()
-      }, refreshState)
-    }
+    // Geometry is reserved in CSS — no ScrollTrigger refresh on reveal.
   }
 
   const syncActive = (animatedProgress: number) => {
@@ -163,8 +158,6 @@ export function createExperienceTimelineController(
 
   // Start inert until the endpoint illuminates.
   setCtaActive(false)
-  // Avoid a refresh storm from the initial inert/collapse.
-  ctaWasActive = false
 
   const ctx = gsap.context(() => {
     gsap.set(progress, { scaleY: 0, transformOrigin: 'top center' })
@@ -220,15 +213,15 @@ export function createExperienceTimelineController(
     })
   }, section)
 
-  const runRefresh = () => {
-    if (disposed) return
-    measureThresholds()
-    ScrollTrigger.refresh()
-  }
-
   const requestRefresh = () => {
     if (disposed) return
-    scheduleScrollTriggerRefresh(runRefresh, refreshState)
+    scheduleScrollTriggerRefresh(
+      refreshState,
+      () => !disposed,
+      () => {
+        measureThresholds()
+      },
+    )
   }
 
   window.addEventListener('resize', requestRefresh)
@@ -240,11 +233,7 @@ export function createExperienceTimelineController(
     dispose: () => {
       if (disposed) return
       disposed = true
-      if (refreshState.raf) {
-        window.cancelAnimationFrame(refreshState.raf)
-        refreshState.raf = 0
-        refreshState.pending = false
-      }
+      cancelScheduledScrollTriggerRefresh(refreshState)
       window.removeEventListener('resize', requestRefresh)
       window.removeEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, requestRefresh)
       window.removeEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, requestRefresh)

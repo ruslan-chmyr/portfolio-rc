@@ -173,4 +173,22 @@ describe('createSpectralDrapeFallback', () => {
     )
     controller.dispose()
   })
+
+  it('reacts to reduced-motion changes without requiring remount', () => {
+    const canvas = document.createElement('canvas')
+    const controller = createSpectralDrapeFallback(canvas, {
+      reducedMotion: false,
+    })
+    const framesBefore = vi.mocked(requestAnimationFrame).mock.calls.length
+    controller.setReducedMotion(true)
+    controller.setPaused(false)
+    expect(vi.mocked(requestAnimationFrame).mock.calls.length).toBe(
+      framesBefore,
+    )
+    controller.setReducedMotion(false)
+    expect(vi.mocked(requestAnimationFrame).mock.calls.length).toBeGreaterThan(
+      framesBefore,
+    )
+    controller.dispose()
+  })
 })

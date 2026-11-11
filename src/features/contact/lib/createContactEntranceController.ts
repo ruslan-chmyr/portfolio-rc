@@ -4,7 +4,10 @@ import {
   PORTFOLIO_SCROLL_HANDOFF_EVENT,
   PORTFOLIO_SCROLL_REENGAGE_EVENT,
 } from '../../intro/lib/createIntroScrollHandoff'
-import { scheduleScrollTriggerRefresh } from '../../../shared/scene/portfolioScene'
+import {
+  cancelScheduledScrollTriggerRefresh,
+  scheduleScrollTriggerRefresh,
+} from '../../../shared/scene/portfolioScene'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -60,14 +63,9 @@ export function createContactEntranceController(
       .to(footer, { autoAlpha: 1, y: 0, duration: 0.5 }, 0.32)
   }, section)
 
-  const runRefresh = () => {
-    if (disposed) return
-    ScrollTrigger.refresh()
-  }
-
   const requestRefresh = () => {
     if (disposed) return
-    scheduleScrollTriggerRefresh(runRefresh, refreshState)
+    scheduleScrollTriggerRefresh(refreshState, () => !disposed)
   }
 
   window.addEventListener('resize', requestRefresh)
@@ -79,11 +77,7 @@ export function createContactEntranceController(
     dispose: () => {
       if (disposed) return
       disposed = true
-      if (refreshState.raf) {
-        window.cancelAnimationFrame(refreshState.raf)
-        refreshState.raf = 0
-        refreshState.pending = false
-      }
+      cancelScheduledScrollTriggerRefresh(refreshState)
       window.removeEventListener('resize', requestRefresh)
       window.removeEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, requestRefresh)
       window.removeEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, requestRefresh)
