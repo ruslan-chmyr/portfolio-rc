@@ -34,6 +34,23 @@ export const PROJECTS_SCROLL = {
   pinBackdropAt: 0.62,
   pinBackdropDuration: 0.38,
   settleHoldDuration: 0.2,
+  /**
+   * After Projects settles, scrub the blue scene out left + up so Experience
+   * can continue as a normal document-flow page.
+   */
+  exitViewportFactor: 0.95,
+  minExitPx: 640,
+  exitDuration: 1,
+  exitXPercent: -72,
+  exitYPercent: -118,
+  /**
+   * Reveal Experience immediately as the panel leaves — pin fades with the
+   * flight so there is no empty gap before the next page.
+   */
+  exitFadeAt: 0,
+  exitFadeDuration: 0.9,
+  /** Soft rise for Experience while it is uncovered. */
+  experienceRevealY: 72,
 } as const
 
 /** Fired when Skills entrance reaches `done` — Projects refreshes its start gate. */
@@ -49,10 +66,36 @@ export function selectProjectsPresentationMode(input: {
   return 'scroll'
 }
 
+/** Entrance scrub only (Skills wipe → settled Projects). */
 export function projectsScrubDistancePx(viewportHeight: number): number {
   return Math.max(
     PROJECTS_SCROLL.minScrubPx,
     viewportHeight * PROJECTS_SCROLL.scrubViewportFactor,
+  )
+}
+
+/** Exit scrub (Projects leaves → Experience owns normal scroll). */
+export function projectsExitDistancePx(viewportHeight: number): number {
+  return Math.max(
+    PROJECTS_SCROLL.minExitPx,
+    viewportHeight * PROJECTS_SCROLL.exitViewportFactor,
+  )
+}
+
+/** Full Projects pin distance: entrance + exit. */
+export function projectsTotalPinDistancePx(viewportHeight: number): number {
+  return projectsScrubDistancePx(viewportHeight) + projectsExitDistancePx(viewportHeight)
+}
+
+/** Timeline time where entrance settle ends and the exit flight begins. */
+export function projectsExitStartsAt(): number {
+  return (
+    Math.max(
+      PROJECTS_SCROLL.panelSlideDuration,
+      PROJECTS_SCROLL.highlightsFadeAt + PROJECTS_SCROLL.highlightsFadeDuration,
+      PROJECTS_SCROLL.skillsFadeAt + PROJECTS_SCROLL.skillsFadeDuration,
+      PROJECTS_SCROLL.pinBackdropAt + PROJECTS_SCROLL.pinBackdropDuration,
+    ) + PROJECTS_SCROLL.settleHoldDuration
   )
 }
 

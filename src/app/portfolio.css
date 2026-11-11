@@ -40,8 +40,14 @@ html.portfolio-native-scroll .about-section .pin-spacer {
 /*
  * Projects pin sits over Skills during the wipe. Keep the spacer transparent
  * so Skills stays visible in the uncovered gutters — navy arrives only via
- * the scrubbed pin backdrop later in the timeline.
+ * the scrubbed pin backdrop later in the timeline. Near the end of the pin
+ * distance, blend toward the portfolio surface so Experience does not flash.
  */
 html.portfolio-native-scroll .projects-section .pin-spacer {
-  background: transparent;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 62%,
+    var(--color-portfolio-background) 100%
+  );
 }

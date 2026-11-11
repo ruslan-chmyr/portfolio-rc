@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   PROJECTS_SCROLL,
   isSkillsEntranceDone,
+  projectsExitDistancePx,
+  projectsExitStartsAt,
   projectsScrubDistancePx,
+  projectsTotalPinDistancePx,
   resolveProjectsTriggerStart,
   selectProjectsPresentationMode,
 } from './projectsScrollConfig'
@@ -40,6 +43,24 @@ describe('projectsScrubDistancePx', () => {
 
   it('scales with tall viewports', () => {
     expect(projectsScrubDistancePx(1200)).toBe(1200 * PROJECTS_SCROLL.scrubViewportFactor)
+  })
+})
+
+describe('projects exit distance', () => {
+  it('adds an exit flight after the entrance scrub', () => {
+    expect(projectsExitDistancePx(400)).toBe(PROJECTS_SCROLL.minExitPx)
+    expect(projectsExitDistancePx(1200)).toBe(1200 * PROJECTS_SCROLL.exitViewportFactor)
+    expect(projectsTotalPinDistancePx(1200)).toBe(
+      projectsScrubDistancePx(1200) + projectsExitDistancePx(1200),
+    )
+    expect(projectsExitStartsAt()).toBeGreaterThan(PROJECTS_SCROLL.panelSlideDuration)
+  })
+})
+
+describe('projects pin-spacer late handoff', () => {
+  it('keeps exit tokens oriented left and up', () => {
+    expect(PROJECTS_SCROLL.exitXPercent).toBeLessThan(0)
+    expect(PROJECTS_SCROLL.exitYPercent).toBeLessThan(0)
   })
 })
 

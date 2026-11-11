@@ -7,7 +7,8 @@ import {
 import {
   PROJECTS_SCROLL,
   SKILLS_ENTRANCE_DONE_EVENT,
-  projectsScrubDistancePx,
+  projectsExitStartsAt,
+  projectsTotalPinDistancePx,
   resolveProjectsTriggerStart,
 } from './projectsScrollConfig'
 
@@ -48,6 +49,7 @@ export function createProjectsScrollController(
   setProjectsSceneActive(section, false)
 
   const skills = document.getElementById('expertise')
+  const experience = document.getElementById('experience')
   const skillsKeyboard = skills?.querySelector<HTMLElement>(
     '.skills-section__keyboard-panel',
   )
@@ -86,9 +88,9 @@ export function createProjectsScrollController(
         trigger: skills,
         start: 'top top',
         end: () => {
-          const scrub = projectsScrubDistancePx(window.innerHeight)
-          // Cover the Projects start offset + full scrub + brief settle.
-          return `+=${scrub + window.innerHeight * 0.2}`
+          const total = projectsTotalPinDistancePx(window.innerHeight)
+          // Cover the Projects start offset + entrance/exit scrub + brief settle.
+          return `+=${total + window.innerHeight * 0.25}`
         },
         pin: true,
         pinSpacing: false,
@@ -102,7 +104,7 @@ export function createProjectsScrollController(
       scrollTrigger: {
         trigger: section,
         start: () => resolveProjectsTriggerStart(skills),
-        end: () => `+=${projectsScrubDistancePx(window.innerHeight)}`,
+        end: () => `+=${projectsTotalPinDistancePx(window.innerHeight)}`,
         pin,
         scrub: PROJECTS_SCROLL.scrub,
         anticipatePin: 1,
@@ -125,9 +127,10 @@ export function createProjectsScrollController(
     // 1) Blue panel wipes in over the pinned Skills scene.
     timeline.fromTo(
       panel,
-      { xPercent: 100 },
+      { xPercent: 100, yPercent: 0 },
       {
         xPercent: 0,
+        yPercent: 0,
         duration: PROJECTS_SCROLL.panelSlideDuration,
         force3D: true,
         immediateRender: false,
@@ -166,25 +169,64 @@ export function createProjectsScrollController(
     // 4) Navy pin backdrop arrives later so early gutters still show Skills.
     timeline.fromTo(
       pin,
-      { backgroundColor: 'transparent' },
+      { backgroundColor: 'transparent', autoAlpha: 1 },
       {
         backgroundColor: PROJECTS_SCROLL.sceneBackdrop,
+        autoAlpha: 1,
         duration: PROJECTS_SCROLL.pinBackdropDuration,
         immediateRender: false,
       },
       PROJECTS_SCROLL.pinBackdropAt,
     )
 
+    const exitAt = projectsExitStartsAt()
+
     timeline.to(
       {},
       { duration: PROJECTS_SCROLL.settleHoldDuration },
-      Math.max(
-        PROJECTS_SCROLL.panelSlideDuration,
-        PROJECTS_SCROLL.highlightsFadeAt + PROJECTS_SCROLL.highlightsFadeDuration,
-        PROJECTS_SCROLL.skillsFadeAt + PROJECTS_SCROLL.skillsFadeDuration,
-        PROJECTS_SCROLL.pinBackdropAt + PROJECTS_SCROLL.pinBackdropDuration,
-      ),
+      exitAt - PROJECTS_SCROLL.settleHoldDuration,
     )
+
+    // 5) Projects leaves left + up while Experience is already underneath.
+    timeline.to(
+      panel,
+      {
+        xPercent: PROJECTS_SCROLL.exitXPercent,
+        yPercent: PROJECTS_SCROLL.exitYPercent,
+        duration: PROJECTS_SCROLL.exitDuration,
+        force3D: true,
+        immediateRender: false,
+      },
+      exitAt,
+    )
+
+    timeline.to(
+      pin,
+      {
+        autoAlpha: 0,
+        duration: PROJECTS_SCROLL.exitFadeDuration,
+        immediateRender: false,
+      },
+      exitAt + PROJECTS_SCROLL.exitFadeAt,
+    )
+
+    if (experience) {
+      gsap.set(experience, { y: 0, force3D: true })
+      timeline.fromTo(
+        experience,
+        {
+          y: PROJECTS_SCROLL.experienceRevealY,
+          force3D: true,
+        },
+        {
+          y: 0,
+          duration: PROJECTS_SCROLL.exitDuration,
+          force3D: true,
+          immediateRender: false,
+        },
+        exitAt,
+      )
+    }
   }, section)
 
   const refresh = () => {
@@ -216,6 +258,9 @@ export function createProjectsScrollController(
       pin.style.minHeight = ''
       if (skillsFadeTargets.length > 0) {
         gsap.set(skillsFadeTargets, { clearProps: 'opacity,visibility' })
+      }
+      if (experience) {
+        gsap.set(experience, { clearProps: 'transform' })
       }
       setProjectsSceneActive(section, false)
       ctx.revert()
