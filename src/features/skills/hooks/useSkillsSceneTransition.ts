@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react'
+import { isProjectsSceneActive } from '../../projects/lib/createProjectsScrollController'
 import { isStoryFocusBusy, type StoryFocusPhase } from '../lib/storyFocusTransition'
 import { createSkillsEntranceController } from '../lib/createSkillsEntranceController'
 import { createSkillsSceneHandoff } from '../lib/createSkillsSceneHandoff'
@@ -77,7 +78,8 @@ export function useSkillsSceneTransition(
         enabled: true,
         isBlocked: () =>
           isStoryFocusBusy(storyPhaseRef.current) ||
-          section.getAttribute('data-skills-mode') === 'story-focus',
+          section.getAttribute('data-skills-mode') === 'story-focus' ||
+          isProjectsSceneActive(),
         onAligned: () => {
           entranceRef.current?.playFromAlignment()
         },

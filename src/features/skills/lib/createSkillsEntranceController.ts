@@ -1,4 +1,5 @@
 import gsap from 'gsap'
+import { SKILLS_ENTRANCE_DONE_EVENT } from '../../projects/lib/projectsScrollConfig'
 import { SKILLS_ENTRANCE } from './skillsEntranceConfig'
 import { decideSkillsEntrance } from './skillsSceneHandoffPolicy'
 
@@ -40,6 +41,9 @@ export function createSkillsEntranceController(
 
   const setEntranceState = (state: 'pending' | 'playing' | 'done') => {
     section.dataset.skillsEntrance = state
+    if (state === 'done' && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(SKILLS_ENTRANCE_DONE_EVENT))
+    }
   }
 
   const showInstant = () => {

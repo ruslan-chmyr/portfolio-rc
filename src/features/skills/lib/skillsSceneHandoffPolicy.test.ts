@@ -88,6 +88,16 @@ describe('shouldBeginAboutAlign', () => {
       }),
     ).toBe(false)
   })
+
+  it('requires settled Skills before About — passed must re-land on Skills first', () => {
+    expect(
+      shouldBeginAboutAlign({
+        ...base,
+        phase: 'passed',
+        skillsTop: 0,
+      }),
+    ).toBe(false)
+  })
 })
 
 describe('resolvePhaseAfterAlignInterrupt', () => {

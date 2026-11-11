@@ -14,6 +14,15 @@
   --color-border: var(--color-portfolio-border);
 }
 
+/*
+ * Shared sticky containing block for Skills → Projects wipe.
+ * Skills sticks inside this stack while Projects covers it.
+ */
+.skills-projects-stack {
+  position: relative;
+  isolation: isolate;
+}
+
 html.portfolio-native-scroll .pin-spacer {
   background: var(--color-portfolio-background);
 }
@@ -26,4 +35,13 @@ html.portfolio-native-scroll .about-section .pin-spacer {
     var(--color-portfolio-background) 72%,
     #05070f 100%
   );
+}
+
+/*
+ * Projects pin sits over Skills during the wipe. Keep the spacer transparent
+ * so Skills stays visible in the uncovered gutters — navy arrives only via
+ * the scrubbed pin backdrop later in the timeline.
+ */
+html.portfolio-native-scroll .projects-section .pin-spacer {
+  background: transparent;
 }

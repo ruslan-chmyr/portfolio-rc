@@ -32,6 +32,11 @@ export const SKILLS_HANDOFF = {
    * that would immediately re-trigger the opposite snap.
    */
   postAlignCooldownMs: 220,
+  /**
+   * After returning from Projects / deeper Skills into settled, ignore residual
+   * upward momentum so About does not steal the same reverse gesture.
+   */
+  postProjectsSettleCooldownMs: 480,
   /** Deep past Skills — later sections own scroll; do not yank back to About. */
   aboutAlignMinTopFactor: -0.18,
 } as const
@@ -90,21 +95,25 @@ export type AboutAlignDecisionInput = {
 }
 
 /**
- * One-gesture reverse: any upward intent from the Skills scene snaps back to the
- * settled About frame (theme surface), not an intermediate dark band.
+ * One-gesture reverse: any upward intent from the settled Skills scene snaps
+ * back to the settled About frame (theme surface), not an intermediate dark band.
+ *
+ * Phase `passed` (later sections / Projects wipe) must re-settle on Skills first —
+ * About must not steal the reverse while Skills is still pinned under the cover.
  */
 export function shouldBeginAboutAlign(input: AboutAlignDecisionInput): boolean {
   if (!input.enabled || input.reducedMotion || input.isMobile || input.blocked) {
     return false
   }
   if (input.direction !== -1) return false
-  if (input.phase !== 'settled' && input.phase !== 'passed') return false
+  if (input.phase !== 'settled') return false
   if (input.aboutReturnScrollY == null) return false
   // Already at/above the return frame.
   if (input.currentScrollY <= input.aboutReturnScrollY + SKILLS_HANDOFF.settleTolerancePx) {
     return false
   }
-  // Still in the Skills scene (top near viewport). Ignore deep later sections.
+  // Still in the Skills scene (top near viewport). Ignore deep later sections
+  // (e.g. Projects scrub) so their reverse scroll is not stolen by About.
   const maxTop = input.viewportHeight * 0.55
   const minTop = input.viewportHeight * SKILLS_HANDOFF.aboutAlignMinTopFactor
   return input.skillsTop < maxTop && input.skillsTop > minTop
