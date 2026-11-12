@@ -15,7 +15,7 @@
   --experience-progress: #54d9ff;
   --experience-org: #6eb0ff;
   --experience-tag-bg: #16233a;
-  --experience-gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --experience-gutter: var(--portfolio-gutter-wide, clamp(1.15rem, 3.5vw, 2.75rem));
   --experience-max: 84rem;
   --experience-node: 0.85rem;
   /*
@@ -85,9 +85,9 @@
 .experience-section__label {
   margin: 0 0 0.85rem;
   font-family: var(--experience-font);
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.18em;
+  font-size: var(--type-label-size, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
   text-transform: uppercase;
   color: var(--experience-muted);
 }
@@ -295,8 +295,8 @@
 .experience-card__period {
   margin: 0;
   font-family: var(--experience-font);
-  font-size: 0.72rem;
-  font-weight: 650;
+  font-size: var(--type-label-size, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--experience-muted);
@@ -338,10 +338,10 @@
 
 .experience-card__tag {
   margin: 0;
-  padding: 0.28rem 0.55rem;
+  padding: 0.32rem 0.6rem;
   border-radius: 999px;
   font-family: var(--experience-font);
-  font-size: 0.68rem;
+  font-size: var(--type-meta-size, 0.68rem);
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--experience-muted);
@@ -397,6 +397,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
+  min-height: var(--control-min-size, 2.75rem);
   padding: 0.72rem 1.15rem;
   border-radius: 999px;
   box-sizing: border-box;

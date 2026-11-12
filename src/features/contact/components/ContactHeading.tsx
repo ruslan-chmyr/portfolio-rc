@@ -36,14 +36,21 @@ export function ContactHeading() {
   const interactive = CONTACT_CONFIG.headingLineTwo
 
   return (
-    <h2 id="contact-heading" className="contact-heading">
-      <span className="contact-heading__line">{CONTACT_CONFIG.headingLineOne}</span>
-      <span className="contact-heading__line contact-heading__line--interactive">
-        <span className="visually-hidden">{interactive}</span>
+    <h2
+      id="contact-heading"
+      className="contact-heading"
+      aria-label={`${CONTACT_CONFIG.headingLineOne} ${interactive}`}
+    >
+      <span className="contact-heading__line" aria-hidden="true">
+        {CONTACT_CONFIG.headingLineOne}
+      </span>
+      <span
+        className="contact-heading__line contact-heading__line--interactive"
+        aria-hidden="true"
+      >
         <span
           ref={interactiveRef}
           className="contact-heading__gravity"
-          aria-hidden="true"
         >
           {Array.from(interactive).map((char, index) => (
             <span

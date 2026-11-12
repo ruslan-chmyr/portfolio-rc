@@ -12,6 +12,7 @@
   --color-text-strong: var(--color-portfolio-text-strong);
   --color-text-hover: var(--color-portfolio-text-hover);
   --color-border: var(--color-portfolio-border);
+  --about-gutter: var(--portfolio-gutter);
 }
 
 /*

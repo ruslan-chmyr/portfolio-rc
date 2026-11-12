@@ -122,9 +122,9 @@
 
 .about-content__expertise--secondary {
   margin-top: clamp(0.65rem, 1.2vh, 0.9rem);
-  font-size: clamp(0.63rem, 0.31vw + 0.52rem, 0.74rem);
-  font-weight: 500;
-  letter-spacing: 0.14em;
+  font-size: clamp(0.68rem, 0.28vw + 0.58rem, 0.78rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-muted);
   max-width: none;
@@ -173,8 +173,8 @@
   }
 
   .about-content__expertise--secondary {
-    font-size: clamp(0.58rem, 0.25vw + 0.49rem, 0.7rem);
-    letter-spacing: 0.12em;
+    font-size: clamp(0.64rem, 0.24vw + 0.54rem, 0.74rem);
+    letter-spacing: 0.11em;
   }
 }
 
@@ -285,8 +285,8 @@
 
   .about-content__expertise--secondary {
     margin-top: 0.7rem;
-    font-size: clamp(0.56rem, 0.2vw + 0.48rem, 0.66rem);
-    letter-spacing: 0.11em;
+    font-size: clamp(0.68rem, 0.2vw + 0.58rem, 0.74rem);
+    letter-spacing: 0.1em;
     text-align: left;
     white-space: normal;
   }

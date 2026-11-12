@@ -20,7 +20,7 @@
   --contact-fabric-opacity: 1;
   /* Short bleed — fabric mass sits low in Contact, not up into Experience. */
   --contact-fabric-bleed: clamp(2rem, 7vh, 4.75rem);
-  --contact-gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --contact-gutter: var(--portfolio-gutter-wide, clamp(1.15rem, 3.5vw, 2.75rem));
   --contact-max: 84rem;
 
   position: relative;
@@ -34,7 +34,7 @@
   padding:
     clamp(4.5rem, 11vh, 7.5rem)
     var(--contact-gutter)
-    25px;
+    max(1.25rem, env(safe-area-inset-bottom, 0px));
   background: #000000;
   color: var(--contact-text);
   /* Visible so the fabric layer can overhang into Experience. */
@@ -229,9 +229,9 @@
 .contact-section__label {
   margin: 0 0 0.9rem;
   font-family: var(--contact-font);
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.18em;
+  font-size: var(--type-label-size, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
   text-transform: uppercase;
   color: var(--contact-muted);
 }
@@ -337,10 +337,11 @@
   background: color-mix(in srgb, var(--contact-chip) 80%, transparent);
   color: var(--contact-muted);
   border-radius: 999px;
-  padding: 0.35rem 0.75rem;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.8rem;
   font-family: var(--contact-font);
-  font-size: 0.72rem;
-  font-weight: 650;
+  font-size: var(--type-label-size, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -496,7 +497,7 @@
   background: var(--contact-field);
   color: var(--contact-text);
   font-family: var(--contact-font);
-  font-size: 0.98rem;
+  font-size: 1rem;
   padding: 0.78rem 0.9rem;
   outline: none;
   resize: vertical;
@@ -520,12 +521,17 @@
   color: #ff8f9f;
 }
 
+[data-theme='dark'] .contact-form__error {
+  color: #c6284a;
+}
+
 .contact-form__submit {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
   width: 100%;
+  min-height: var(--control-min-size, 2.75rem);
   margin-top: 0.25rem;
   padding: 0.85rem 1.1rem;
   border: 0;
@@ -584,9 +590,9 @@
 
 /* —— Footer —— */
 .contact-footer {
-  margin-top: clamp(4.25rem, 11vh, 6.5rem);
+  margin-top: clamp(3.75rem, 10vh, 5.75rem);
   margin-bottom: 0;
-  padding-bottom: 0;
+  padding-bottom: clamp(0.35rem, 1.5vh, 0.85rem);
 }
 
 .contact-footer__rule {
