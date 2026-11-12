@@ -6,6 +6,8 @@ import {
   PORTFOLIO_SCROLL_REENGAGE_EVENT,
 } from '../../intro/lib/createIntroScrollHandoff'
 import { isProjectsSceneActive } from '../../../shared/scene/portfolioScene'
+import { THEME_CHANGE_EVENT } from '../../../shared/theme'
+import { PORTFOLIO_NAVIGATE_EVENT } from '../../../app/portfolio/lib/navigatePortfolioSection'
 import {
   isAboutReturnAligned,
   isSkillsAligned,
@@ -516,6 +518,41 @@ export function createSkillsSceneHandoff(
     }
   }
 
+  const onThemeChange = () => {
+    if (disposed || !enabled) return
+    // Retarget the About pin restore if a reverse align captured the prior theme color.
+    if (phase === 'aligning-about' || themeBgTween) {
+      restoreThemeBackground()
+    }
+  }
+
+  const onPortfolioNavigate = (event: Event) => {
+    if (disposed || !enabled) return
+    const sectionId = (event as CustomEvent<{ sectionId?: string }>).detail
+      ?.sectionId
+    if (
+      sectionId === 'projects' ||
+      sectionId === 'experience' ||
+      sectionId === 'contact'
+    ) {
+      killAlign()
+      killThemeBgTween()
+      setPhase('passed')
+      return
+    }
+    if (sectionId === 'expertise') {
+      killAlign()
+      killThemeBgTween()
+      setPhase('settled')
+      return
+    }
+    if (sectionId === 'about') {
+      killAlign()
+      killThemeBgTween()
+      setPhase('idle')
+    }
+  }
+
   if (enabled) {
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('wheel', onWheel, { passive: true })
@@ -524,6 +561,8 @@ export function createSkillsSceneHandoff(
     window.addEventListener('pageshow', onPageShow)
     window.addEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, resetFromIntro)
     window.addEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, resetFromIntro)
+    window.addEventListener(THEME_CHANGE_EVENT, onThemeChange)
+    window.addEventListener(PORTFOLIO_NAVIGATE_EVENT, onPortfolioNavigate)
     // One-shot settle check after mount — not a perpetual loop.
     pendingEvalRaf = window.requestAnimationFrame(() => {
       pendingEvalRaf = 0
@@ -548,6 +587,8 @@ export function createSkillsSceneHandoff(
       window.removeEventListener('pageshow', onPageShow)
       window.removeEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, resetFromIntro)
       window.removeEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, resetFromIntro)
+      window.removeEventListener(THEME_CHANGE_EVENT, onThemeChange)
+      window.removeEventListener(PORTFOLIO_NAVIGATE_EVENT, onPortfolioNavigate)
     },
   }
 }

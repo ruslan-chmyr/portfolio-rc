@@ -1,11 +1,14 @@
 import logoOnDarkBg from '../../../assets/rc-logo-white.svg'
 import logoOnLightBg from '../../../assets/rc-logo-dark.svg'
-import { useTheme } from '../../../shared/theme'
+import { portfolioLogoSrc, useTheme } from '../../../shared/theme'
 import { CONTACT_CONFIG } from '../model/contactConfig'
 
 export function ContactFooter() {
   const { theme } = useTheme()
-  const logoSrc = theme === 'dark' ? logoOnDarkBg : logoOnLightBg
+  const logoSrc = portfolioLogoSrc(theme, {
+    onDarkBg: logoOnDarkBg,
+    onLightBg: logoOnLightBg,
+  })
 
   const onTop = () => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches

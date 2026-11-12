@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react'
 import { useAboutScrollAnimation } from '../hooks/useAboutScrollAnimation'
 import { AboutContent } from './AboutContent'
 import { AboutIntroTypography } from './AboutIntroTypography'
-import { PortfolioNav, PortfolioSectionIndex } from '../../../app/portfolio'
+import { PortfolioSectionIndex } from '../../../app/portfolio'
 import { AboutTechAmbient } from './AboutTechAmbient'
 import '../../../app/portfolio/styles/portfolio-chrome.css'
 import '../styles/about.css'
@@ -36,11 +36,12 @@ export function AboutSection() {
   return (
     <section
       ref={sectionRef}
+      id="about"
       className="about-section"
       aria-labelledby="about-heading"
     >
       <div ref={pinRef} className="about-section__pin">
-        <PortfolioNav />
+        <div className="about-section__chrome-slot" aria-hidden />
         <AboutIntroTypography
           stageRef={typeStageRef}
           seniorRef={seniorRef}

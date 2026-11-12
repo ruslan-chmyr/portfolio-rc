@@ -13,6 +13,11 @@
   background: var(--color-background-complete);
 }
 
+/* Keep the SVG/fallback mark legible on the complete fill (WebGL path hides SVG). */
+.intro-animation--complete .intro-animation__ink {
+  color: var(--color-ink-on-complete);
+}
+
 .intro-animation--handed-off {
   visibility: hidden;
   pointer-events: none;

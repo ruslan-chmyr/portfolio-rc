@@ -2,6 +2,11 @@ export { ThemeProvider } from './ThemeProvider'
 export type { ThemeContextValue } from './themeContext'
 export { useTheme } from './useTheme'
 export { applyThemeAttribute, readStoredTheme } from './initTheme'
+export { portfolioLogoSrc } from './portfolioLogoSrc'
+export {
+  isSceneBridgeBackground,
+  syncThemeDependentSurfaces,
+} from './syncThemeDependentSurfaces'
 export { THEME_TOKENS, themeDetail } from './themeTokens'
 export {
   THEME_CHANGE_EVENT,
