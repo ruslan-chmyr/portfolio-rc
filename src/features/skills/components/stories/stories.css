@@ -31,11 +31,11 @@
   bottom: 0.35rem;
   z-index: 2;
   margin: 0;
-  font-size: 0.58rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
+  font-size: var(--type-meta-size, 0.68rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--skills-text-muted) 72%, transparent);
+  color: color-mix(in srgb, var(--skills-text-muted) 88%, transparent);
   pointer-events: none;
 }
 
@@ -114,16 +114,17 @@
 .skills-story-expanded__close {
   appearance: none;
   flex: 0 0 auto;
-  min-height: 2.15rem;
-  padding: 0.35rem 0.85rem;
+  min-height: var(--control-min-size, 2.75rem);
+  min-width: var(--control-min-size, 2.75rem);
+  padding: 0.5rem 1rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.04) 100%);
   color: var(--skills-text);
   cursor: pointer;
   font: inherit;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: var(--type-label-size, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -132,9 +133,13 @@
   border-color: rgba(94, 231, 255, 0.4);
 }
 
+.skills-story-expanded__close:active {
+  transform: translateY(1px);
+}
+
 .skills-story-expanded__close:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--skills-cyan) 65%, transparent);
-  outline-offset: 3px;
+  outline: var(--focus-ring-width, 2px) solid color-mix(in srgb, var(--skills-cyan) 65%, transparent);
+  outline-offset: var(--focus-ring-offset, 2px);
 }
 
 .skills-story-expanded__content {
@@ -246,9 +251,9 @@
 
 .skills-story-expanded__section-title {
   margin: 0;
-  font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
+  font-size: var(--type-meta-size, 0.68rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
   text-transform: uppercase;
   color: rgba(154, 166, 184, 0.95);
 }
@@ -337,6 +342,24 @@
 
   .skills-story-expanded {
     padding: 1rem;
+  }
+
+  .skills-stories__hint {
+    left: 0;
+    max-width: calc(100% - 0.5rem);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+  }
+}
+
+@media (max-width: 640px) {
+  .skills-stories__workspace {
+    min-height: clamp(20rem, 52vh, 28rem);
+  }
+
+  .skills-story-expanded {
+    padding: 0.9rem;
+    border-radius: 18px;
   }
 }
 

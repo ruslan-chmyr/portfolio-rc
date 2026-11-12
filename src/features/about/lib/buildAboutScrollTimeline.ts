@@ -61,7 +61,7 @@ export function buildAboutScrollTimeline(
     {
       scale: 1,
       y: 0,
-      opacity: 1,
+      autoAlpha: 1,
       duration: scaleRevealEnd,
       ease: 'power2.out',
     },
@@ -92,7 +92,12 @@ export function buildAboutScrollTimeline(
   if (indexEl) timeline.to(indexEl, { autoAlpha: 0, duration: contentStart }, 0)
   if (ambientReveal) timeline.to(ambientReveal, { autoAlpha: 0, duration: contentStart }, 0)
 
-  timeline.to(content, { autoAlpha: 1, duration: 0.001 }, contentStart)
+  // Soft gate — keeps scrub ownership without a hard one-frame pop.
+  timeline.to(
+    content,
+    { autoAlpha: 1, duration: 0.035, ease: 'power1.out' },
+    contentStart,
+  )
   timeline.to(
     revealEls,
     {
@@ -209,7 +214,7 @@ export function setAboutScrollInitialStates(
   gsap.set(stage, {
     scale: ABOUT_TYPE_ENTRANCE.fromScale,
     y: ABOUT_TYPE_ENTRANCE.fromY,
-    opacity: ABOUT_TYPE_ENTRANCE.fromOpacity,
+    autoAlpha: ABOUT_TYPE_ENTRANCE.fromOpacity,
   })
   gsap.set(content, { autoAlpha: 0 })
   gsap.set(revealEls, { autoAlpha: 0, y: 32 })

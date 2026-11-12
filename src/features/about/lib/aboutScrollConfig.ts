@@ -51,8 +51,8 @@ export const ABOUT_EXIT = {
   secondaryDuration: 0.045,
   ambientDuration: 0.05,
   typeDuration: 0.055,
-  /** Tight pin fade so reverse scrub restores the theme surface quickly. */
-  pinFadeDuration: 0.04,
+  /** Pin → Skills navy; slightly longer than a flash on fast scrub. */
+  pinFadeDuration: 0.07,
   /** Skills deep navy — bridges the theme About pin into the dark scene. */
   pinExitColor: '#05070f',
 } as const

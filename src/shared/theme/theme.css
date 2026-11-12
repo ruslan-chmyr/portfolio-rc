@@ -26,6 +26,20 @@
   --header-controls-top: 20px;
   --header-controls-right: 20px;
   --header-controls-gap: clamp(1.1rem, 3vw, 2rem);
+  /* Shared editorial micro-type + control rhythm (sections may still diverge). */
+  --portfolio-gutter: clamp(1rem, 3vw, 2.25rem);
+  --portfolio-gutter-wide: clamp(1.15rem, 3.5vw, 2.75rem);
+  --type-label-size: 0.72rem;
+  --type-label-tracking: 0.18em;
+  --type-label-weight: 600;
+  --type-meta-size: 0.68rem;
+  --control-min-size: 2.75rem;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  /* Shared micro-interaction timing (CSS hover/focus/pressed). */
+  --interaction-fast: 160ms;
+  --interaction-normal: 240ms;
+  --interaction-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 [data-theme='dark'] {

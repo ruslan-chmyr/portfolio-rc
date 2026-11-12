@@ -11,8 +11,10 @@ export function syncTypeClusterLayout(stage: HTMLElement, typeWords: HTMLElement
   const stageX = Number(gsap.getProperty(stage, 'x')) || 0
   const stageY = Number(gsap.getProperty(stage, 'y')) || 0
   const stageOpacity = Number(gsap.getProperty(stage, 'opacity'))
+  const stageVisibility = String(gsap.getProperty(stage, 'visibility') ?? 'visible')
+  const restoredOpacity = Number.isFinite(stageOpacity) ? stageOpacity : 1
 
-  gsap.set(stage, { scale: 1, x: 0, y: 0, opacity: 1 })
+  gsap.set(stage, { scale: 1, x: 0, y: 0, autoAlpha: 1 })
   gsap.set(typeWords, {
     x: 0,
     y: 0,
@@ -29,10 +31,24 @@ export function syncTypeClusterLayout(stage: HTMLElement, typeWords: HTMLElement
     gsap.set(word, { x: offsets[i]?.x ?? 0, y: offsets[i]?.y ?? 0 })
   })
 
+  // Prefer autoAlpha so opacity + visibility stay in sync (timeline uses autoAlpha).
+  // If visibility was independently hidden while opacity > 0, restore both explicitly
+  // so we do not overwrite that intentional state via autoAlpha.
+  if (stageVisibility === 'hidden' && restoredOpacity > 0) {
+    gsap.set(stage, {
+      scale: stageScale,
+      x: stageX,
+      y: stageY,
+      opacity: restoredOpacity,
+      visibility: 'hidden',
+    })
+    return
+  }
+
   gsap.set(stage, {
     scale: stageScale,
     x: stageX,
     y: stageY,
-    opacity: Number.isFinite(stageOpacity) ? stageOpacity : 1,
+    autoAlpha: restoredOpacity,
   })
 }

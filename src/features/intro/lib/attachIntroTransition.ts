@@ -92,8 +92,10 @@ export function attachIntroTransition(
         progress,
         reducedMotion ? 0 : (performance.now() - runtime.transitionStartTime) / 1000,
       )
-      gsap.set(transitionCanvas, { opacity: progress > 0 ? 1 : 0 })
-      gsap.set(canvas, { opacity: progress > 0 ? 0 : 1, scale: 1 })
+      // Ramp the ink composite in over the first ~5% so the first tick isn't a pop.
+      const inkComposite = smooth01(clamp01(progress / 0.05))
+      gsap.set(transitionCanvas, { opacity: inkComposite })
+      gsap.set(canvas, { opacity: 1 - inkComposite, scale: 1 })
       gsap.set(mark, { opacity: 0 })
       gsap.set(bloom, { scale: 0.001, svgOrigin: '300 160' })
     } else {

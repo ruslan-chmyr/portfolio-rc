@@ -45,22 +45,23 @@ export function createContactEntranceController(
   const targets = [intro, links, form, footer]
 
   const ctx = gsap.context(() => {
-    gsap.set(targets, { autoAlpha: 0, y: 28 })
+    gsap.set(targets, { autoAlpha: 0, y: 22 })
 
     const tl = gsap.timeline({
       defaults: { ease: 'power2.out' },
       scrollTrigger: {
         trigger: section,
-        start: 'top 72%',
+        // Slightly earlier so copy begins as Experience yields the frame.
+        start: 'top 82%',
         once: true,
         invalidateOnRefresh: true,
       },
     })
 
-    tl.to(intro, { autoAlpha: 1, y: 0, duration: 0.7 }, 0)
-      .to(links, { autoAlpha: 1, y: 0, duration: 0.55 }, 0.12)
-      .to(form, { autoAlpha: 1, y: 0, duration: 0.65 }, 0.2)
-      .to(footer, { autoAlpha: 1, y: 0, duration: 0.5 }, 0.32)
+    tl.to(intro, { autoAlpha: 1, y: 0, duration: 0.68 }, 0)
+      .to(links, { autoAlpha: 1, y: 0, duration: 0.55 }, 0.1)
+      .to(form, { autoAlpha: 1, y: 0, duration: 0.62 }, 0.18)
+      .to(footer, { autoAlpha: 1, y: 0, duration: 0.48 }, 0.28)
   }, section)
 
   const requestRefresh = () => {

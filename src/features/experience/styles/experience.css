@@ -15,7 +15,7 @@
   --experience-progress: #54d9ff;
   --experience-org: #6eb0ff;
   --experience-tag-bg: #16233a;
-  --experience-gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --experience-gutter: var(--portfolio-gutter-wide, clamp(1.15rem, 3.5vw, 2.75rem));
   --experience-max: 84rem;
   --experience-node: 0.85rem;
   /*
@@ -85,9 +85,9 @@
 .experience-section__label {
   margin: 0 0 0.85rem;
   font-family: var(--experience-font);
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.18em;
+  font-size: var(--type-label-size, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
   text-transform: uppercase;
   color: var(--experience-muted);
 }
@@ -295,8 +295,8 @@
 .experience-card__period {
   margin: 0;
   font-family: var(--experience-font);
-  font-size: 0.72rem;
-  font-weight: 650;
+  font-size: var(--type-label-size, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--experience-muted);
@@ -338,10 +338,10 @@
 
 .experience-card__tag {
   margin: 0;
-  padding: 0.28rem 0.55rem;
+  padding: 0.32rem 0.6rem;
   border-radius: 999px;
   font-family: var(--experience-font);
-  font-size: 0.68rem;
+  font-size: var(--type-meta-size, 0.68rem);
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--experience-muted);
@@ -397,6 +397,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
+  min-height: var(--control-min-size, 2.75rem);
   padding: 0.72rem 1.15rem;
   border-radius: 999px;
   box-sizing: border-box;
@@ -410,10 +411,10 @@
   border: 1px solid color-mix(in srgb, var(--experience-progress) 70%, white);
   cursor: pointer;
   transition:
-    transform 180ms ease,
-    background-color 180ms ease,
-    box-shadow 180ms ease,
-    opacity 180ms ease;
+    transform var(--interaction-fast, 160ms) var(--interaction-ease),
+    background-color var(--interaction-fast, 160ms) var(--interaction-ease),
+    box-shadow var(--interaction-fast, 160ms) var(--interaction-ease),
+    opacity var(--interaction-fast, 160ms) var(--interaction-ease);
 }
 
 .experience-cv-cta__button:hover {
@@ -421,8 +422,13 @@
   box-shadow: 0 8px 22px color-mix(in srgb, var(--experience-progress) 28%, transparent);
 }
 
+.experience-cv-cta__button:active:not(.experience-cv-cta__button--disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
 .experience-cv-cta__button:focus-visible {
-  outline: 2px solid var(--experience-progress);
+  outline: var(--focus-ring-width, 2px) solid var(--experience-progress);
   outline-offset: 3px;
 }
 
@@ -432,6 +438,24 @@
   pointer-events: none;
   box-shadow: none;
   transform: none;
+}
+
+/* Unavailable CV: editorial note — not a faux primary button. */
+.experience-cv-cta__soon {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.15rem;
+  font-family: var(--experience-font);
+  font-size: var(--type-label-size, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
+  text-transform: uppercase;
+  color: var(--experience-muted);
+}
+
+.experience-cv-cta__soon-mark {
+  letter-spacing: 0.08em;
+  opacity: 0.85;
 }
 
 .experience-cv-cta__icon,
