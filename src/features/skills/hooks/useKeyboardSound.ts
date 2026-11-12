@@ -3,7 +3,8 @@ import keyClickUrl from '../../../assets/sounds/key-click.m4a'
 import { createKeyboardSoundController } from '../lib/keyboardSound'
 
 /**
- * Macropad click sounds — enabled by default; user can mute via the toggle.
+ * Macropad click sounds — preference defaults to on; the Audio pool is created
+ * only on the first playClick (no network preload on Skills mount).
  */
 export function useKeyboardSound() {
   const [soundEnabled, setSoundEnabled] = useState(true)

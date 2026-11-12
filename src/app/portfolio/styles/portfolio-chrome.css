@@ -167,18 +167,6 @@
   object-fit: contain;
 }
 
-.portfolio-nav__logo--on-light-bg {
-  display: none;
-}
-
-[data-theme='dark'] .portfolio-nav__logo--on-dark-bg {
-  display: none;
-}
-
-[data-theme='dark'] .portfolio-nav__logo--on-light-bg {
-  display: block;
-}
-
 .portfolio-nav__rule {
   display: block;
   width: clamp(1.5rem, 3vw, 2.2rem);
