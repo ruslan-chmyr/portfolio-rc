@@ -411,10 +411,10 @@
   border: 1px solid color-mix(in srgb, var(--experience-progress) 70%, white);
   cursor: pointer;
   transition:
-    transform 180ms ease,
-    background-color 180ms ease,
-    box-shadow 180ms ease,
-    opacity 180ms ease;
+    transform var(--interaction-fast, 160ms) var(--interaction-ease),
+    background-color var(--interaction-fast, 160ms) var(--interaction-ease),
+    box-shadow var(--interaction-fast, 160ms) var(--interaction-ease),
+    opacity var(--interaction-fast, 160ms) var(--interaction-ease);
 }
 
 .experience-cv-cta__button:hover {
@@ -422,8 +422,13 @@
   box-shadow: 0 8px 22px color-mix(in srgb, var(--experience-progress) 28%, transparent);
 }
 
+.experience-cv-cta__button:active:not(.experience-cv-cta__button--disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
 .experience-cv-cta__button:focus-visible {
-  outline: 2px solid var(--experience-progress);
+  outline: var(--focus-ring-width, 2px) solid var(--experience-progress);
   outline-offset: 3px;
 }
 
@@ -433,6 +438,24 @@
   pointer-events: none;
   box-shadow: none;
   transform: none;
+}
+
+/* Unavailable CV: editorial note — not a faux primary button. */
+.experience-cv-cta__soon {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.15rem;
+  font-family: var(--experience-font);
+  font-size: var(--type-label-size, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
+  text-transform: uppercase;
+  color: var(--experience-muted);
+}
+
+.experience-cv-cta__soon-mark {
+  letter-spacing: 0.08em;
+  opacity: 0.85;
 }
 
 .experience-cv-cta__icon,

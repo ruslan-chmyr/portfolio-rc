@@ -1163,6 +1163,7 @@ const CircularCarousel = ({
       data-ready={ready ? '' : undefined}
       data-draggable={draggable ? '' : undefined}
       data-dragging={dragging ? '' : undefined}
+      data-cursor={draggable ? 'drag' : undefined}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={releasePointer}

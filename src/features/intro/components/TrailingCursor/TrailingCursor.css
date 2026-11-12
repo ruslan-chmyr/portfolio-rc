@@ -1,12 +1,13 @@
 .trailing-cursor {
+  --cursor-ring-size: 34.5px;
+  --cursor-ring-border: 0.94px;
+  --cursor-dot-size: 2.625px;
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 2147483000;
   mix-blend-mode: difference;
 }
-
-/* Intro + About: white source and difference so the cursor inverts over text and bg. */
 
 .trailing-cursor__dot,
 .trailing-cursor__ring {
@@ -15,25 +16,70 @@
   top: 0;
   opacity: 0;
   will-change: transform;
+  box-sizing: border-box;
 }
 
-/* White source + difference → dark on white bg, light on black (logo / canvas / post-transition). */
 .trailing-cursor__dot {
-  width: 2.625px;
-  height: 2.625px;
+  width: var(--cursor-dot-size);
+  height: var(--cursor-dot-size);
   border-radius: 50%;
   background: var(--color-cursor-source);
+  transition:
+    width var(--interaction-fast, 160ms) var(--interaction-ease),
+    height var(--interaction-fast, 160ms) var(--interaction-ease),
+    opacity var(--interaction-fast, 160ms) var(--interaction-ease);
 }
 
 .trailing-cursor__ring {
-  width: 34.5px;
-  height: 34.5px;
+  width: var(--cursor-ring-size);
+  height: var(--cursor-ring-size);
   border-radius: 50%;
-  border: 0.94px solid var(--color-cursor-source);
+  border: var(--cursor-ring-border) solid var(--color-cursor-source);
   background: transparent;
+  transition:
+    width var(--interaction-fast, 160ms) var(--interaction-ease),
+    height var(--interaction-fast, 160ms) var(--interaction-ease),
+    border-width var(--interaction-fast, 160ms) var(--interaction-ease),
+    opacity var(--interaction-fast, 160ms) var(--interaction-ease);
+}
+
+.trailing-cursor[data-mode='interactive'] {
+  --cursor-ring-size: 42px;
+  --cursor-ring-border: 1.35px;
+  --cursor-dot-size: 3.1px;
+}
+
+.trailing-cursor[data-mode='link'] {
+  --cursor-ring-size: 28px;
+  --cursor-ring-border: 1.15px;
+  --cursor-dot-size: 2.2px;
+}
+
+.trailing-cursor[data-mode='drag'] {
+  --cursor-ring-size: 46px;
+  --cursor-ring-border: 1.2px;
+  --cursor-dot-size: 2.625px;
+}
+
+.trailing-cursor[data-mode='native'] .trailing-cursor__dot,
+.trailing-cursor[data-mode='native'] .trailing-cursor__ring {
+  opacity: 0 !important;
 }
 
 html.intro-custom-cursor,
 html.intro-custom-cursor * {
   cursor: none !important;
+}
+
+/* Restore system cursor for form editing while the decorative cursor hides. */
+html.intro-custom-cursor[data-cursor-mode='native'],
+html.intro-custom-cursor[data-cursor-mode='native'] * {
+  cursor: auto !important;
+}
+
+html.intro-custom-cursor input,
+html.intro-custom-cursor textarea,
+html.intro-custom-cursor select,
+html.intro-custom-cursor [contenteditable='true'] {
+  cursor: text !important;
 }

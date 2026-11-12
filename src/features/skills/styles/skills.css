@@ -180,6 +180,10 @@
     0 0 0 2px color-mix(in srgb, var(--skills-cyan) 55%, transparent);
 }
 
+.skills-category-toggle:active:not(:disabled):not(.skills-category-toggle--locked) {
+  transform: translateY(1px);
+}
+
 .skills-category-toggle:disabled,
 .skills-category-toggle--locked {
   cursor: default;
@@ -563,6 +567,10 @@
 .skills-fallback__chip:focus-visible {
   outline: var(--focus-ring-width, 2px) solid color-mix(in srgb, var(--skills-cyan) 65%, transparent);
   outline-offset: var(--focus-ring-offset, 2px);
+}
+
+.skills-fallback__chip:active {
+  transform: translateY(1px);
 }
 
 .skills-fallback__chip--selected {

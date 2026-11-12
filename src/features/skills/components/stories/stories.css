@@ -133,9 +133,13 @@
   border-color: rgba(94, 231, 255, 0.4);
 }
 
+.skills-story-expanded__close:active {
+  transform: translateY(1px);
+}
+
 .skills-story-expanded__close:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--skills-cyan) 65%, transparent);
-  outline-offset: 3px;
+  outline: var(--focus-ring-width, 2px) solid color-mix(in srgb, var(--skills-cyan) 65%, transparent);
+  outline-offset: var(--focus-ring-offset, 2px);
 }
 
 .skills-story-expanded__content {

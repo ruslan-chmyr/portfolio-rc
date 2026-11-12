@@ -18,11 +18,22 @@
 
 .theme-toggle:hover {
   color: var(--color-text-hover);
+  border-color: color-mix(in srgb, var(--color-border) 70%, var(--color-foreground));
+  background: color-mix(in srgb, var(--color-foreground) 6%, transparent);
+  transition:
+    color var(--interaction-fast, 160ms) var(--interaction-ease),
+    border-color var(--interaction-fast, 160ms) var(--interaction-ease),
+    background-color var(--interaction-fast, 160ms) var(--interaction-ease),
+    transform var(--interaction-fast, 160ms) var(--interaction-ease);
+}
+
+.theme-toggle:active {
+  transform: translateY(1px);
 }
 
 .theme-toggle:focus-visible {
-  outline: 2px solid var(--color-foreground);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width, 2px) solid var(--color-foreground);
+  outline-offset: var(--focus-ring-offset, 2px);
 }
 
 .theme-toggle__icon {

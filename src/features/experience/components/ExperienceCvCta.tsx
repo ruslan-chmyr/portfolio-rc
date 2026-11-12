@@ -82,10 +82,11 @@ export function ExperienceCvCta() {
         </a>
       ) : (
         <span
-          className="experience-cv-cta__button experience-cv-cta__button--disabled"
+          className="experience-cv-cta__soon"
           aria-disabled="true"
         >
-          {label}
+          {EXPERIENCE_CV_CTA.buttonLabel}
+          <span className="experience-cv-cta__soon-mark"> · Soon</span>
         </span>
       )}
     </div>
