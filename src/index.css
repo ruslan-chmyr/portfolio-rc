@@ -1,3 +1,4 @@
+@import './shared/theme/fonts.css';
 @import './shared/theme/theme.css';
 
 *,
@@ -34,10 +35,21 @@ html:not(.portfolio-native-scroll) body {
   height: 100%;
 }
 
-html.portfolio-native-scroll,
-html.portfolio-native-scroll body {
+/*
+ * Single document scrollport on `html` only. Putting overflow-y:auto on both
+ * html and body creates nested scrollbars (often intermittent with pin-spacers).
+ */
+html.portfolio-native-scroll {
   overflow-x: clip;
   overflow-y: auto;
+  height: auto;
+  min-height: 100%;
+  background: var(--color-portfolio-background);
+}
+
+html.portfolio-native-scroll body {
+  overflow-x: clip;
+  overflow-y: visible;
   height: auto;
   min-height: 100%;
   background: var(--color-portfolio-background);

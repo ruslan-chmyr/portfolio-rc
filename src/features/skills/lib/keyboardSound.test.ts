@@ -33,7 +33,7 @@ describe('createKeyboardSoundController', () => {
     globalThis.Audio = OriginalAudio
   })
 
-  it('stays silent while muted and plays after enable', () => {
+  it('stays silent while muted and allocates the pool only on first play', () => {
     const controller = createKeyboardSoundController('/key-click.m4a', {
       poolSize: 2,
       minIntervalMs: 0,
@@ -43,8 +43,11 @@ describe('createKeyboardSoundController', () => {
     expect(FakeAudio.instances).toHaveLength(0)
 
     controller.setEnabled(true)
+    expect(FakeAudio.instances).toHaveLength(0)
+
     controller.playClick()
     expect(FakeAudio.instances).toHaveLength(2)
+    expect(FakeAudio.instances[0]?.src).toBe('/key-click.m4a')
     expect(FakeAudio.instances[0]?.play).toHaveBeenCalledTimes(1)
 
     controller.dispose()
@@ -60,21 +63,26 @@ describe('createKeyboardSoundController', () => {
     })
     controller.setEnabled(true)
 
+    controller.playClick()
     const first = FakeAudio.instances[0]
     expect(first).toBeTruthy()
-    first!.play.mockImplementationOnce(() => Promise.reject(new Error('autoplay')))
-
-    expect(() => controller.playClick()).not.toThrow()
     expect(first!.play).toHaveBeenCalledTimes(1)
-    await Promise.resolve()
 
+    first!.play.mockImplementationOnce(() => Promise.reject(new Error('autoplay')))
+    // Still within the throttle window — must not call play again.
     controller.playClick()
     expect(first!.play).toHaveBeenCalledTimes(1)
 
     now = 1_000 + KEYBOARD_SOUND_MIN_INTERVAL_MS + 1
+    first!.play.mockImplementationOnce(() => Promise.reject(new Error('autoplay')))
+    expect(() => controller.playClick()).not.toThrow()
+    expect(first!.play).toHaveBeenCalledTimes(2)
+    await Promise.resolve()
+
+    now = 1_000 + KEYBOARD_SOUND_MIN_INTERVAL_MS * 2 + 2
     first!.play.mockImplementationOnce(() => Promise.resolve())
     controller.playClick()
-    expect(first!.play).toHaveBeenCalledTimes(2)
+    expect(first!.play).toHaveBeenCalledTimes(3)
 
     controller.dispose()
   })

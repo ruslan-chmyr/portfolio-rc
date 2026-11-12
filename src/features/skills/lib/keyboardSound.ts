@@ -35,13 +35,18 @@ export function createKeyboardSoundController(
   let cursor = 0
   let pool: PoolEntry[] | null = null
 
+  /**
+   * Allocate the Audio pool only on the first playClick while enabled.
+   * Avoids network preload when Skills mounts or when sound is merely toggled on.
+   */
   const ensurePool = (): PoolEntry[] | null => {
     if (typeof Audio === 'undefined') return null
     if (pool) return pool
     try {
       pool = Array.from({ length: poolSize }, () => {
-        const audio = new Audio(src)
+        const audio = new Audio()
         audio.preload = 'auto'
+        audio.src = src
         audio.volume = volume
         return { audio, lastStartMs: 0 }
       })
@@ -54,8 +59,6 @@ export function createKeyboardSoundController(
   return {
     setEnabled(next) {
       enabled = next
-      if (!next) return
-      ensurePool()
     },
     isEnabled() {
       return enabled

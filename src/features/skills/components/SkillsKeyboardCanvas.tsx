@@ -21,7 +21,7 @@ import { SkillsKeyboardFallback } from './SkillsKeyboardFallback'
 
 type EngageSkillHandler = (skillId: SkillId, options?: SkillEngageOptions) => void
 
-type SkillsKeyboardCanvasProps = {
+export type SkillsKeyboardCanvasProps = {
   enabled: boolean
   displayCategory: SkillBoardCategory
   selectedSkillId: SkillId | null
@@ -64,9 +64,11 @@ function SkillsKeyboardCanvasInner({
   onFlipComplete,
 }: Omit<SkillsKeyboardCanvasProps, 'enabled'>) {
   const frameRef = useRef<HTMLDivElement>(null)
+  const invalidateRef = useRef<(() => void) | null>(null)
   const [reducedMotion, setReducedMotion] = useState(prefersReducedMotion)
   const [cursor, setCursor] = useState<'pointer' | 'auto'>('auto')
-  const [inView, setInView] = useState(true)
+  // Canvas may mount early via rootMargin preload; stay paused until truly visible.
+  const [inView, setInView] = useState(false)
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -78,14 +80,22 @@ function SkillsKeyboardCanvasInner({
 
   useEffect(() => {
     const node = frameRef.current
-    if (!node || typeof IntersectionObserver === 'undefined') return
+    if (!node) return
+    if (typeof IntersectionObserver === 'undefined') {
+      setInView(true)
+      return
+    }
     const observer = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting),
+      ([entry]) => setInView(Boolean(entry?.isIntersecting)),
       { root: null, threshold: 0.05 },
     )
     observer.observe(node)
     return () => observer.disconnect()
   }, [])
+
+  useEffect(() => {
+    if (inView) invalidateRef.current?.()
+  }, [inView])
 
   const handlePointerLeave = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -122,6 +132,7 @@ function SkillsKeyboardCanvasInner({
         }}
         onCreated={({ gl, invalidate }) => {
           gl.setClearColor(0x000000, 0)
+          invalidateRef.current = invalidate
           invalidate()
         }}
       >

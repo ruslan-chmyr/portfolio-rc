@@ -8,6 +8,8 @@ export default defineConfig({
       ['src/features/intro/lib/attachIntroTheme.test.ts', 'jsdom'],
       ['src/features/intro/lib/createIntroScrollHandoff.test.ts', 'jsdom'],
       ['src/features/skills/hooks/useSkillCategoryTransition.test.ts', 'jsdom'],
+      ['src/features/skills/hooks/useNearViewport.test.ts', 'jsdom'],
+      ['src/features/skills/hooks/useSkillsKeyboardModule.test.ts', 'jsdom'],
       ['src/features/skills/lib/createSkillsSceneHandoff.test.ts', 'jsdom'],
       ['src/features/projects/lib/createProjectsScrollController.test.ts', 'jsdom'],
     ],

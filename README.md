@@ -1,106 +1,202 @@
-# Portfolio — Ruslan Chmyr
+# RC — Interactive Developer Portfolio
 
-A personal portfolio built with React and TypeScript, focused on interactive visuals, scroll-driven animations, and frontend engineering.
+A personal portfolio built as an interactive experience rather than a traditional set of pages. Motion, 3D visuals, and carefully paced scroll storytelling introduce the work and engineering background behind the site.
 
-## Overview
+**React · TypeScript · Three.js · WebGL · GSAP · Vite**
 
-The site opens on an interactive **RC** monogram, then scrolls through About, Skills, Projects, Experience, and Contact. The visual language is minimal and editorial: large type, restrained chrome, light/dark themes.
+> Live demo URL is not published in this repository yet. Run locally with the commands below.
 
-## Tech stack
+### Project preview
 
-| Area | Tools |
-| --- | --- |
-| UI | React 19, TypeScript |
-| Build | Vite 8 |
-| Motion | GSAP, ScrollTrigger |
-| Graphics | WebGL / Three.js (intro fluid, Skills keyboard, Contact fabric) |
-| API | Vercel Functions + Resend |
-| Quality | Vitest, Oxlint, `tsc -b` |
+Contact section particle fabric (repository screenshot):
 
-## Features
+![Contact particle fabric backdrop](assets/contact-drape-after.png)
 
-- **Intro** — WebGL2 fluid monogram, scroll-controlled ink transition, theme-aware handoff
-- **About** — GSAP typography timeline, portrait/bio, ambient tech marks
-- **Skills** — 3D keyboard scene, category stories, scroll handoff into Projects
-- **Projects** — scrubbed project showcase with pin/wipe transitions
-- **Experience** — career timeline, sticky year, milestone activation, CV CTA
-- **Contact** — Gravity Letters heading, spectral fabric backdrop, form + social links
+---
 
-## Architecture
+## The Experience
 
-Feature-based folders keep React UI separate from imperative animation/GPU controllers.
+What a visitor meets, section by section.
 
-- **React** owns structure, forms, and accessibility
-- **GSAP controllers** own scroll timelines, pins, and dispose cleanly
-- **WebGL modules** own renderer lifecycle (lazy init, pause offscreen, context loss)
-- **`scheduleScrollTriggerRefresh`** coalesces global refreshes across sections
-- **Contact** posts to same-origin `/api/contact`; Resend stays server-side
-- **Reduced motion** is respected for Experience, Contact fabric, and Gravity Letters
+### Interactive introduction
+
+The site opens on an **RC** monogram that responds to the cursor. As you scroll, the mark dissolves through an ink-like transition and hands control over to the rest of the portfolio.
+
+### About
+
+Large typography unfolds into a personal introduction — portrait, short bio, and a clear sense of focus — before the page continues downward.
+
+### Skills
+
+An interactive **3D keyboard** lets visitors explore technologies and engineering themes. Selecting keys opens inspection details; engineering stories can highlight related skills and flip the board between categories.
+
+### Projects
+
+A selected set of projects is presented in a pinned, scroll-driven sequence that transitions from Skills into the next chapter of the page.
+
+### Experience
+
+A scroll-synced career timeline highlights milestones as you move, with a sticky year rail and an invitation to view the full CV when a PDF link is configured.
+
+### Contact
+
+An animated particle fabric sits behind contact options, social links, and a message form — with a readable CSS fallback if WebGL cannot run.
+
+---
+
+## Engineering Highlights
+
+Concrete systems that make the experience hold up under scroll, load, and device constraints.
+
+### Custom WebGL fluid simulation
+
+The intro mark is driven by a **WebGL2** fluid-style simulation with GLSL programs, float render targets, and pointer-driven forces. Scroll progress drives an ink transition (distance-field capture + shaders). When WebGL2 or required extensions are unavailable, the intro falls back to SVG presentation. Runtime dispose cleans GPU resources when the intro lifecycle ends.
+
+### Interactive 3D Skills keyboard
+
+Built with **React Three Fiber**, **Three.js**, and **Drei**: key geometry, lighting, contact shadows, category flip animations, Story Focus highlighting, and React-owned selection state. Rendering uses a **demand / never** frameloop so idle or offscreen scenes stay quiet. A static keyboard fallback remains interactive when WebGL is unavailable or while the 3D module is still loading.
+
+Heavy Three/R3F code is **not** pulled on first paint. An IntersectionObserver gate loads the Skills canvas chunk only as the section approaches the viewport, then keeps the canvas mounted for the session.
+
+### Scroll-driven storytelling
+
+**GSAP** and **ScrollTrigger** pin and scrub About, Skills handoff, Projects, Experience, and Contact entrances. Controllers own dispose, reduced-motion paths, and reverse-friendly scrubbing. A shared `scheduleScrollTriggerRefresh` coalesces layout refreshes so sections do not thrash `ScrollTrigger.refresh()` independently.
+
+### Custom particle fabric (Contact)
+
+Contact uses an original Three.js **Points** mesh with custom vertex/fragment shaders — fold motion, depth, and a soft pointer brush. Density and DPR adapt by viewport; initialization is viewport-triggered; the loop pauses offscreen; context loss falls back to CSS. This is a project-owned approximation, not the license-gated React Bits Pro Spectral Drape component. The heading uses a lightweight “Gravity Letters” fallback for the same reason.
+
+### Contact delivery infrastructure
+
+`POST /api/contact` is a **Vercel serverless** handler that validates input, enforces size limits, applies a soft per-isolate rate limit, and calls **Resend** with a timeout. Success means `{ ok: true }` — acceptance by the provider, not guaranteed inbox delivery. Without server credentials the API returns an honest unavailable response. Production should also enable platform WAF rate limiting on the route.
+
+---
+
+## Performance Optimization — Before & After
+
+Laboratory Lighthouse runs against **production Vite builds** (simulated throttling). Scores are lab metrics, not CrUX / real-user field data.
+
+| Metric | Before | After |
+| --- | ---: | ---: |
+| Desktop Performance | 97 | **100** |
+| Mobile Performance | 70 | **95** |
+| Approx. initial transfer | ~2.56 MB | **~251 KB** |
+| Mobile FCP | 3.9s | **2.1s** |
+| Mobile LCP | 5.6s | **2.6s** |
+| CLS | 0 | **0** |
+
+Mobile LCP measured **2.6s** in lab — improved, but not claimed as meeting a 2.5s Core Web Vitals threshold.
+
+Initial load dropped sharply **without removing** the 3D keyboard or other approved effects. Heavy graphics load when the visitor approaches the relevant section; images, fonts, and audio follow the same pay-when-needed approach. Runtime work also includes ScrollTrigger refresh coalescing, Contact particle budgets / offscreen pause, WebGL context-loss fallbacks, and intro GPU cleanup.
+
+### How it was measured
+
+- `npm run build` + `vite preview`
+- Lighthouse (desktop preset / mobile form-factor, simulated throttling)
+- Network panel / Performance resource timing for chunk attribution
+- Chrome DevTools Protocol checks for Canvas init timing where used
+
+---
+
+## Architecture & Technical Decisions
 
 ```text
 src/
-├── app/
+├── app/                 # Portfolio shell, nav, chrome
 ├── features/
-│   ├── intro/
-│   ├── about/
-│   ├── skills/
-│   ├── projects/
-│   ├── experience/
-│   └── contact/
-└── shared/
-    ├── graphics/
-    ├── scene/          # ScrollTrigger refresh coordination
-    ├── pointer/
-    └── theme/
+│   ├── intro/           # WebGL2 fluid + ink transition
+│   ├── about/           # Typography timeline + portrait
+│   ├── skills/          # R3F keyboard, stories, load gate
+│   ├── projects/        # Pinned scrub showcase
+│   ├── experience/      # Career timeline + CV CTA
+│   └── contact/         # Fabric, form, links, entrance
+├── shared/
+│   ├── graphics/        # Fluid simulation core
+│   ├── scene/           # ScrollTrigger refresh coordination
+│   ├── pointer/         # Shared pointer helpers / cursor bridge
+│   ├── theme/           # Theme + self-hosted fonts
+│   └── lib/webgl/       # Low-level WebGL helpers
 api/
-└── contact.ts          # Vercel Function (Resend)
+└── contact.ts           # Vercel Function (Resend)
 ```
 
-## Getting started
+**Feature-based ownership** — each section keeps UI, hooks, config, controllers, and tests together.
+
+**Clear runtimes** — React owns structure and state; GSAP controllers own pins/timelines and dispose; WebGL modules own init, pause, and cleanup.
+
+**Progressive enhancement** — Skills fallback, Contact CSS fabric, intro SVG path, and reduced-motion branches keep the page usable when GPU or motion is limited.
+
+**Performance boundaries** — Skills Three/R3F and Contact fabric load near viewport; audio and large images follow the same “pay when needed” idea.
+
+---
+
+## Quality & Accessibility
+
+- TypeScript throughout (`tsc -b` in production build)
+- Vitest suite — **234** tests passing at README rewrite time
+- Oxlint for lint
+- Error boundary around the Skills WebGL canvas
+- `prefers-reduced-motion` handling across scroll/3D sections
+- Keyboard-accessible Skills controls alongside the canvas
+- Semantic landmarks and form labeling on Contact
+- Explicit resource cleanup on controllers and WebGL paths
+
+This is not a claim of full WCAG certification — only of practices implemented and tested in-repo.
+
+---
+
+## Tech Stack
+
+| Area | Technologies |
+| --- | --- |
+| UI | React 19, TypeScript |
+| 3D graphics | Three.js, React Three Fiber, Drei |
+| GPU effects | WebGL2, GLSL |
+| Animation | GSAP, ScrollTrigger |
+| Build | Vite 8 |
+| Testing | Vitest, jsdom |
+| Lint | Oxlint |
+| Contact API | Vercel Functions, Resend |
+
+---
+
+## Getting Started
 
 ```bash
 npm install
 npm run dev
 ```
 
-Network access from another device:
-
-```bash
-npm run dev -- --host
-```
-
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Vite development server |
-| `npm run build` | Typecheck (`tsc -b`) and production bundle |
-| `npm run preview` | Serve the production build locally |
+| `npm run dev` | Development server |
+| `npm run build` | Typecheck + production bundle |
+| `npm run preview` | Serve the production build |
 | `npm run test` | Vitest |
 | `npm run lint` | Oxlint |
 
-## Contact form deployment
+Optional LAN access: `npm run dev -- --host`
 
-Frontend defaults to `POST /api/contact`.
+---
 
-**Server env (Vercel — never use `VITE_` for secrets):**
+## Contact API Configuration
 
-| Variable | Purpose |
-| --- | --- |
-| `RESEND_API_KEY` | Resend API key |
-| `CONTACT_FROM_EMAIL` | Verified Resend sender |
-| `CONTACT_TO_EMAIL` | Inbox for inquiries |
-| `CONTACT_RATE_LIMIT_MAX` | Soft per-isolate limit (default `5`) |
-| `CONTACT_RATE_LIMIT_WINDOW_MS` | Soft window (default `60000`) |
-| `CONTACT_RESEND_TIMEOUT_MS` | Provider timeout (default `10000`) |
+Server-side only (never `VITE_` for secrets):
 
-**Notes:**
+```env
+RESEND_API_KEY=
+CONTACT_FROM_EMAIL=   # verified Resend sender
+CONTACT_TO_EMAIL=     # inbox for inquiries
+```
 
-- Without Resend credentials the API returns `503` / unavailable (honest, not fake success)
-- Local mock: `VITE_CONTACT_ALLOW_MOCK=true` only when no API URL override is set
-- In-memory rate limiting is defense in depth — enable **Vercel Firewall** on `POST /api/contact` for production
-- Success means Resend accepted the request, not that the inbox received it
+Optional: `CONTACT_RATE_LIMIT_MAX`, `CONTACT_RATE_LIMIT_WINDOW_MS`, `CONTACT_RESEND_TIMEOUT_MS`.
+
+Use a verified Resend domain/sender. Enable Vercel Firewall rate limiting on `POST /api/contact` for production. Without credentials the API reports unavailable rather than fake success.
+
+---
 
 ## Author
 
-Ruslan Chmyr — Senior Frontend Engineer
+**Ruslan Chmyr** — Senior Frontend Engineer
 
-GitHub: [ruslan-chmyr](https://github.com/ruslan-chmyr)
+[GitHub](https://github.com/ruslan-chmyr) · [LinkedIn](https://www.linkedin.com/in/ruslan-chmyr-99419818a/)

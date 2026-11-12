@@ -629,18 +629,6 @@
   opacity: 0.9;
 }
 
-.contact-footer__logo--on-light-bg {
-  display: none;
-}
-
-[data-theme='dark'] .contact-footer__logo--on-dark-bg {
-  display: none;
-}
-
-[data-theme='dark'] .contact-footer__logo--on-light-bg {
-  display: block;
-}
-
 .contact-footer__copy,
 .contact-footer__tagline {
   margin: 0;

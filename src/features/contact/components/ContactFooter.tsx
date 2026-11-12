@@ -1,8 +1,12 @@
 import logoOnDarkBg from '../../../assets/rc-logo-white.svg'
 import logoOnLightBg from '../../../assets/rc-logo-dark.svg'
+import { useTheme } from '../../../shared/theme'
 import { CONTACT_CONFIG } from '../model/contactConfig'
 
 export function ContactFooter() {
+  const { theme } = useTheme()
+  const logoSrc = theme === 'dark' ? logoOnDarkBg : logoOnLightBg
+
   const onTop = () => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' })
@@ -15,15 +19,8 @@ export function ContactFooter() {
         <div className="contact-footer__brand">
           <span className="contact-footer__logo-wrap" aria-hidden="true">
             <img
-              className="contact-footer__logo contact-footer__logo--on-dark-bg"
-              src={logoOnDarkBg}
-              alt=""
-              width={36}
-              height={36}
-            />
-            <img
-              className="contact-footer__logo contact-footer__logo--on-light-bg"
-              src={logoOnLightBg}
+              className="contact-footer__logo"
+              src={logoSrc}
               alt=""
               width={36}
               height={36}
