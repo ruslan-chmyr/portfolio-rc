@@ -7,6 +7,14 @@
   overflow: hidden;
   z-index: 1000;
   isolation: isolate;
+  will-change: transform;
+  transition: background-color var(--theme-transition-duration, 320ms) ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-animation {
+    will-change: auto;
+  }
 }
 
 .intro-animation--complete {

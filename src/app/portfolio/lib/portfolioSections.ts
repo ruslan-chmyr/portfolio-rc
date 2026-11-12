@@ -27,12 +27,12 @@ export function formatPortfolioSectionLabel(number: string, title: string) {
   return `${number} / ${title}`
 }
 
-/** Rows below 01 / About — numbers match on-section editorial labels. */
+/** Rows below 01 / About — single source of truth for editorial numbering. */
 export const PORTFOLIO_FOLLOWING_SECTIONS: PortfolioSectionEntry[] = [
   { id: 'expertise', number: '02', title: 'Skills', targetId: 'expertise' },
   { id: 'projects', number: '03', title: 'Projects', targetId: 'projects' },
-  { id: 'experience', number: '05', title: 'Experience', targetId: 'experience' },
-  { id: 'contact', number: '06', title: 'Contact', targetId: 'contact' },
+  { id: 'experience', number: '04', title: 'Experience', targetId: 'experience' },
+  { id: 'contact', number: '05', title: 'Contact', targetId: 'contact' },
 ]
 
 /** Navigable portfolio sections in document order (excludes intro). */

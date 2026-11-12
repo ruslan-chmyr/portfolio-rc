@@ -14,3 +14,8 @@ export {
   navigatePortfolioSection,
   PORTFOLIO_NAVIGATE_EVENT,
 } from './lib/navigatePortfolioSection'
+export {
+  beginPortfolioNavSession,
+  endPortfolioNavSession,
+  isPortfolioNavSessionActive,
+} from './lib/portfolioNavSession'

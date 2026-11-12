@@ -1,8 +1,18 @@
+import {
+  findPortfolioSection,
+  formatPortfolioSectionLabel,
+} from '../../../app/portfolio/lib/portfolioSections'
+
+const CONTACT_SECTION = findPortfolioSection('contact')!
+
 /**
  * Contact section copy and verified public destinations.
  */
 export const CONTACT_CONFIG = {
-  sectionLabel: '06 / Contact',
+  sectionLabel: formatPortfolioSectionLabel(
+    CONTACT_SECTION.number,
+    CONTACT_SECTION.title,
+  ),
   availability: 'Open to opportunities',
   headingLineOne: 'Have something',
   headingLineTwo: 'in mind?',

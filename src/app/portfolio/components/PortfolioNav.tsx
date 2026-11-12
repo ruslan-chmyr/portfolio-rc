@@ -40,6 +40,13 @@ export function PortfolioNav() {
     ? formatPortfolioSectionLabel(activeEntry.number, activeEntry.title)
     : '01 / About'
 
+  // Close menu when leaving compact mode without leaving stale open state.
+  const [menuMode, setMenuMode] = useState(mode)
+  if (menuMode !== mode) {
+    setMenuMode(mode)
+    if (mode !== 'compact' && menuOpen) setMenuOpen(false)
+  }
+
   const menuVisible = mode === 'compact' && menuOpen
 
   useEffect(() => {

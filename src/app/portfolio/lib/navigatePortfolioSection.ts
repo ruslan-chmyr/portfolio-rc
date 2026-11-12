@@ -1,6 +1,10 @@
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { isProjectsSceneActive } from '../../../shared/scene/portfolioScene'
 import {
+  beginPortfolioNavSession,
+  endPortfolioNavSession,
+} from './portfolioNavSession'
+import {
   findPortfolioSection,
   type PortfolioSectionId,
 } from './portfolioSections'
@@ -11,8 +15,14 @@ export type PortfolioNavigateDetail = {
   sectionId: Exclude<PortfolioSectionId, 'intro'>
 }
 
+export type NavigableSectionId = Exclude<PortfolioSectionId, 'intro'>
+
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+function readScrollY() {
+  return window.scrollY || document.documentElement.scrollTop || 0
 }
 
 function writeScrollY(y: number, smooth: boolean) {
@@ -28,13 +38,7 @@ function findScrollTriggerFor(el: Element | null): ScrollTrigger | undefined {
   return ScrollTrigger.getAll().find((trigger) => trigger.trigger === el)
 }
 
-function markSkillsHandoffPassed() {
-  const skills = document.getElementById('expertise')
-  if (!skills) return
-  skills.dataset.skillsHandoff = 'passed'
-}
-
-function announceNavigation(sectionId: Exclude<PortfolioSectionId, 'intro'>) {
+function announceNavigation(sectionId: NavigableSectionId) {
   window.dispatchEvent(
     new CustomEvent<PortfolioNavigateDetail>(PORTFOLIO_NAVIGATE_EVENT, {
       detail: { sectionId },
@@ -42,58 +46,69 @@ function announceNavigation(sectionId: Exclude<PortfolioSectionId, 'intro'>) {
   )
 }
 
+function resolveTargetY(sectionId: NavigableSectionId): number | null {
+  if (sectionId === 'about') {
+    const about = document.querySelector('.about-section')
+    if (!about && !document.getElementById('about-heading')) return null
+    const st = findScrollTriggerFor(about)
+    return st ? st.start : 0
+  }
+
+  if (sectionId === 'expertise') {
+    const skills = document.getElementById('expertise')
+    if (!skills) return null
+    if (isProjectsSceneActive()) {
+      const projects = document.getElementById('projects')
+      const st = findScrollTriggerFor(projects)
+      if (st) {
+        // Leave the Projects pin before measuring Skills.
+        writeScrollY(Math.max(0, st.start - 1), false)
+      }
+    }
+    return Math.max(0, skills.getBoundingClientRect().top + readScrollY())
+  }
+
+  if (sectionId === 'projects') {
+    const projects = document.getElementById('projects')
+    if (!projects) return null
+    const st = findScrollTriggerFor(projects)
+    if (st) return st.start + 8
+    return Math.max(0, projects.getBoundingClientRect().top + readScrollY())
+  }
+
+  const entry = findPortfolioSection(sectionId)
+  if (!entry) return null
+  const el = document.getElementById(entry.targetId)
+  if (!el) return null
+  return Math.max(0, el.getBoundingClientRect().top + readScrollY())
+}
+
 /**
  * Programmatic section navigation that respects intro capture and pin spacers.
- * Does not run while intro owns the viewport (Mode A has no section jumps).
+ * Validates the destination before announcing or mutating Skills handoff state.
+ * Owns scroll until settle or user interrupt so Skills handoff cannot compete.
  */
 export function navigatePortfolioSection(
-  sectionId: Exclude<PortfolioSectionId, 'intro'>,
+  sectionId: NavigableSectionId,
 ): boolean {
   if (!document.documentElement.classList.contains('portfolio-native-scroll')) {
     return false
   }
 
+  const targetY = resolveTargetY(sectionId)
+  if (targetY == null || !Number.isFinite(targetY)) {
+    return false
+  }
+
+  beginPortfolioNavSession(sectionId, targetY)
+  // Announce only after validation — handoff updates phase / kills aligns.
   announceNavigation(sectionId)
+  writeScrollY(targetY, true)
 
-  if (sectionId === 'about') {
-    const about = document.querySelector('.about-section')
-    const st = findScrollTriggerFor(about)
-    writeScrollY(st ? st.start : 0, true)
-    return true
+  // If write was a no-op (already there), release ownership immediately.
+  if (Math.abs(readScrollY() - targetY) <= 8) {
+    endPortfolioNavSession()
   }
 
-  if (sectionId === 'expertise') {
-    const skills = document.getElementById('expertise')
-    if (!skills) return false
-    if (isProjectsSceneActive()) {
-      // Leave projects pin ownership by scrolling to skills frame start.
-      const projects = document.getElementById('projects')
-      const st = findScrollTriggerFor(projects)
-      if (st) writeScrollY(st.start - 1, false)
-    }
-    const top = skills.getBoundingClientRect().top + window.scrollY
-    writeScrollY(top, true)
-    return true
-  }
-
-  if (sectionId === 'projects') {
-    markSkillsHandoffPassed()
-    const projects = document.getElementById('projects')
-    const st = findScrollTriggerFor(projects)
-    if (st) {
-      writeScrollY(st.start + 8, true)
-      return true
-    }
-    if (!projects) return false
-    writeScrollY(projects.getBoundingClientRect().top + window.scrollY, true)
-    return true
-  }
-
-  const entry = findPortfolioSection(sectionId)
-  if (!entry) return false
-  markSkillsHandoffPassed()
-  const el = document.getElementById(entry.targetId)
-  if (!el) return false
-  writeScrollY(el.getBoundingClientRect().top + window.scrollY, true)
   return true
 }
