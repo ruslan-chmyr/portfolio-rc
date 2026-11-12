@@ -25,6 +25,8 @@ import {
   type SpectralDrapeProfile,
 } from './spectralDrapeConfig'
 
+export type SpectralDrapeAvailability = 'ready' | 'context-lost' | 'failed'
+
 export type SpectralDrapeFallback = {
   dispose: () => void
   setPaused: (paused: boolean) => void
@@ -34,6 +36,7 @@ export type SpectralDrapeFallback = {
 
 type FabricOptions = {
   reducedMotion?: boolean
+  onAvailability?: (state: SpectralDrapeAvailability) => void
 }
 
 const VERTEX_SHADER = /* glsl */ `
@@ -248,6 +251,7 @@ export function createSpectralDrapeFallback(
   options?: FabricOptions,
 ): SpectralDrapeFallback {
   let reducedMotion = Boolean(options?.reducedMotion)
+  const onAvailability = options?.onAvailability
   let disposed = false
   let userPaused = false
   let paused = reducedMotion || userPaused
@@ -256,6 +260,11 @@ export function createSpectralDrapeFallback(
   let time = 0
   let lastGeometryKey = ''
   let contextLost = false
+
+  const notifyAvailability = (state: SpectralDrapeAvailability) => {
+    if (disposed) return
+    onAvailability?.(state)
+  }
 
   let renderer: WebGLRenderer
   try {
@@ -267,12 +276,14 @@ export function createSpectralDrapeFallback(
       failIfMajorPerformanceCaveat: false,
     })
   } catch (error) {
+    notifyAvailability('failed')
     throw new Error('webgl_unavailable', { cause: error })
   }
 
   const gl = renderer.getContext()
   if (!gl) {
     renderer.dispose()
+    notifyAvailability('failed')
     throw new Error('webgl_unavailable')
   }
 
@@ -426,20 +437,33 @@ export function createSpectralDrapeFallback(
     event.preventDefault()
     contextLost = true
     stopLoop()
+    notifyAvailability('context-lost')
   }
 
   const onContextRestored = () => {
     if (disposed) return
-    contextLost = false
-    lastGeometryKey = ''
-    resize()
-    syncPaused()
+    try {
+      contextLost = false
+      lastGeometryKey = ''
+      resize()
+      if (!material) {
+        notifyAvailability('failed')
+        return
+      }
+      notifyAvailability('ready')
+      syncPaused()
+    } catch {
+      contextLost = true
+      stopLoop()
+      notifyAvailability('failed')
+    }
   }
 
   resize()
   window.addEventListener('pointermove', onPointer, { passive: true })
   canvas.addEventListener('webglcontextlost', onContextLost, false)
   canvas.addEventListener('webglcontextrestored', onContextRestored, false)
+  notifyAvailability('ready')
   if (!paused) start()
 
   return {

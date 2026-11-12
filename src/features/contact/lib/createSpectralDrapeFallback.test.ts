@@ -191,4 +191,22 @@ describe('createSpectralDrapeFallback', () => {
     )
     controller.dispose()
   })
+
+  it('notifies availability on context loss and restoration', () => {
+    const canvas = document.createElement('canvas')
+    const onAvailability = vi.fn()
+    const controller = createSpectralDrapeFallback(canvas, {
+      reducedMotion: false,
+      onAvailability,
+    })
+    expect(onAvailability).toHaveBeenCalledWith('ready')
+
+    const lost = new Event('webglcontextlost', { cancelable: true })
+    canvas.dispatchEvent(lost)
+    expect(onAvailability).toHaveBeenCalledWith('context-lost')
+
+    canvas.dispatchEvent(new Event('webglcontextrestored'))
+    expect(onAvailability).toHaveBeenCalledWith('ready')
+    controller.dispose()
+  })
 })

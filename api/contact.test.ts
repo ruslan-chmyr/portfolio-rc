@@ -177,6 +177,7 @@ describe('contact API', () => {
   })
 
   it('returns 502 when the provider times out', async () => {
+    vi.useFakeTimers()
     const fetchImpl = vi.fn().mockImplementation((_url, init: RequestInit) => {
       return new Promise((_resolve, reject) => {
         init.signal?.addEventListener('abort', () => {
@@ -184,16 +185,22 @@ describe('contact API', () => {
         })
       })
     })
-    vi.stubEnv('CONTACT_RESEND_TIMEOUT_MS', '20')
+    vi.stubEnv('CONTACT_RESEND_TIMEOUT_MS', '1000')
     const { res, status } = createRes()
-    await handleContactRequest(baseReq(), res, {
+    const pending = handleContactRequest(baseReq(), res, {
       fetchImpl: fetchImpl as unknown as typeof fetch,
     })
+    await vi.advanceTimersByTimeAsync(1000)
+    await pending
     expect(status).toHaveBeenCalledWith(502)
+    vi.useRealTimers()
   })
 
   it('sends escaped HTML and reply_to on success', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue({ ok: true })
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 're_123' }),
+    })
     const { res, status, json } = createRes()
     await handleContactRequest(
       baseReq({
@@ -217,5 +224,51 @@ describe('contact API', () => {
     expect(body.html).toContain(escapeHtml('Ruslan <script>'))
     expect(body.html).not.toContain('<script>')
     expect(String(init.headers)).not.toContain('VITE_')
+  })
+
+  it('rejects provider 200 payloads without an acceptance id', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    })
+    const { res, status } = createRes()
+    await handleContactRequest(baseReq(), res, {
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    })
+    expect(status).toHaveBeenCalledWith(502)
+  })
+
+  it('rejects arrays and primitives as request bodies', async () => {
+    const arrayRes = createRes()
+    await handleContactRequest(baseReq({ body: '[]' }), arrayRes.res)
+    expect(arrayRes.status).toHaveBeenCalledWith(400)
+
+    const primitiveRes = createRes()
+    await handleContactRequest(baseReq({ body: '"hello"' }), primitiveRes.res)
+    expect(primitiveRes.status).toHaveBeenCalledWith(400)
+  })
+
+  it('requires JSON content-type', async () => {
+    const { res, status } = createRes()
+    await handleContactRequest(
+      baseReq({ headers: { 'x-vercel-forwarded-for': '203.0.113.10' } }),
+      res,
+    )
+    expect(status).toHaveBeenCalledWith(415)
+  })
+
+  it('falls back safely from invalid rate-limit env values', async () => {
+    vi.stubEnv('CONTACT_RATE_LIMIT_MAX', 'NaN')
+    vi.stubEnv('CONTACT_RATE_LIMIT_WINDOW_MS', '-5')
+    const { readPositiveIntEnv } = await import('./contact')
+    expect(readPositiveIntEnv('CONTACT_RATE_LIMIT_MAX', 5, { min: 1, max: 100 })).toBe(
+      5,
+    )
+    expect(
+      readPositiveIntEnv('CONTACT_RATE_LIMIT_WINDOW_MS', 60_000, {
+        min: 1_000,
+        max: 3_600_000,
+      }),
+    ).toBe(60_000)
   })
 })

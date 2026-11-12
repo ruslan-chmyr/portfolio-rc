@@ -14,10 +14,10 @@
  * Abuse protection:
  * - Per-instance soft limiter (defense in depth; not global across serverless isolates).
  * - Production MUST also enable Vercel Firewall / WAF rate limiting on POST /api/contact.
- * - Client identity prefers Vercel-set headers (`x-vercel-forwarded-for`, then `x-real-ip`).
- * - Do not treat arbitrary `x-forwarded-for` as authoritative outside Vercel.
+ * - Client identity prefers platform-controlled headers when present.
+ * - Generic `x-forwarded-for` is last-resort only and may be spoofable off-platform.
  *
- * Frontend defaults to same-origin `/api/contact` (override with VITE_CONTACT_API_URL only if needed).
+ * Success contract: `{ ok: true }` — acceptance by Resend, not inbox delivery.
  */
 
 export type ContactBody = {
@@ -63,9 +63,8 @@ function headerValue(
 }
 
 /**
- * Prefer platform-controlled identity. On Vercel, `x-vercel-forwarded-for`
- * / `x-real-ip` are set by the edge. Generic `x-forwarded-for` is only used
- * as a last resort and may be spoofable outside that contract.
+ * Prefer platform-controlled identity when available.
+ * Documented as defense-in-depth only — production relies on Vercel WAF.
  */
 export function resolveClientKey(req: ContactRequest): string {
   const vercelForwarded = headerValue(req.headers, 'x-vercel-forwarded-for')
@@ -80,12 +79,26 @@ export function resolveClientKey(req: ContactRequest): string {
   return 'unknown'
 }
 
+export function readPositiveIntEnv(
+  name: string,
+  fallback: number,
+  options?: { min?: number; max?: number },
+): number {
+  const min = options?.min ?? 1
+  const max = options?.max ?? 3_600_000
+  const raw = process.env[name]
+  if (raw == null || raw.trim() === '') return fallback
+  const value = Number(raw)
+  if (!Number.isFinite(value) || !Number.isInteger(value)) return fallback
+  if (value < min || value > max) return fallback
+  return value
+}
+
 function pruneRateBuckets(now: number): void {
   for (const [key, bucket] of rateBuckets) {
     if (now > bucket.resetAt) rateBuckets.delete(key)
   }
   if (rateBuckets.size <= RATE_BUCKET_CAP) return
-  // Drop oldest reset windows first under pressure.
   const ordered = [...rateBuckets.entries()].sort(
     (a, b) => a[1].resetAt - b[1].resetAt,
   )
@@ -101,8 +114,14 @@ export function allowContactRequest(
   key: string,
   now = Date.now(),
 ): boolean {
-  const windowMs = Number(process.env.CONTACT_RATE_LIMIT_WINDOW_MS ?? 60_000)
-  const max = Number(process.env.CONTACT_RATE_LIMIT_MAX ?? 5)
+  const windowMs = readPositiveIntEnv('CONTACT_RATE_LIMIT_WINDOW_MS', 60_000, {
+    min: 1_000,
+    max: 3_600_000,
+  })
+  const max = readPositiveIntEnv('CONTACT_RATE_LIMIT_MAX', 5, {
+    min: 1,
+    max: 100,
+  })
   pruneRateBuckets(now)
   const bucket = rateBuckets.get(key)
   if (!bucket || now > bucket.resetAt) {
@@ -136,22 +155,41 @@ function readBoundedString(value: unknown, max: number): ParsedField {
 
 function parseBody(raw: ContactRequest['body']): ContactBody | null {
   if (raw == null) return {}
-  if (typeof raw === 'object') return raw as ContactBody
   if (typeof raw === 'string') {
-    if (raw.length > CONTACT_MAX_BODY_BYTES) return null
+    if (Buffer.byteLength(raw, 'utf8') > CONTACT_MAX_BODY_BYTES) return null
     try {
-      return JSON.parse(raw) as ContactBody
+      const parsed: unknown = JSON.parse(raw)
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return null
+      }
+      return parsed as ContactBody
     } catch {
       return null
     }
   }
-  return null
+  if (typeof raw !== 'object' || Array.isArray(raw)) return null
+  try {
+    if (Buffer.byteLength(JSON.stringify(raw), 'utf8') > CONTACT_MAX_BODY_BYTES) {
+      return null
+    }
+  } catch {
+    return null
+  }
+  return raw as ContactBody
 }
 
 function isJsonContentType(req: ContactRequest): boolean {
   const contentType = headerValue(req.headers, 'content-type').toLowerCase()
-  if (!contentType) return true // Vercel may pre-parse without forwarding CT in tests
   return contentType.includes('application/json')
+}
+
+/** Resend accepted-mail payload — require an id string when JSON is present. */
+export function isAcceptedResendPayload(payload: unknown): boolean {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return false
+  }
+  const id = (payload as { id?: unknown }).id
+  return typeof id === 'string' && id.length > 0
 }
 
 export type ContactHandlerDeps = {
@@ -235,7 +273,10 @@ export async function handleContactRequest(
   const safeName = escapeHtml(name)
   const safeEmail = escapeHtml(email)
   const safeMessage = escapeHtml(message).replaceAll('\n', '<br />')
-  const timeoutMs = Number(process.env.CONTACT_RESEND_TIMEOUT_MS ?? 10_000)
+  const timeoutMs = readPositiveIntEnv('CONTACT_RESEND_TIMEOUT_MS', 10_000, {
+    min: 1_000,
+    max: 60_000,
+  })
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
 
@@ -264,6 +305,20 @@ export async function handleContactRequest(
       return
     }
 
+    let providerPayload: unknown = null
+    try {
+      providerPayload = await response.json()
+    } catch {
+      res.status(502).json({ ok: false, error: 'provider' })
+      return
+    }
+
+    if (!isAcceptedResendPayload(providerPayload)) {
+      res.status(502).json({ ok: false, error: 'provider' })
+      return
+    }
+
+    // Acceptance only — not confirmation of inbox delivery.
     res.status(200).json({ ok: true })
   } catch {
     res.status(502).json({ ok: false, error: 'provider' })

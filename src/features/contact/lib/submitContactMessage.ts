@@ -13,6 +13,9 @@ export type ContactSubmitResult =
       errors?: ReturnType<typeof validateContactForm>
     }
 
+export type ContactApiSuccess = { ok: true }
+export type ContactApiFailure = { ok: false; error?: string }
+
 const DEFAULT_CONTACT_API_URL = '/api/contact'
 
 /**
@@ -32,10 +35,22 @@ export function resolveContactApiUrl(): string {
 export function resolveContactSubmitMode(): 'live' | 'mock' | 'unavailable' {
   const allowMock = import.meta.env.VITE_CONTACT_ALLOW_MOCK === 'true'
   // Prefer same-origin `/api/contact` in all environments; mock only when asked.
-  if (allowMock && import.meta.env.DEV && !String(import.meta.env.VITE_CONTACT_API_URL ?? '').trim()) {
+  if (
+    allowMock &&
+    import.meta.env.DEV &&
+    !String(import.meta.env.VITE_CONTACT_API_URL ?? '').trim()
+  ) {
     return 'mock'
   }
   return 'live'
+}
+
+/** Accept only an explicit `{ ok: true }` contract — never HTTP status alone. */
+export function parseContactApiResponse(payload: unknown): boolean {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return false
+  }
+  return (payload as ContactApiSuccess).ok === true
 }
 
 export async function submitContactMessage(
@@ -70,11 +85,22 @@ export async function submitContactMessage(
       }),
     })
 
+    let payload: unknown = null
+    try {
+      payload = await response.json()
+    } catch {
+      payload = null
+    }
+
     if (response.status === 503) {
       return { ok: false, reason: 'unavailable' }
     }
 
     if (!response.ok) {
+      return { ok: false, reason: 'server' }
+    }
+
+    if (!parseContactApiResponse(payload)) {
       return { ok: false, reason: 'server' }
     }
 

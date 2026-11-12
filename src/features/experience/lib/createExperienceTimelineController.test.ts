@@ -23,6 +23,7 @@ vi.mock('gsap', () => {
     default: {
       registerPlugin: vi.fn(),
       set: vi.fn(),
+      getProperty: vi.fn(() => 0),
       fromTo,
       context,
       matchMedia,
@@ -105,16 +106,10 @@ function mountTimelineDom(options?: { withIntro?: boolean; withEndpoint?: boolea
 
 function lastFromToVars() {
   const vars = fromTo.mock.calls.at(-1)?.[2] as {
+    onUpdate?: (this: { progress: () => number }) => void
     scrollTrigger?: {
       scrub?: number
-      onUpdate?: (self: {
-        progress: number
-        animation?: { progress: () => number }
-      }) => void
-      onRefresh?: (self: {
-        progress: number
-        animation?: { progress: () => number }
-      }) => void
+      onRefresh?: () => void
     }
   }
   return vars
@@ -122,11 +117,8 @@ function lastFromToVars() {
 
 function runTweenProgress(value: number) {
   const vars = lastFromToVars()
-  expect(vars.scrollTrigger?.onUpdate).toBeTypeOf('function')
-  vars.scrollTrigger!.onUpdate!({
-    progress: value,
-    animation: { progress: () => value },
-  })
+  expect(vars.onUpdate).toBeTypeOf('function')
+  vars.onUpdate!.call({ progress: () => value })
 }
 
 describe('createExperienceTimelineController', () => {
@@ -235,7 +227,7 @@ describe('createExperienceTimelineController', () => {
     expect(fromTo).toHaveBeenCalled()
     const vars = lastFromToVars()
     expect(vars.scrollTrigger?.scrub).toBeTypeOf('number')
-    expect(vars.scrollTrigger?.onUpdate).toBeTypeOf('function')
+    expect(vars.onUpdate).toBeTypeOf('function')
     expect(vars.scrollTrigger?.onRefresh).toBeTypeOf('function')
     expect(ScrollTrigger.refresh).toHaveBeenCalled()
 
@@ -244,7 +236,7 @@ describe('createExperienceTimelineController', () => {
     expect(contextRevert).toHaveBeenCalled()
   })
 
-  it('prefers animation.progress over raw ScrollTrigger progress', () => {
+  it('keeps milestones on the tween update path during scrub settle', () => {
     const dom = mountTimelineDom()
     createExperienceTimelineController(
       {
@@ -254,15 +246,14 @@ describe('createExperienceTimelineController', () => {
       { prefersReducedMotion: false },
     )
 
-    const vars = lastFromToVars()
-    // Raw ST progress is ahead (0.9); animated line is still at 0.01 → no activations.
-    vars.scrollTrigger!.onUpdate!({
-      progress: 0.9,
-      animation: { progress: () => 0.01 },
-    })
+    // Scrub still catching up — only the tween progress may advance.
+    runTweenProgress(0.01)
     expect(dom.nodes.every((node) => !node.classList.contains('is-active'))).toBe(
       true,
     )
+    runTweenProgress(0.35)
+    expect(dom.nodes[1]?.classList.contains('is-active')).toBe(true)
+    expect(dom.year.textContent).toBe('2023')
   })
 
   it('activates milestones from animated tween progress, including reverse and CTA endpoint', () => {

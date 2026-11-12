@@ -164,30 +164,28 @@ export function createExperienceTimelineController(
     measureThresholds()
     syncActive(0)
 
+    // Milestone sync lives on the tween onUpdate so numeric scrub lag stays
+    // aligned with the visible progress line after scroll stops.
     gsap.fromTo(
       progress,
       { scaleY: 0 },
       {
         scaleY: 1,
         ease: 'none',
+        onUpdate() {
+          syncActive(this.progress())
+        },
         scrollTrigger: {
           trigger: track,
           start: EXPERIENCE_TIMELINE.progressStart,
           end: EXPERIENCE_TIMELINE.progressEnd,
           scrub: EXPERIENCE_TIMELINE.scrub,
           invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            // Prefer the tween's scrubbed progress (matches rendered scaleY),
-            // not raw ScrollTrigger progress which leads the visible line.
-            const animated = self.animation?.progress()
-            syncActive(
-              typeof animated === 'number' ? animated : self.progress,
-            )
-          },
-          onRefresh: (self) => {
+          onRefresh: () => {
             measureThresholds()
-            const animated = self.animation?.progress()
-            if (typeof animated === 'number') syncActive(animated)
+            // ease:none → rendered scaleY matches tween progress.
+            const rendered = Number(gsap.getProperty(progress, 'scaleY')) || 0
+            syncActive(rendered)
           },
         },
       },
