@@ -19,6 +19,59 @@
   pointer-events: none;
 }
 
+/*
+ * Mirrored About index — top-left on Experience / Contact.
+ * Portfolio surface tokens so it stays legible on the inverted page.
+ */
+.about-section__index-column--leading {
+  --about-index-below-nav: clamp(2.5rem, 5.5vh, 3.25rem);
+  --about-index-top-extra: 28px;
+  --about-index-column-gap: 8px;
+  --about-index-stack-gap: 2px;
+  --color-foreground: var(--color-portfolio-foreground);
+  --color-text-muted: var(--color-portfolio-text-muted);
+  --color-border: var(--color-portfolio-border);
+  --color-background: var(--color-portfolio-background);
+  right: auto;
+  left: var(--header-controls-right);
+  align-items: flex-start;
+}
+
+.about-section__index-column--leading .about-section__index-stack {
+  align-items: flex-start;
+}
+
+.about-section__index-column--leading .about-section__index--inactive .about-section__index-line {
+  transform-origin: 0% 50%;
+}
+
+.about-section__index-column--leading .about-section__index--active .about-section__index-label {
+  color: var(--color-foreground);
+}
+
+.about-section__index-column--leading .about-section__index--active .about-section__index-line {
+  background: var(--color-foreground);
+}
+
+/* Sticky host so the leading index tracks the viewport while the section scrolls. */
+.portfolio-section-index-rail {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Contact — tuck the mirrored index just under the chrome. */
+.portfolio-section-index-rail--high .about-section__index-column--leading {
+  top: calc(var(--header-controls-top) + clamp(2.75rem, 4.5vh, 3.75rem));
+}
+
+/* Experience — park the index in the lower third of the viewport. */
+.portfolio-section-index-rail--low .about-section__index-column--leading {
+  top: calc(100svh - clamp(9.5rem, 24vh, 14rem));
+}
+
 .about-section__index-stack {
   display: flex;
   flex-direction: column;
@@ -44,8 +97,15 @@
   justify-content: flex-start;
   gap: 0.75rem;
   min-height: calc(var(--about-index-font) * 1.15);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
   pointer-events: auto;
-  cursor: default;
+  cursor: pointer;
   isolation: isolate;
 }
 
@@ -152,7 +212,8 @@
 }
 
 .portfolio-chrome[data-mode='standard'],
-.portfolio-chrome[data-mode='compact'] {
+.portfolio-chrome[data-mode='compact'],
+.portfolio-chrome[data-mode='rail'] {
   opacity: 1;
   visibility: visible;
   transform: none;
@@ -385,6 +446,160 @@
   outline-color: var(--chrome-fg);
 }
 
+/* Skills desktop: top strip keeps only the theme toggle. */
+.portfolio-nav--theme-only {
+  justify-content: flex-end;
+  background: transparent;
+  padding-bottom: 0.55rem;
+}
+
+.portfolio-nav__brand-spacer {
+  display: none;
+}
+
+/* —— Vertical editorial rail (Skills desktop) —— */
+.portfolio-nav-rail {
+  position: fixed;
+  z-index: 6;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: clamp(2.75rem, 3.6vw, 3.35rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  padding:
+    calc(var(--header-controls-top) + 0.15rem)
+    0
+    max(1.25rem, env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+  color: var(--chrome-fg);
+  /* Rotated vertical labels must not paint over Skills headings. */
+  overflow: hidden;
+}
+
+.portfolio-nav-rail__brand,
+.portfolio-nav-rail__links,
+.portfolio-nav-rail__link,
+.portfolio-nav-rail__active {
+  pointer-events: auto;
+}
+
+.portfolio-nav-rail__brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: opacity var(--interaction-fast, 160ms) var(--interaction-ease);
+}
+
+.portfolio-nav-rail__brand:hover {
+  opacity: 0.82;
+}
+
+.portfolio-nav-rail__brand:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--chrome-fg);
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
+.portfolio-nav-rail__logo {
+  display: block;
+  width: clamp(1.85rem, 2.4vw, 2.25rem);
+  height: clamp(1.85rem, 2.4vw, 2.25rem);
+  object-fit: contain;
+}
+
+.portfolio-nav-rail__spine {
+  flex: 0 0 auto;
+  width: 1px;
+  height: clamp(1.5rem, 4vh, 2.5rem);
+  background: var(--chrome-border);
+}
+
+.portfolio-nav-rail__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.15rem;
+  /* Bottom → top reading along the left edge; logo stays upright above. */
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: clamp(0.62rem, 0.28vw + 0.5rem, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.portfolio-nav-rail__link {
+  color: var(--chrome-strong);
+  text-decoration: none;
+  transition: color var(--interaction-fast, 160ms) var(--interaction-ease);
+}
+
+.portfolio-nav-rail__link:hover {
+  color: var(--chrome-hover);
+}
+
+.portfolio-nav-rail__link:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--chrome-fg);
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
+.portfolio-nav-rail .portfolio-nav__soon {
+  color: var(--chrome-muted);
+}
+
+/* Active section marker + progress (theme toggle stays in the top strip). */
+.portfolio-nav-rail__active {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  padding-bottom: 0.35rem;
+}
+
+.portfolio-nav-rail__active-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: clamp(0.62rem, 0.28vw + 0.5rem, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--chrome-muted);
+  white-space: nowrap;
+}
+
+.portfolio-nav-rail__progress {
+  position: relative;
+  width: 1px;
+  height: clamp(3.5rem, 12vh, 5.5rem);
+  background: color-mix(in srgb, var(--chrome-border) 70%, transparent);
+  overflow: hidden;
+}
+
+.portfolio-nav-rail__progress-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 38%;
+  background: var(--chrome-fg);
+}
+
+.portfolio-nav-rail__progress-fill[data-section='projects'] {
+  height: 56%;
+}
+
 .about-section__index-marker {
   display: none;
 }
@@ -397,6 +612,12 @@
 }
 
 @media (max-width: 700px) {
+  /* Compact chrome already names the section — hide the mirrored editorial index. */
+  .portfolio-section-index-rail,
+  .about-section__index-column--leading {
+    display: none;
+  }
+
   .portfolio-nav {
     flex-wrap: nowrap;
     align-items: center;

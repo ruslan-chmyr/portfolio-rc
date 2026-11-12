@@ -11,11 +11,11 @@ describe('detectActivePortfolioSection', () => {
     ).toBe('intro')
   })
 
-  it('prefers projects scene ownership over skills geometry', () => {
+  it('prefers projects nav ownership over skills geometry', () => {
     expect(
       detectActivePortfolioSection({
         nativeScroll: true,
-        projectsSceneActive: true,
+        projectsNavOwned: true,
         skillsHandoffPhase: 'settled',
         sectionTops: {
           about: -800,
@@ -28,11 +28,47 @@ describe('detectActivePortfolioSection', () => {
     ).toBe('projects')
   })
 
+  it('keeps Skills while the Projects wipe has not reached nav ownership', () => {
+    expect(
+      detectActivePortfolioSection({
+        nativeScroll: true,
+        projectsNavOwned: false,
+        projectsSceneActive: true,
+        skillsHandoffPhase: 'passed',
+        sectionTops: {
+          about: -800,
+          expertise: 0,
+          projects: 0,
+          experience: 900,
+          contact: 1600,
+        },
+      }),
+    ).toBe('expertise')
+  })
+
+  it('does not let mid-wipe geometry override Skills chrome', () => {
+    expect(
+      detectActivePortfolioSection({
+        nativeScroll: true,
+        projectsNavOwned: false,
+        projectsSceneActive: true,
+        skillsHandoffPhase: null,
+        sectionTops: {
+          about: -800,
+          expertise: 0,
+          projects: 0,
+          experience: 900,
+          contact: 1600,
+        },
+      }),
+    ).toBe('expertise')
+  })
+
   it('uses skills handoff settled phase before geometry', () => {
     expect(
       detectActivePortfolioSection({
         nativeScroll: true,
-        projectsSceneActive: false,
+        projectsNavOwned: false,
         skillsHandoffPhase: 'settled',
         sectionTops: {
           about: -400,
@@ -49,7 +85,7 @@ describe('detectActivePortfolioSection', () => {
     expect(
       detectActivePortfolioSection({
         nativeScroll: true,
-        projectsSceneActive: false,
+        projectsNavOwned: false,
         skillsHandoffPhase: 'aligning-skills',
         sectionTops: {
           about: -200,
@@ -66,7 +102,7 @@ describe('detectActivePortfolioSection', () => {
     expect(
       detectActivePortfolioSection({
         nativeScroll: true,
-        projectsSceneActive: false,
+        projectsNavOwned: false,
         skillsHandoffPhase: 'passed',
         viewportHeight: 1000,
         sectionTops: {

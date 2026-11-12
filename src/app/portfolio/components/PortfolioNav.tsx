@@ -5,7 +5,7 @@ import {
   EXPERIENCE_CV_PDF_URL,
   isExperienceCvPdfConfigured,
 } from '../../../features/experience/model/experienceConfig'
-import { portfolioLogoSrc, useTheme } from '../../../shared/theme'
+import { chromeLogoSrc, useTheme } from '../../../shared/theme'
 import { ThemeToggle } from '../../../shared/ui/ThemeToggle/ThemeToggle'
 import { usePortfolioNavigation } from '../hooks/usePortfolioNavigation'
 import { navigatePortfolioSection } from '../lib/navigatePortfolioSection'
@@ -16,6 +16,32 @@ import {
 } from '../lib/portfolioSections'
 import '../styles/portfolio-chrome.css'
 
+function ResumeControl({
+  configured,
+  className,
+}: {
+  configured: boolean
+  className?: string
+}) {
+  if (configured) {
+    return (
+      <a
+        className={className}
+        href={EXPERIENCE_CV_PDF_URL}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Resume
+      </a>
+    )
+  }
+  return (
+    <span className={className ? `${className} portfolio-nav__soon` : 'portfolio-nav__soon'} title="Resume coming soon">
+      Resume
+    </span>
+  )
+}
+
 export function PortfolioNav() {
   const { theme } = useTheme()
   const { mode, activeSection, surface } = usePortfolioNavigation()
@@ -24,13 +50,10 @@ export function PortfolioNav() {
   const menuRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
 
-  const immersive = surface === 'immersive'
-  const logoSrc = immersive
-    ? logoOnDarkBg
-    : portfolioLogoSrc(theme, {
-        onDarkBg: logoOnDarkBg,
-        onLightBg: logoOnLightBg,
-      })
+  const logoSrc = chromeLogoSrc(theme, surface, {
+    onDarkBg: logoOnDarkBg,
+    onLightBg: logoOnLightBg,
+  })
 
   const resumeConfigured = isExperienceCvPdfConfigured(EXPERIENCE_CV_PDF_URL)
   const activeEntry = findPortfolioSection(
@@ -48,6 +71,16 @@ export function PortfolioNav() {
   }
 
   const menuVisible = mode === 'compact' && menuOpen
+  const railActive = mode === 'rail'
+  /** Skills/Projects mobile: RC + Resume + Contact (no Menu), matching the rail chrome. */
+  const immersiveCompact =
+    mode === 'compact' &&
+    (activeSection === 'expertise' || activeSection === 'projects')
+  const showCompactMenu = mode === 'compact' && !immersiveCompact
+  const showInlineLinks = mode === 'standard' || immersiveCompact
+  const railActiveLabel = activeEntry
+    ? formatPortfolioSectionLabel(activeEntry.number, activeEntry.title)
+    : '02 / Skills'
 
   useEffect(() => {
     if (!menuVisible) return
@@ -88,66 +121,69 @@ export function PortfolioNav() {
       data-active-section={activeSection}
       aria-hidden={mode === 'intro' ? true : undefined}
     >
-      <nav className="portfolio-nav" aria-label="Primary">
-        <a
-          className="portfolio-nav__brand"
-          href="#about-heading"
-          onClick={(event) => {
-            event.preventDefault()
-            goTo('about')
-          }}
-        >
-          <span className="portfolio-nav__logo-wrap">
-            <img
-              className="portfolio-nav__logo"
-              src={logoSrc}
-              width={40}
-              height={40}
-              alt="RC"
-            />
-          </span>
-          <span className="portfolio-nav__rule" aria-hidden />
-        </a>
+      {/* Top bar: full horizontal chrome, or theme-only strip on Skills/Projects rail. */}
+      <nav
+        className={[
+          'portfolio-nav',
+          railActive ? 'portfolio-nav--theme-only' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        aria-label="Primary"
+      >
+        {!railActive ? (
+          <a
+            className="portfolio-nav__brand"
+            href="#about-heading"
+            onClick={(event) => {
+              event.preventDefault()
+              goTo('about')
+            }}
+          >
+            <span className="portfolio-nav__logo-wrap">
+              <img
+                className="portfolio-nav__logo"
+                src={logoSrc}
+                width={40}
+                height={40}
+                alt="RC"
+              />
+            </span>
+            <span className="portfolio-nav__rule" aria-hidden />
+          </a>
+        ) : (
+          <span className="portfolio-nav__brand-spacer" aria-hidden />
+        )}
 
-        {mode === 'compact' && activeSection !== 'about' ? (
+        {showCompactMenu && activeSection !== 'about' ? (
           <p className="portfolio-nav__section" aria-live="polite">
             {activeLabel}
           </p>
         ) : null}
 
         <div className="portfolio-nav__end">
-          {mode === 'standard' ? (
+          {showInlineLinks ? (
             <ul className="portfolio-nav__links">
               <li>
-                {resumeConfigured ? (
+                <ResumeControl configured={resumeConfigured} />
+              </li>
+              {activeSection !== 'contact' ? (
+                <li>
                   <a
-                    href={EXPERIENCE_CV_PDF_URL}
-                    target="_blank"
-                    rel="noreferrer"
+                    href="#contact"
+                    onClick={(event) => {
+                      event.preventDefault()
+                      goTo('contact')
+                    }}
                   >
-                    Resume
+                    Contact
                   </a>
-                ) : (
-                  <span className="portfolio-nav__soon" title="Resume coming soon">
-                    Resume
-                  </span>
-                )}
-              </li>
-              <li>
-                <a
-                  href="#contact"
-                  onClick={(event) => {
-                    event.preventDefault()
-                    goTo('contact')
-                  }}
-                >
-                  Contact
-                </a>
-              </li>
+                </li>
+              ) : null}
             </ul>
           ) : null}
 
-          {mode === 'compact' ? (
+          {showCompactMenu ? (
             <div className="portfolio-nav__menu" ref={menuRef}>
               <button
                 ref={menuButtonRef}
@@ -185,26 +221,73 @@ export function PortfolioNav() {
                     </li>
                   ))}
                   <li>
-                    {resumeConfigured ? (
-                      <a
-                        href={EXPERIENCE_CV_PDF_URL}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Resume
-                      </a>
-                    ) : (
-                      <span className="portfolio-nav__soon">Resume</span>
-                    )}
+                    <ResumeControl configured={resumeConfigured} />
                   </li>
                 </ul>
               ) : null}
             </div>
           ) : null}
 
+          {/* Theme toggle stays top-right on rail sections; not in the rail. */}
           <ThemeToggle />
         </div>
       </nav>
+
+      {railActive ? (
+        <nav className="portfolio-nav-rail" aria-label="Section primary">
+          <a
+            className="portfolio-nav-rail__brand"
+            href="#about-heading"
+            onClick={(event) => {
+              event.preventDefault()
+              goTo('about')
+            }}
+          >
+            <img
+              className="portfolio-nav-rail__logo"
+              src={logoSrc}
+              width={36}
+              height={36}
+              alt="RC"
+            />
+          </a>
+
+          <div className="portfolio-nav-rail__spine" aria-hidden />
+
+          <ul className="portfolio-nav-rail__links">
+            <li>
+              <a
+                className="portfolio-nav-rail__link"
+                href="#contact"
+                onClick={(event) => {
+                  event.preventDefault()
+                  goTo('contact')
+                }}
+              >
+                Contact
+              </a>
+            </li>
+            <li>
+              <ResumeControl
+                configured={resumeConfigured}
+                className="portfolio-nav-rail__link"
+              />
+            </li>
+          </ul>
+
+          <div className="portfolio-nav-rail__active" aria-current="page">
+            <span className="portfolio-nav-rail__active-label">
+              {railActiveLabel}
+            </span>
+            <span className="portfolio-nav-rail__progress" aria-hidden>
+              <span
+                className="portfolio-nav-rail__progress-fill"
+                data-section={activeSection}
+              />
+            </span>
+          </div>
+        </nav>
+      ) : null}
     </header>
   )
 }

@@ -11,11 +11,24 @@ export const SKILLS_ENTRANCE_DONE_EVENT = 'skills-entrance-done'
 /** `documentElement.dataset` key while the Projects scrub scene owns the viewport. */
 export const PROJECTS_SCENE_DATASET_KEY = 'projectsScene'
 
+/**
+ * Chrome/nav ownership — set only once the blue panel wipe is nearly complete,
+ * so Skills rail labels stay until Projects has almost finished covering.
+ */
+export const PROJECTS_NAV_DATASET_KEY = 'projectsNav'
+
 export function isProjectsSceneActive(
   root: ParentNode = document.documentElement,
 ): boolean {
   if (!(root instanceof HTMLElement)) return false
   return root.dataset[PROJECTS_SCENE_DATASET_KEY] === 'active'
+}
+
+export function isProjectsNavOwned(
+  root: ParentNode = document.documentElement,
+): boolean {
+  if (!(root instanceof HTMLElement)) return false
+  return root.dataset[PROJECTS_NAV_DATASET_KEY] === 'owned'
 }
 
 export function setProjectsSceneActive(
@@ -28,6 +41,14 @@ export function setProjectsSceneActive(
   } else {
     delete document.documentElement.dataset[PROJECTS_SCENE_DATASET_KEY]
     delete section.dataset.projectsActive
+  }
+}
+
+export function setProjectsNavOwned(owned: boolean): void {
+  if (owned) {
+    document.documentElement.dataset[PROJECTS_NAV_DATASET_KEY] = 'owned'
+  } else {
+    delete document.documentElement.dataset[PROJECTS_NAV_DATASET_KEY]
   }
 }
 

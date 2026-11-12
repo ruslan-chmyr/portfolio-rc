@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('gsap/ScrollTrigger', () => ({
   ScrollTrigger: {
-    getAll: () => [],
+    getAll: vi.fn(() => []),
   },
 }))
 
@@ -11,6 +11,7 @@ vi.mock('../../../shared/scene/portfolioScene', () => ({
   isProjectsSceneActive: () => false,
 }))
 
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
   endPortfolioNavSession,
   isPortfolioNavSessionActive,
@@ -45,6 +46,8 @@ describe('navigatePortfolioSection', () => {
 
   afterEach(() => {
     endPortfolioNavSession()
+    vi.mocked(ScrollTrigger.getAll).mockReset()
+    vi.mocked(ScrollTrigger.getAll).mockReturnValue([])
     vi.unstubAllGlobals()
   })
 
@@ -125,8 +128,32 @@ describe('navigatePortfolioSection', () => {
     window.scrollTo = scrollTo
 
     expect(navigatePortfolioSection('about')).toBe(true)
+    // Without an About ScrollTrigger, falls back to 0 / heading measurement.
     expect(scrollTo).toHaveBeenCalledWith(
       expect.objectContaining({ top: 0, left: 0 }),
+    )
+  })
+
+  it('lands About navigation on the settled bio progress when a pin exists', () => {
+    document.documentElement.classList.add('portfolio-native-scroll')
+    document.body.innerHTML = '<section class="about-section"></section>'
+    Object.defineProperty(window, 'scrollY', {
+      value: 4000,
+      configurable: true,
+      writable: true,
+    })
+    const scrollTo = vi.fn()
+    window.scrollTo = scrollTo
+
+    const about = document.querySelector('.about-section')
+    vi.mocked(ScrollTrigger.getAll).mockReturnValue([
+      { trigger: about, start: 100, end: 1100 } as never,
+    ])
+
+    expect(navigatePortfolioSection('about')).toBe(true)
+    // ABOUT_RETURN_PROGRESS = settledStart (0.86) → 100 + 1000 * 0.86
+    expect(scrollTo).toHaveBeenCalledWith(
+      expect.objectContaining({ top: 960, left: 0 }),
     )
   })
 })

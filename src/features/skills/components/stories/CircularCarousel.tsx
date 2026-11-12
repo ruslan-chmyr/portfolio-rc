@@ -954,6 +954,9 @@ const CircularCarousel = ({
     if (event.pointerType === 'mouse') {
       state.pointer.inside = true;
       updatePointer(event);
+      if (settingsRef.current.pauseOnHover && !state.drag) {
+        setHoverPaused(isOverCardSurface(event.target));
+      }
     }
     const press = state.press;
     if (!press || press.id !== event.pointerId) {
@@ -1011,16 +1014,26 @@ const CircularCarousel = ({
     wakeRef.current();
   };
 
+  const isOverCardSurface = (target: EventTarget | null) =>
+    target instanceof Element && Boolean(target.closest('[data-cc-index]'));
+
+  const setHoverPaused = (next: boolean) => {
+    const state = stateRef.current;
+    if (state.hover === next) return;
+    state.hover = next;
+    wakeRef.current();
+  };
+
   const handlePointerEnter = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType !== 'mouse') return;
-    stateRef.current.hover = true;
-    wakeRef.current();
+    // Pause drift only while the pointer is over a card face — not empty stage chrome.
+    setHoverPaused(isOverCardSurface(event.target));
   };
 
   const handlePointerLeave = (event: React.PointerEvent<HTMLDivElement>) => {
     const state = stateRef.current;
     if (event.pointerType === 'mouse') {
-      state.hover = false;
+      setHoverPaused(false);
       state.pointer.inside = false;
     }
     wakeRef.current();

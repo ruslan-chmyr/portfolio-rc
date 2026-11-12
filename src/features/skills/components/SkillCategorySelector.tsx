@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useId,
-  useRef,
-  type KeyboardEvent,
-} from 'react'
+import { useCallback, useId, useRef, type KeyboardEvent } from 'react'
 import {
   canSelectSkillBoardCategory,
   type SkillBoardCategory,
@@ -20,8 +15,7 @@ type SkillCategorySelectorProps = {
 }
 
 /**
- * Neumorphic FE ↔ AI board switch.
- * Single control with a sliding knob; arrows also move between boards.
+ * Segmented FE / AI board control — two equal centered buttons in one pill.
  */
 export function SkillCategorySelector({
   activeCategory,
@@ -29,11 +23,9 @@ export function SkillCategorySelector({
   locked = false,
 }: SkillCategorySelectorProps) {
   const labelId = useId()
-  const buttonRef = useRef<HTMLButtonElement | null>(null)
-  const isFe = activeCategory === 'fe'
+  const groupRef = useRef<HTMLDivElement | null>(null)
   const feAvailable = canSelectSkillBoardCategory('fe')
   const aiAvailable = canSelectSkillBoardCategory('ai')
-  const canToggle = feAvailable && aiAvailable
 
   const selectCategory = useCallback(
     (category: SkillBoardCategory) => {
@@ -44,12 +36,7 @@ export function SkillCategorySelector({
     [activeCategory, locked, onSelect],
   )
 
-  const toggle = useCallback(() => {
-    if (locked || !canToggle) return
-    selectCategory(isFe ? 'ai' : 'fe')
-  }, [canToggle, isFe, locked, selectCategory])
-
-  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+  const onGroupKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
       event.preventDefault()
       selectCategory('ai')
@@ -72,52 +59,53 @@ export function SkillCategorySelector({
   }
 
   return (
-    <div className="skills-category-selector" aria-labelledby={labelId}>
+    <div
+      ref={groupRef}
+      className={[
+        'skills-category-seg',
+        locked ? 'skills-category-seg--locked' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      role="group"
+      aria-labelledby={labelId}
+      aria-disabled={locked || undefined}
+      onKeyDown={onGroupKeyDown}
+    >
       <span id={labelId} className="skills-keyboard-a11y">
         Skill board category
       </span>
       <button
-        ref={buttonRef}
         type="button"
         className={[
-          'skills-category-toggle',
-          isFe ? 'skills-category-toggle--fe' : 'skills-category-toggle--ai',
-          locked ? 'skills-category-toggle--locked' : '',
+          'skills-category-seg__btn',
+          activeCategory === 'fe' ? 'skills-category-seg__btn--active' : '',
+          activeCategory === 'fe' ? 'skills-category-seg__btn--fe' : '',
         ]
           .filter(Boolean)
           .join(' ')}
-        role="switch"
-        aria-checked={!isFe}
-        aria-label="Toggle skill board between FE and AI"
-        aria-disabled={locked || !canToggle}
-        aria-busy={locked || undefined}
-        disabled={!canToggle}
-        onClick={toggle}
-        onKeyDown={onKeyDown}
+        aria-pressed={activeCategory === 'fe'}
+        aria-label="Frontend skills board"
+        disabled={!feAvailable || (locked && activeCategory !== 'fe')}
+        onClick={() => selectCategory('fe')}
       >
-        <span className="skills-category-toggle__switch" aria-hidden />
-        <span
-          className={[
-            'skills-category-toggle__side',
-            'skills-category-toggle__side--fe',
-            isFe ? 'skills-category-toggle__side--active' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          FE
-        </span>
-        <span
-          className={[
-            'skills-category-toggle__side',
-            'skills-category-toggle__side--ai',
-            !isFe ? 'skills-category-toggle__side--active' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          AI
-        </span>
+        FE
+      </button>
+      <button
+        type="button"
+        className={[
+          'skills-category-seg__btn',
+          activeCategory === 'ai' ? 'skills-category-seg__btn--active' : '',
+          activeCategory === 'ai' ? 'skills-category-seg__btn--ai' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        aria-pressed={activeCategory === 'ai'}
+        aria-label="AI skills board"
+        disabled={!aiAvailable || (locked && activeCategory !== 'ai')}
+        onClick={() => selectCategory('ai')}
+      >
+        AI
       </button>
     </div>
   )

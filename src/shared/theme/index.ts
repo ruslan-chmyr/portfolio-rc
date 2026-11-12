@@ -2,7 +2,8 @@ export { ThemeProvider } from './ThemeProvider'
 export type { ThemeContextValue } from './themeContext'
 export { useTheme } from './useTheme'
 export { applyThemeAttribute, readStoredTheme } from './initTheme'
-export { portfolioLogoSrc } from './portfolioLogoSrc'
+export { chromeLogoSrc, portfolioLogoSrc } from './portfolioLogoSrc'
+export type { PortfolioChromeSurface } from './portfolioLogoSrc'
 export {
   isSceneBridgeBackground,
   syncThemeDependentSurfaces,

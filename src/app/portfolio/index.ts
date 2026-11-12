@@ -1,5 +1,9 @@
 export { PortfolioNav } from './components/PortfolioNav'
-export { PortfolioSectionIndex } from './components/PortfolioSectionIndex'
+export {
+  PortfolioSectionIndex,
+  type PortfolioSectionIndexPlacement,
+  type PortfolioSectionIndexProps,
+} from './components/PortfolioSectionIndex'
 export {
   formatPortfolioSectionLabel,
   PORTFOLIO_CURRENT_SECTION,

@@ -61,7 +61,8 @@ describe('createSkillsEntranceController', () => {
     expect(gsap.timeline).toHaveBeenCalledTimes(1)
 
     controller.dispose()
-    expect(targets.section.dataset.skillsEntrance).toBe('done')
+    // Dispose must not force `done` — that flashes the unfinished layout on remount.
+    expect(targets.section.dataset.skillsEntrance).toBe('playing')
   })
 
   it('shows instantly for reduced motion', () => {

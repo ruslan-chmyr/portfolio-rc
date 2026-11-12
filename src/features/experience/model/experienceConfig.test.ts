@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  EXPERIENCE_CV_CTA,
   EXPERIENCE_CV_PDF_URL,
   EXPERIENCE_ENTRIES,
   getExperienceYears,
@@ -55,12 +54,7 @@ describe('experienceConfig', () => {
     expect(getExperienceYears()).toEqual(['2026', '2023', '2020', '2019'])
   })
 
-  it('keeps CV CTA copy and an unset PDF URL by default', () => {
-    expect(EXPERIENCE_CV_CTA.heading).toBe('Want the full picture?')
-    expect(EXPERIENCE_CV_CTA.description).toBe(
-      'Explore my complete experience, skills, and professional background in my CV.',
-    )
-    expect(EXPERIENCE_CV_CTA.buttonLabel).toBe('View Full CV')
+  it('keeps an unset Resume PDF URL by default', () => {
     expect(EXPERIENCE_CV_PDF_URL).toBe('')
     expect(isExperienceCvPdfConfigured()).toBe(false)
     expect(isExperienceCvPdfConfigured('https://example.com/cv.pdf')).toBe(true)

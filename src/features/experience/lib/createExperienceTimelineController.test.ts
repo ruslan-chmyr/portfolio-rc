@@ -57,14 +57,8 @@ function mountTimelineDom(options?: { withIntro?: boolean; withEndpoint?: boolea
           withIntro
             ? `<div class="experience-timeline__sidebar-sticky">
           <p class="experience-timeline__year">2026</p>
-          <div class="experience-cv-cta" data-experience-cta>
-            <a class="experience-cv-cta__button" href="https://cdn.example.com/cv.pdf">View Full CV</a>
-          </div>
         </div>`
-            : `<p class="experience-timeline__year">2026</p>
-               <div class="experience-cv-cta" data-experience-cta>
-                 <a class="experience-cv-cta__button" href="https://cdn.example.com/cv.pdf">View Full CV</a>
-               </div>`
+            : `<p class="experience-timeline__year">2026</p>`
         }
       </aside>
       <div class="experience-timeline__track" style="height: 1000px">
@@ -100,8 +94,7 @@ function mountTimelineDom(options?: { withIntro?: boolean; withEndpoint?: boolea
   const intro = section.querySelector<HTMLElement>(
     '.experience-timeline__sidebar-sticky',
   )
-  const cta = section.querySelector<HTMLElement>('[data-experience-cta]')!
-  return { section, track, progress, year, nodes, cards, intro, cta }
+  return { section, track, progress, year, nodes, cards, intro }
 }
 
 function lastFromToVars() {
@@ -256,7 +249,7 @@ describe('createExperienceTimelineController', () => {
     expect(dom.year.textContent).toBe('2023')
   })
 
-  it('activates milestones from animated tween progress, including reverse and CTA endpoint', () => {
+  it('activates milestones from animated tween progress, including reverse and endpoint', () => {
     const dom = mountTimelineDom()
     createExperienceTimelineController(
       {
@@ -271,8 +264,6 @@ describe('createExperienceTimelineController', () => {
     expect(dom.nodes.every((node) => !node.classList.contains('is-active'))).toBe(
       true,
     )
-    expect(dom.cta.classList.contains('is-active')).toBe(false)
-    expect(dom.cta.hasAttribute('inert')).toBe(true)
 
     // Fast-forward past second career node
     runTweenProgress(0.35)
@@ -280,25 +271,19 @@ describe('createExperienceTimelineController', () => {
     expect(dom.nodes[1]?.classList.contains('is-active')).toBe(true)
     expect(dom.cards[1]?.classList.contains('is-active')).toBe(true)
     expect(dom.year.textContent).toBe('2023')
-    expect(dom.cta.classList.contains('is-active')).toBe(false)
 
     // Final career node
     runTweenProgress(0.72)
     expect(dom.nodes[3]?.classList.contains('is-active')).toBe(true)
-    expect(dom.cta.classList.contains('is-active')).toBe(false)
 
-    // Endpoint illuminates CTA
+    // Track endpoint after the last career milestone
     runTweenProgress(0.95)
     expect(dom.nodes[4]?.classList.contains('is-active')).toBe(true)
-    expect(dom.cta.classList.contains('is-active')).toBe(true)
-    expect(dom.cta.hasAttribute('inert')).toBe(false)
     expect(dom.year.textContent).toBe('2019')
 
     // Reverse deactivates endpoint first
     runTweenProgress(0.72)
     expect(dom.nodes[4]?.classList.contains('is-active')).toBe(false)
-    expect(dom.cta.classList.contains('is-active')).toBe(false)
-    expect(dom.cta.hasAttribute('inert')).toBe(true)
     expect(dom.nodes[3]?.classList.contains('is-active')).toBe(true)
   })
 
@@ -368,11 +353,11 @@ describe('createExperienceTimelineController', () => {
     expect(dom.cards.every((card) => card.classList.contains('is-active'))).toBe(
       true,
     )
-    expect(dom.cta.classList.contains('is-active')).toBe(true)
-    expect(dom.cta.hasAttribute('inert')).toBe(false)
 
     controller.dispose()
-    expect(dom.cta.classList.contains('is-active')).toBe(false)
+    expect(dom.nodes.every((node) => !node.classList.contains('is-active'))).toBe(
+      true,
+    )
   })
 
   it('applyExperienceStaticPresentation covers unready/error fail-open', () => {
@@ -392,7 +377,5 @@ describe('createExperienceTimelineController', () => {
     expect(dom.cards.every((card) => card.classList.contains('is-active'))).toBe(
       true,
     )
-    expect(dom.cta.classList.contains('is-active')).toBe(true)
-    expect(dom.cta.hasAttribute('inert')).toBe(false)
   })
 })

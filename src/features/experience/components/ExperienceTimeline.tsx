@@ -6,7 +6,6 @@ import {
   type ExperienceEntry,
 } from '../model/experienceConfig'
 import { ExperienceCard } from './ExperienceCard'
-import { ExperienceCvCta } from './ExperienceCvCta'
 
 type ExperienceTimelineProps = {
   entries?: readonly ExperienceEntry[]
@@ -37,10 +36,7 @@ export function ExperienceTimeline({
   return (
     <div className="experience-timeline">
       <aside className="experience-timeline__sidebar">
-        {/*
-          Sidebar stretches with the track. Intro + year + CTA pin as one
-          stack so the final year never lands on top of the CV invite.
-        */}
+        {/* Sidebar stretches with the track; intro + year pin as one stack. */}
         <div className="experience-timeline__sidebar-sticky">
           {intro}
           <div className="experience-timeline__year-rail" aria-hidden="true">
@@ -48,7 +44,6 @@ export function ExperienceTimeline({
               {entries[0]?.year ?? ''}
             </p>
           </div>
-          <ExperienceCvCta />
         </div>
       </aside>
 

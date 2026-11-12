@@ -103,6 +103,24 @@ export function projectsExitStartsAt(): number {
   )
 }
 
+/** Total scrubbed timeline length (entrance settle + exit flight). */
+export function projectsTimelineDuration(): number {
+  return projectsExitStartsAt() + PROJECTS_SCROLL.exitDuration
+}
+
+/**
+ * ScrollTrigger progress (0–1) where chrome may switch to Projects.
+ * Default: panel fully wiped in (xPercent ≈ 0), still before the exit flight.
+ */
+export function projectsNavReadyProgress(
+  wipeCompleteRatio = 1,
+): number {
+  const ratio = Math.min(1, Math.max(0, wipeCompleteRatio))
+  return (
+    (PROJECTS_SCROLL.panelSlideDuration * ratio) / projectsTimelineDuration()
+  )
+}
+
 /** Park the trigger until Skills has finished entering, then use the normal start. */
 export function resolveProjectsTriggerStart(skills: HTMLElement | null): string {
   if (!isSkillsEntranceDone(skills)) return 'bottom+=150% bottom'

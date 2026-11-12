@@ -11,7 +11,8 @@
   --skills-stories-track: 1fr;
   --skills-shell-gap: clamp(1.1rem, 2.2vw, 2.1rem);
   --skills-panel-gap: 0.3rem;
-  --skills-inspection-tilt: -6deg;
+  /* Mockup headings are axis-aligned; keep a tiny tilt only if desired later. */
+  --skills-inspection-tilt: 0deg;
   --skills-stage-min: clamp(20rem, 42vh, 30rem);
   position: relative;
   /* Above inactive Projects overlap so entrance/handoff stay visible. */
@@ -30,10 +31,13 @@
   min-height: 100vh;
   min-height: 100dvh;
   min-height: 100svh;
+  /* Left inset grows under the Skills rail via :has() below. */
+  --skills-rail-gutter: 0px;
   padding:
     clamp(2.25rem, 5vh, 3.75rem)
-    var(--portfolio-gutter, clamp(1rem, 3vw, 2.25rem))
-    clamp(2.75rem, 7vh, 4.75rem);
+    0
+    clamp(2.75rem, 7vh, 4.75rem)
+    calc(var(--portfolio-gutter, clamp(1rem, 3vw, 2.25rem)) + var(--skills-rail-gutter));
   background:
     radial-gradient(ellipse 70% 45% at 18% 8%, rgba(94, 231, 255, 0.1), transparent 58%),
     radial-gradient(ellipse 55% 40% at 88% 92%, rgba(180, 48, 90, 0.07), transparent 55%),
@@ -43,11 +47,18 @@
   box-sizing: border-box;
 }
 
-/* Entrance seeds opacity via GSAP; keep pending shells non-interactive briefly. */
+/*
+ * Hide pending shells before GSAP seeds (and across Strict Mode remounts).
+ * Playing / done rely on GSAP inline opacity — do not force opacity here.
+ */
 .skills-section[data-skills-entrance='pending'] .skills-section__inspection-slot,
 .skills-section[data-skills-entrance='pending'] .skills-section__board-footer,
 .skills-section[data-skills-entrance='pending'] .skills-section__stage,
-.skills-section[data-skills-entrance='pending'] .skills-section__stories-panel,
+.skills-section[data-skills-entrance='pending'] .skills-section__stories-panel {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .skills-section[data-skills-entrance='playing'] .skills-section__inspection-slot,
 .skills-section[data-skills-entrance='playing'] .skills-section__board-footer,
 .skills-section[data-skills-entrance='playing'] .skills-section__stage,
@@ -64,9 +75,9 @@
 }
 
 .skills-section__shell {
-  width: min(92rem, 100%);
-  max-width: 100%;
-  margin-inline: auto;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
   display: grid;
   grid-template-columns: minmax(0, var(--skills-keyboard-track)) minmax(0, var(--skills-stories-track));
   gap: var(--skills-shell-gap);
@@ -75,6 +86,17 @@
   min-height: clamp(40rem, calc(100svh - 7.5rem), 54rem);
   overflow-x: clip;
   /* Grid track changes are animated by GSAP (avoids competing CSS transitions). */
+}
+
+/*
+ * Clear the left rail as soon as Skills owns the scene — don't wait for chrome
+ * `data-mode=rail` (one frame late → heading under RESUME + stage width jump).
+ * Rail is ~3.35rem; vertical Contact/Resume needs generous breathing room past it.
+ */
+.skills-section[data-skills-handoff='aligning-skills'],
+.skills-section[data-skills-handoff='settled'],
+html:has(.portfolio-chrome[data-mode='rail']) .skills-section {
+  --skills-rail-gutter: clamp(7.25rem, 11vw, 11.5rem);
 }
 
 .skills-section__keyboard-panel {
@@ -91,8 +113,8 @@
   flex: 1 1 auto;
   min-width: 0;
   min-height: 100%;
-  /* Keep macropad + footer visually centered against the Stories stage. */
-  justify-content: center;
+  /* Top-align with the stories column — centering left a tall empty gap above the pad. */
+  justify-content: flex-start;
 }
 
 .skills-section__stories-panel {
@@ -101,12 +123,24 @@
   flex-direction: column;
   min-width: 0;
   min-height: 100%;
-  /* Bleed into section padding so the ring can reach the viewport edge. */
-  margin-right: calc(-1 * var(--portfolio-gutter, clamp(1rem, 3vw, 2.25rem)));
-  padding-right: 0.35rem;
+  /* Hug the viewport edge — section right padding is intentionally 0. */
+  margin-right: 0;
+  padding-right: 0;
 }
 
-/* FE / AI + Sound sit under the macropad. Category tabs hide in Story Focus. */
+/* Mobile/tablet index — desktop rail already shows 02 / Skills. */
+.skills-section__index {
+  display: none;
+  margin: 0 0 0.55rem;
+  font-size: clamp(0.62rem, 0.28vw + 0.5rem, 0.72rem);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--skills-text-muted);
+  line-height: 1;
+}
+
+/* FE / AI + Sound sit under the heading (mockup). Category tabs hide in Story Focus. */
 .skills-section__board-footer {
   position: relative;
   z-index: 3;
@@ -115,170 +149,104 @@
   align-items: center;
   justify-content: flex-start;
   gap: 0.55rem;
-  margin-top: 0.35rem;
+  margin: 0.15rem 0 0.65rem;
   flex: 0 0 auto;
-  min-height: 2.9rem;
-}
-
-.skills-category-selector {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  min-height: 2.75rem;
 }
 
 /*
- * Neumorphic FE ↔ AI switch — soft extruded track + sliding knob,
- * tuned for the dark Skills scene (not the cream demo palette).
+ * Segmented FE / AI control — equal flex-centered buttons in one pill.
+ * No absolute knob; active state is the filled segment itself.
  */
-.skills-category-toggle {
-  --cat-bg: #101826;
-  --cat-light: rgba(255, 255, 255, 0.1);
-  --cat-shadow: rgba(0, 0, 0, 0.55);
+.skills-category-seg {
   --cat-fe: #5ee7ff;
   --cat-ai: #9eb6ff;
   --cat-muted: rgba(154, 166, 184, 0.72);
-  --cat-pad: 0.26rem;
-  --cat-knob: 2.35rem;
-  --cat-gap: 0.4rem;
-  position: relative;
-  appearance: none;
+  --cat-size: 2.55rem;
   box-sizing: border-box;
-  display: grid;
-  /* Columns match the knob exactly so FE/AI sit on the knob centers. */
-  grid-template-columns: var(--cat-knob) var(--cat-knob);
-  column-gap: var(--cat-gap);
-  align-items: center;
-  justify-content: center;
-  width: calc(var(--cat-knob) * 2 + var(--cat-pad) * 2 + var(--cat-gap));
-  height: calc(var(--cat-knob) + var(--cat-pad) * 2);
-  padding: var(--cat-pad);
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0.2rem;
+  height: var(--cat-size);
+  padding: 0.18rem;
   border-radius: 999px;
-  border: 2px solid #0c131f;
-  background: var(--cat-bg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 16, 28, 0.88);
   box-shadow:
-    -2px -2px 4px var(--cat-light),
-    3px 3px 6px var(--cat-shadow),
-    inset 1px 1px 3px rgba(0, 0, 0, 0.45),
-    inset -1px -1px 2px rgba(255, 255, 255, 0.04);
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  outline: none;
-  overflow: hidden;
-  transition: box-shadow 180ms ease, border-color 180ms ease;
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 6px 16px rgba(0, 0, 0, 0.28);
 }
 
-.skills-category-toggle:hover:not(:disabled):not(.skills-category-toggle--locked) {
-  border-color: color-mix(in srgb, var(--skills-cyan) 28%, #0c131f);
-}
-
-.skills-category-toggle:focus-visible {
-  box-shadow:
-    -2px -2px 4px var(--cat-light),
-    3px 3px 6px var(--cat-shadow),
-    inset 1px 1px 3px rgba(0, 0, 0, 0.45),
-    0 0 0 2px color-mix(in srgb, var(--skills-cyan) 55%, transparent);
-}
-
-.skills-category-toggle:active:not(:disabled):not(.skills-category-toggle--locked) {
-  transform: translateY(1px);
-}
-
-.skills-category-toggle:disabled,
-.skills-category-toggle--locked {
-  cursor: default;
+.skills-category-seg--locked {
   opacity: 0.72;
 }
 
-.skills-category-toggle__switch {
-  /* Span the track so this absolute layer does not steal a label column. */
-  grid-column: 1 / -1;
-  grid-row: 1;
-  position: absolute;
-  top: 50%;
-  left: var(--cat-pad);
-  right: auto;
-  width: var(--cat-knob);
-  height: var(--cat-knob);
-  border-radius: 50%;
-  background: linear-gradient(160deg, #1a2536 0%, #121b29 100%);
-  box-shadow:
-    inset 1px 1px 2px rgba(255, 255, 255, 0.12),
-    4px 5px 8px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.04);
-  transform: translateY(-50%);
-  transition:
-    left 320ms cubic-bezier(0.22, 1, 0.36, 1),
-    right 320ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 180ms ease,
-    background 180ms ease;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.skills-category-toggle--ai .skills-category-toggle__switch {
-  left: auto;
-  right: var(--cat-pad);
-  box-shadow:
-    inset 1px 1px 2px rgba(255, 255, 255, 0.14),
-    4px 5px 8px rgba(0, 0, 0, 0.45),
-    0 0 14px color-mix(in srgb, var(--cat-ai) 28%, transparent);
-}
-
-.skills-category-toggle--fe .skills-category-toggle__switch {
-  box-shadow:
-    inset 1px 1px 2px rgba(255, 255, 255, 0.14),
-    4px 5px 8px rgba(0, 0, 0, 0.45),
-    0 0 14px color-mix(in srgb, var(--cat-fe) 26%, transparent);
-}
-
-.skills-category-toggle__side {
-  position: relative;
-  z-index: 2;
-  grid-row: 1;
-  display: flex;
+.skills-category-seg__btn {
+  appearance: none;
+  box-sizing: border-box;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--cat-knob);
-  height: var(--cat-knob);
+  min-width: calc(var(--cat-size) - 0.36rem);
+  height: 100%;
   margin: 0;
-  padding: 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: normal;
-  text-transform: uppercase;
-  line-height: 1;
-  text-align: center;
+  padding: 0 0.85rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
   color: var(--cat-muted);
-  transition: color 220ms ease, opacity 220ms ease, text-shadow 220ms ease;
-  opacity: 0.62;
-  user-select: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
-.skills-category-toggle__side--fe {
-  grid-column: 1;
+.skills-category-seg__btn:hover:not(:disabled):not(.skills-category-seg__btn--active) {
+  color: var(--skills-text);
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.skills-category-toggle__side--ai {
-  grid-column: 2;
+.skills-category-seg__btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--skills-cyan) 55%, transparent);
+  outline-offset: 2px;
 }
 
-.skills-category-toggle__side--active {
-  opacity: 1;
+.skills-category-seg__btn:disabled {
+  cursor: default;
 }
 
-.skills-category-toggle--fe .skills-category-toggle__side--fe {
-  color: var(--cat-fe);
-  text-shadow: 0 0 12px color-mix(in srgb, var(--cat-fe) 35%, transparent);
+.skills-category-seg__btn--active {
+  color: #061018;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
-.skills-category-toggle--ai .skills-category-toggle__side--ai {
-  color: var(--cat-ai);
-  text-shadow: 0 0 12px color-mix(in srgb, var(--cat-ai) 35%, transparent);
+.skills-category-seg__btn--fe.skills-category-seg__btn--active {
+  background: linear-gradient(180deg, #7af0ff 0%, var(--cat-fe) 100%);
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--cat-fe) 35%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.skills-category-seg__btn--ai.skills-category-seg__btn--active {
+  background: linear-gradient(180deg, #b8c8ff 0%, var(--cat-ai) 100%);
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--cat-ai) 32%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.skills-category-seg--locked .skills-category-seg__btn:not(.skills-category-seg__btn--active) {
+  pointer-events: none;
 }
 
 .skills-sound-toggle {
-  --sound-size: 2.87rem;
+  --sound-size: 2.55rem;
   appearance: none;
   box-sizing: border-box;
   display: inline-flex;
@@ -371,9 +339,9 @@
   flex: 0 0 auto;
   width: 100%;
   margin: 0;
-  /* Tighter band — reduces dead space above the macropad. */
-  padding-top: clamp(1.05rem, 3.8vw, 1.9rem);
-  height: clamp(5.5rem, 11vh, 7rem);
+  /* Heading + lede above category controls; keyboard follows. */
+  padding-top: 0.15rem;
+  height: clamp(5.1rem, 10.5vh, 6.75rem);
   box-sizing: content-box;
   overflow: hidden;
 }
@@ -381,7 +349,8 @@
 /* Transparent stage — blends into the section background (no card seam). */
 .skills-section__stage {
   position: relative;
-  flex: 1 1 auto;
+  /* Height from width × aspect-ratio (capped) — don't flex-grow into leftover shell space. */
+  flex: 0 1 auto;
   width: 100%;
   min-height: var(--skills-stage-min);
   max-height: min(36rem, 58vh);
@@ -462,23 +431,33 @@
 
 .skills-inspection__name {
   margin: 0;
-  font-size: clamp(1.25rem, 1.3vw + 0.9rem, 1.85rem);
+  font-size: clamp(1.55rem, 1.8vw + 1rem, 2.35rem);
   font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 1.08;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
   color: #ffffff;
   overflow-wrap: anywhere;
+}
+
+.skills-inspection[data-mode='skill'] .skills-inspection__name {
+  font-size: clamp(1.25rem, 1.3vw + 0.9rem, 1.85rem);
+  letter-spacing: -0.035em;
+  line-height: 1.08;
 }
 
 .skills-inspection__lede,
 .skills-inspection__description {
   margin: 0;
-  max-width: 36ch;
+  max-width: 34ch;
   font-size: clamp(0.84rem, 0.22vw + 0.76rem, 0.98rem);
   line-height: 1.45;
   color: var(--skills-text-muted);
   overflow-wrap: anywhere;
   text-wrap: pretty;
+}
+
+.skills-inspection__lede {
+  max-width: 42ch;
 }
 
 .skills-inspection__description {
@@ -499,6 +478,13 @@
   height: 100% !important;
   touch-action: pan-y;
   background: transparent;
+  /* Avoid a 0×0 / wrong-aspect first paint before R3F measures the stage. */
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+.skills-keyboard__frame[data-sized='true'] .skills-keyboard__canvas {
+  opacity: 1;
 }
 
 .skills-fallback {
@@ -594,6 +580,7 @@
 @media (max-width: 960px) {
   .skills-section {
     min-height: 0;
+    padding-right: var(--portfolio-gutter, clamp(1rem, 3vw, 2.25rem));
   }
 
   .skills-section__shell {
@@ -621,18 +608,22 @@
   }
 
   .skills-section__inspection-slot {
-    padding-top: clamp(1.5rem, 5vw, 2.5rem);
-    height: clamp(6.25rem, 12vh, 7.75rem);
+    padding-top: 0.35rem;
+    height: clamp(5.25rem, 11vh, 6.75rem);
+  }
+
+  .skills-section__index {
+    display: block;
   }
 
   .skills-inspection {
-    --skills-inspection-tilt: -5deg;
     width: min(24rem, 94%);
   }
 }
 
 @media (max-width: 700px) {
   .skills-section {
+    --skills-rail-gutter: 0px;
     padding-inline: clamp(1rem, 4.2vw, 1.35rem);
     --skills-panel-gap: 0.4rem;
     --skills-inspection-tilt: 0deg;
@@ -646,8 +637,8 @@
   }
 
   .skills-section__inspection-slot {
-    padding-top: 0.35rem;
-    height: clamp(5.75rem, 16vh, 7.25rem);
+    padding-top: 0.15rem;
+    height: clamp(5.25rem, 15vh, 6.75rem);
   }
 
   .skills-inspection {
@@ -659,6 +650,10 @@
   }
 
   .skills-inspection__name {
+    font-size: clamp(1.45rem, 6.2vw, 1.85rem);
+  }
+
+  .skills-inspection[data-mode='skill'] .skills-inspection__name {
     font-size: clamp(1.25rem, 5vw, 1.6rem);
   }
 }
@@ -666,15 +661,14 @@
 @media (prefers-reduced-motion: reduce) {
   .skills-keyboard__canvas {
     touch-action: pan-y;
+    transition: none;
   }
 
   .skills-section__shell {
     transition: none;
   }
 
-  .skills-category-toggle,
-  .skills-category-toggle__switch,
-  .skills-category-toggle__side,
+  .skills-category-seg__btn,
   .skills-sound-toggle {
     transition: none;
   }

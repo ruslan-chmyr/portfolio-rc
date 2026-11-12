@@ -54,8 +54,10 @@ export function SkillInspection({ skill }: SkillInspectionProps) {
           </>
         ) : (
           <>
-            <h3 className="skills-inspection__name">Explore my skills</h3>
-            <p className="skills-inspection__lede">Hover, tap, or press a key.</p>
+            <h3 className="skills-inspection__name">Beyond the stack.</h3>
+            <p className="skills-inspection__lede">
+              Tools, architecture, and the decisions behind what I build.
+            </p>
           </>
         )}
       </div>

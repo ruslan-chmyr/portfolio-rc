@@ -22,11 +22,11 @@ export type ExperienceTimelineElements = {
   track: HTMLElement
   progress: HTMLElement
   year: HTMLElement
-  /** Career + CV endpoint nodes, in document order. */
+  /** Career + track endpoint nodes, in document order. */
   nodes: HTMLElement[]
   cards: HTMLElement[]
   years: readonly string[]
-  /** Sticky intro (header + year + CTA). Pinned on desktop only. */
+  /** Sticky intro (header + year). Pinned on desktop only. */
   intro?: HTMLElement | null
 }
 
@@ -46,19 +46,14 @@ export function applyExperienceStaticPresentation(
   gsap.set(progress, { scaleY: 1, transformOrigin: 'top center' })
   nodes.forEach((node) => node.classList.add('is-active'))
   cards.forEach((card) => card.classList.add('is-active'))
-  const cta = section.querySelector<HTMLElement>('[data-experience-cta]')
-  if (cta) {
-    cta.classList.add('is-active')
-    cta.removeAttribute('inert')
-  }
   if (years[0]) year.textContent = years[0]!
   section.dataset.experienceMotion = motion
 }
 
 function clearExperienceActiveClasses(
-  elements: Pick<ExperienceTimelineElements, 'nodes' | 'cards' | 'section' | 'progress'>,
+  elements: Pick<ExperienceTimelineElements, 'nodes' | 'cards' | 'progress'>,
 ): void {
-  const { nodes, cards, section, progress } = elements
+  const { nodes, cards, progress } = elements
   nodes.forEach((node) => {
     node.classList.remove('is-active')
     node.style.willChange = ''
@@ -67,14 +62,11 @@ function clearExperienceActiveClasses(
     card.classList.remove('is-active')
     card.style.willChange = ''
   })
-  const cta = section.querySelector<HTMLElement>('[data-experience-cta]')
-  cta?.classList.remove('is-active')
-  cta?.setAttribute('inert', '')
   progress.style.willChange = ''
 }
 
 /**
- * Scrubs the cyan progress line and toggles milestone/card/CTA states.
+ * Scrubs the cyan progress line and toggles milestone/card states.
  * Activation follows the *animated* progress (tween), not raw scroll progress,
  * so nodes light when the visible line reaches them under scrub lag.
  */
@@ -124,16 +116,6 @@ export function createExperienceTimelineController(
     })
   }
 
-  const cta = section.querySelector<HTMLElement>('[data-experience-cta]')
-
-  const setCtaActive = (active: boolean) => {
-    if (!cta) return
-    cta.classList.toggle('is-active', active)
-    if (active) cta.removeAttribute('inert')
-    else cta.setAttribute('inert', '')
-    // Geometry is reserved in CSS — no ScrollTrigger refresh on reveal.
-  }
-
   const syncActive = (animatedProgress: number) => {
     const active = activeMilestoneIndex(animatedProgress, thresholds)
     nodes.forEach((node, index) => {
@@ -142,8 +124,6 @@ export function createExperienceTimelineController(
     cards.forEach((card, index) => {
       card.classList.toggle('is-active', index <= active)
     })
-    // CV endpoint is the last measured node — after the final career milestone.
-    setCtaActive(active >= nodes.length - 1 && active >= 0)
 
     if (active !== lastActive) {
       lastActive = active
@@ -155,9 +135,6 @@ export function createExperienceTimelineController(
       if (nextYear) year.textContent = nextYear
     }
   }
-
-  // Start inert until the endpoint illuminates.
-  setCtaActive(false)
 
   const ctx = gsap.context(() => {
     gsap.set(progress, { scaleY: 0, transformOrigin: 'top center' })

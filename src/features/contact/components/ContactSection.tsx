@@ -1,4 +1,6 @@
 import { useRef } from 'react'
+import { PortfolioSectionIndex } from '../../../app/portfolio'
+import '../../../app/portfolio/styles/portfolio-chrome.css'
 import { useContactEntrance } from '../hooks/useContactEntrance'
 import { CONTACT_CONFIG } from '../model/contactConfig'
 import { ContactBackground } from './ContactBackground'
@@ -32,11 +34,14 @@ export function ContactSection() {
     >
       <ContactBackground />
 
+      <div className="portfolio-section-index-rail portfolio-section-index-rail--high">
+        <PortfolioSectionIndex activeId="contact" placement="leading" />
+      </div>
+
       <div className="contact-section__inner">
         <div className="contact-section__grid">
           <div className="contact-section__left">
             <div className="contact-section__intro" ref={introRef} data-contact-intro>
-              <p className="contact-section__label">{CONTACT_CONFIG.sectionLabel}</p>
               <p className="contact-section__availability">
                 <span className="contact-section__status-dot" aria-hidden="true" />
                 {CONTACT_CONFIG.availability}

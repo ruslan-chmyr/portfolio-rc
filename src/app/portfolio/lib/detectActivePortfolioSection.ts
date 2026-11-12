@@ -1,10 +1,16 @@
-import { isProjectsSceneActive } from '../../../shared/scene/portfolioScene'
+import {
+  isProjectsNavOwned,
+  isProjectsSceneActive,
+} from '../../../shared/scene/portfolioScene'
 import type { PortfolioSectionId } from './portfolioSections'
 
 const ROOT_NATIVE_SCROLL = 'portfolio-native-scroll'
 
 export type DetectActivePortfolioSectionInput = {
   nativeScroll?: boolean
+  /** True once the Projects wipe is nearly complete (chrome ownership). */
+  projectsNavOwned?: boolean
+  /** True while the Projects pin/scrub is active (may be mid-wipe). */
   projectsSceneActive?: boolean
   skillsHandoffPhase?: string | null
   /** Sorted by document order; tops are getBoundingClientRect().top */
@@ -37,11 +43,19 @@ export function detectActivePortfolioSection(
 
   if (!nativeScroll) return 'intro'
 
-  const projectsActive =
+  const projectsOwned =
+    input.projectsNavOwned ??
+    (typeof document !== 'undefined' && isProjectsNavOwned())
+
+  if (projectsOwned) return 'projects'
+
+  const projectsScene =
     input.projectsSceneActive ??
     (typeof document !== 'undefined' && isProjectsSceneActive())
 
-  if (projectsActive) return 'projects'
+  // Mid-wipe: Projects pin is active but the panel is not finished — keep Skills
+  // chrome. Geometry alone would wrongly pick Projects (both tops ≈ 0).
+  if (projectsScene) return 'expertise'
 
   const handoff =
     input.skillsHandoffPhase ??

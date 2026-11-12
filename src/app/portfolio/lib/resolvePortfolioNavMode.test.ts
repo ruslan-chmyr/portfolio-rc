@@ -25,12 +25,36 @@ describe('resolvePortfolioNavMode', () => {
     ).toBe('standard')
   })
 
-  it('returns compact for immersive scenes and narrow viewports', () => {
+  it('returns rail for desktop Skills and Projects', () => {
+    expect(
+      resolvePortfolioNavMode({
+        nativeScroll: true,
+        activeSection: 'expertise',
+        viewportWidth: 1440,
+      }),
+    ).toBe('rail')
     expect(
       resolvePortfolioNavMode({
         nativeScroll: true,
         activeSection: 'projects',
         viewportWidth: 1440,
+      }),
+    ).toBe('rail')
+  })
+
+  it('returns compact for narrow viewports', () => {
+    expect(
+      resolvePortfolioNavMode({
+        nativeScroll: true,
+        activeSection: 'expertise',
+        viewportWidth: 700,
+      }),
+    ).toBe('compact')
+    expect(
+      resolvePortfolioNavMode({
+        nativeScroll: true,
+        activeSection: 'projects',
+        viewportWidth: 700,
       }),
     ).toBe('compact')
     expect(
