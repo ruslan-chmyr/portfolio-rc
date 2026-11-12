@@ -44,7 +44,11 @@ export type ProjectsScrollController = {
  * - Skills entrance owns initial opacity/visibility of Skills chrome.
  * - This controller only fades Skills after entrance is done (scrubbed fromTo,
  *   never forced visible on init).
- * - Experience motion lives on an inner wrapper, not the section layout box.
+ * - Experience stays in stable document flow. The section CSS underlap
+ *   (`--experience-underlap`) already places it under Projects; we do not
+ *   animate Experience layout (margin/transform) during the scrub — that would
+ *   shift ScrollTrigger geometry and break the Experience sidebar pin
+ *   (transform creates a containing block for `position: fixed` pins).
  */
 export function createProjectsScrollController(
   elements: ProjectsScrollControllerElements,
@@ -60,9 +64,6 @@ export function createProjectsScrollController(
   setProjectsSceneActive(section, false)
 
   const skills = document.getElementById('expertise')
-  const experienceMotion = document.querySelector<HTMLElement>(
-    '#experience .experience-section__motion',
-  )
   const skillsKeyboard = skills?.querySelector<HTMLElement>(
     '.skills-section__keyboard-panel',
   )
@@ -97,7 +98,11 @@ export function createProjectsScrollController(
 
   const ctx = gsap.context(() => {
     syncPinViewportHeight()
+    // Lock pixel x/y to 0 — ScrollTrigger invalidateOnRefresh can otherwise
+    // bake the live matrix into `x` while xPercent keeps tweening (double offset).
     gsap.set(panel, {
+      x: 0,
+      y: 0,
       xPercent: 100,
       yPercent: 0,
       force3D: true,
@@ -106,9 +111,6 @@ export function createProjectsScrollController(
       backgroundColor: 'transparent',
       autoAlpha: 1,
     })
-    if (experienceMotion) {
-      gsap.set(experienceMotion, { y: 0, force3D: true })
-    }
 
     // Skills pin: hold the scene under Projects without adding document spacing.
     // End covers Projects trigger offset (top+=12vh) + full entrance/exit scrub.
@@ -142,7 +144,7 @@ export function createProjectsScrollController(
           syncPinViewportHeight()
           setProjectsSceneActive(section, self.isActive)
           syncSkillsViewportClip(self.isActive)
-          syncWillChange(panel, experienceMotion, self.progress)
+          syncWillChange(panel, self.progress)
         },
         onToggle: (self) => {
           setProjectsSceneActive(section, self.isActive)
@@ -151,7 +153,7 @@ export function createProjectsScrollController(
         onUpdate: (self) => {
           setProjectsSceneActive(section, self.isActive)
           syncSkillsViewportClip(self.isActive)
-          syncWillChange(panel, experienceMotion, self.progress)
+          syncWillChange(panel, self.progress)
         },
       },
     })
@@ -159,8 +161,10 @@ export function createProjectsScrollController(
     // 1) Blue panel wipes in over the pinned Skills scene.
     timeline.fromTo(
       panel,
-      { xPercent: 100, yPercent: 0 },
+      { x: 0, y: 0, xPercent: 100, yPercent: 0 },
       {
+        x: 0,
+        y: 0,
         xPercent: 0,
         yPercent: 0,
         duration: PROJECTS_SCROLL.panelSlideDuration,
@@ -225,6 +229,8 @@ export function createProjectsScrollController(
     timeline.to(
       panel,
       {
+        x: 0,
+        y: 0,
         xPercent: PROJECTS_SCROLL.exitXPercent,
         yPercent: PROJECTS_SCROLL.exitYPercent,
         duration: PROJECTS_SCROLL.exitDuration,
@@ -243,35 +249,17 @@ export function createProjectsScrollController(
       },
       exitAt + PROJECTS_SCROLL.exitFadeAt,
     )
-
-    // Animate the inner motion wrapper only — section keeps document-flow geometry.
-    if (experienceMotion) {
-      timeline.fromTo(
-        experienceMotion,
-        {
-          y: PROJECTS_SCROLL.experienceRevealY,
-          force3D: true,
-        },
-        {
-          y: 0,
-          duration: PROJECTS_SCROLL.exitDuration,
-          force3D: true,
-          immediateRender: false,
-        },
-        exitAt,
-      )
-    }
   }, section)
-
-  const runRefresh = () => {
-    if (disposed) return
-    syncPinViewportHeight()
-    ScrollTrigger.refresh()
-  }
 
   const requestRefresh = () => {
     if (disposed) return
-    scheduleScrollTriggerRefresh(runRefresh, refreshState)
+    scheduleScrollTriggerRefresh(
+      refreshState,
+      () => !disposed,
+      () => {
+        syncPinViewportHeight()
+      },
+    )
   }
 
   window.addEventListener('resize', requestRefresh)
@@ -291,7 +279,6 @@ export function createProjectsScrollController(
       window.removeEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, requestRefresh)
       window.removeEventListener(SKILLS_ENTRANCE_DONE_EVENT, requestRefresh)
       panel.style.willChange = ''
-      if (experienceMotion) experienceMotion.style.willChange = ''
       pin.style.height = ''
       pin.style.minHeight = ''
       syncSkillsViewportClip(false)
@@ -305,9 +292,6 @@ export function createProjectsScrollController(
       ) {
         gsap.set(skillsFadeTargets, { clearProps: 'opacity,visibility' })
       }
-      if (experienceMotion) {
-        gsap.set(experienceMotion, { clearProps: 'transform' })
-      }
 
       setProjectsSceneActive(section, false)
       ctx.revert()
@@ -317,14 +301,7 @@ export function createProjectsScrollController(
   }
 }
 
-function syncWillChange(
-  panel: HTMLElement,
-  experienceMotion: HTMLElement | null,
-  progress: number,
-) {
+function syncWillChange(panel: HTMLElement, progress: number) {
   const active = progress > 0.001 && progress < 0.999
   panel.style.willChange = active ? 'transform' : ''
-  if (experienceMotion) {
-    experienceMotion.style.willChange = active ? 'transform' : ''
-  }
 }

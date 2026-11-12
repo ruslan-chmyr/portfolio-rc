@@ -19,6 +19,5 @@ export const PORTFOLIO_FOLLOWING_SECTIONS: PortfolioSectionEntry[] = [
   { id: 'expertise', number: '02', title: 'Skills' },
   { id: 'projects', number: '03', title: 'Projects' },
   { id: 'experience', number: '04', title: 'Experience' },
-  { id: 'learning', number: '05', title: 'Growth' },
   { id: 'contact', number: '06', title: 'Contact' },
 ]
