@@ -3,7 +3,7 @@ import { CONTACT_CONFIG, CONTACT_FIELD_LIMITS } from './contactConfig'
 
 describe('contactConfig', () => {
   it('exposes verified contact destinations', () => {
-    expect(CONTACT_CONFIG.sectionLabel).toBe('06 / Contact')
+    expect(CONTACT_CONFIG.sectionLabel).toBe('05 / Contact')
     expect(CONTACT_CONFIG.email).toBe('ruslan.chmyr.98@gmail.com')
     expect(CONTACT_CONFIG.availability).toBe('Open to opportunities')
     expect(CONTACT_CONFIG.socials).toEqual([

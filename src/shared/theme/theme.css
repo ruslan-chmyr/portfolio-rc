@@ -13,6 +13,8 @@
   /* White + difference reads on intro light/dark surfaces; portfolio overrides below. */
   --color-cursor-source: #ffffff;
   --color-text-on-complete: rgba(255, 255, 255, 0.52);
+  /* SVG/fallback RC mark once intro fill matches background-complete */
+  --color-ink-on-complete: #ffffff;
   /* Portfolio surface (inverted vs intro) */
   --color-portfolio-background: #000000;
   --color-portfolio-foreground: #ffffff;
@@ -38,6 +40,7 @@
   --color-border: rgba(255, 255, 255, 0.22);
   --color-cursor-source: #ffffff;
   --color-text-on-complete: rgba(0, 0, 0, 0.52);
+  --color-ink-on-complete: #000000;
   --color-portfolio-background: #ffffff;
   --color-portfolio-foreground: #000000;
   --color-portfolio-text-muted: rgba(0, 0, 0, 0.45);
@@ -81,4 +84,25 @@ body,
 .intro-animation__ink {
   color: var(--color-ink);
   transition: color var(--theme-transition-duration) ease;
+}
+
+.intro-animation--complete .intro-animation__ink {
+  color: var(--color-ink-on-complete);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body,
+  #root,
+  .portfolio-main,
+  .about-section,
+  .about-section__pin,
+  .skills-section,
+  .intro-animation,
+  .intro-caption,
+  .intro-scroll-hint,
+  .theme-toggle,
+  .intro-animation__ink {
+    transition: none;
+  }
 }

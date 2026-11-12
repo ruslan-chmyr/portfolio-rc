@@ -122,7 +122,60 @@
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
-/* —— Nav —— */
+/* —— Global adaptive chrome —— */
+.portfolio-chrome {
+  --chrome-fg: var(--color-portfolio-foreground);
+  --chrome-muted: var(--color-portfolio-text-muted);
+  --chrome-strong: var(--color-portfolio-text-strong);
+  --chrome-hover: var(--color-portfolio-text-hover);
+  --chrome-border: var(--color-portfolio-border);
+  --chrome-surface: color-mix(in srgb, var(--color-portfolio-background) 72%, transparent);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  pointer-events: none;
+  color: var(--chrome-fg);
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease,
+    color 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease;
+}
+
+.portfolio-chrome[data-mode='intro'] {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+}
+
+.portfolio-chrome[data-mode='standard'],
+.portfolio-chrome[data-mode='compact'] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  pointer-events: none;
+}
+
+.portfolio-chrome[data-surface='immersive'] {
+  --chrome-fg: rgba(255, 255, 255, 0.92);
+  --chrome-muted: rgba(255, 255, 255, 0.55);
+  --chrome-strong: rgba(255, 255, 255, 0.9);
+  --chrome-hover: rgba(255, 255, 255, 0.98);
+  --chrome-border: rgba(255, 255, 255, 0.28);
+  --chrome-surface: rgba(5, 7, 15, 0.42);
+}
+
+.portfolio-chrome[data-mode='compact'] .portfolio-nav {
+  background: linear-gradient(
+    180deg,
+    var(--chrome-surface) 0%,
+    transparent 100%
+  );
+}
+
 .portfolio-nav {
   position: relative;
   z-index: 5;
@@ -132,7 +185,93 @@
   justify-content: space-between;
   gap: 1.5rem;
   padding: var(--header-controls-top) var(--header-controls-right)
-    clamp(0.75rem, 1.8vw, 1.05rem) var(--about-gutter);
+    clamp(0.75rem, 1.8vw, 1.05rem) var(--about-gutter, clamp(1rem, 3vw, 2.25rem));
+  pointer-events: auto;
+}
+
+.portfolio-nav__section {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  max-width: min(42vw, 14rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(0.56rem, 0.32vw + 0.44rem, 0.68rem);
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--chrome-muted);
+  pointer-events: none;
+}
+
+.portfolio-nav__menu {
+  position: relative;
+}
+
+.portfolio-nav__menu-toggle {
+  margin: 0;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--chrome-border);
+  background: transparent;
+  color: var(--chrome-strong);
+  font: inherit;
+  font-size: clamp(0.56rem, 0.32vw + 0.44rem, 0.68rem);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.portfolio-nav__menu-toggle:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+}
+
+.portfolio-nav__menu-list {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  min-width: 11.5rem;
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+  list-style: none;
+  border: 1px solid var(--chrome-border);
+  background: color-mix(in srgb, var(--color-portfolio-background) 92%, transparent);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.portfolio-chrome[data-surface='immersive'] .portfolio-nav__menu-list {
+  background: rgba(5, 7, 15, 0.92);
+}
+
+.portfolio-nav__menu-list a,
+.portfolio-nav__menu-list .portfolio-nav__soon {
+  display: block;
+  padding: 0.45rem 0.25rem;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--chrome-strong);
+}
+
+.portfolio-nav__menu-list a:hover,
+.portfolio-nav__menu-list a[aria-current='page'] {
+  color: var(--chrome-hover);
+}
+
+.portfolio-nav__menu-list a:focus-visible {
+  outline: 2px solid var(--chrome-fg);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-chrome {
+    transition: none;
+  }
 }
 
 .portfolio-nav__end {
@@ -171,7 +310,7 @@
   display: block;
   width: clamp(1.5rem, 3vw, 2.2rem);
   height: 1px;
-  background: var(--color-border);
+  background: var(--chrome-border, var(--color-border));
 }
 
 .portfolio-nav__links {
@@ -191,16 +330,30 @@
 }
 
 .portfolio-nav__links a {
-  color: var(--color-text-strong);
+  color: var(--chrome-strong, var(--color-text-strong));
   text-decoration: none;
 }
 
 .portfolio-nav__links a:hover {
-  color: var(--color-text-hover);
+  color: var(--chrome-hover, var(--color-text-hover));
+}
+
+.portfolio-nav__links a:focus-visible {
+  outline: 2px solid var(--chrome-fg, var(--color-foreground));
+  outline-offset: 2px;
 }
 
 .portfolio-nav__soon {
-  color: var(--color-text-muted);
+  color: var(--chrome-muted, var(--color-text-muted));
+}
+
+.portfolio-chrome .theme-toggle {
+  color: var(--chrome-strong);
+  border-color: var(--chrome-border);
+}
+
+.portfolio-chrome .theme-toggle:focus-visible {
+  outline-color: var(--chrome-fg);
 }
 
 .about-section__index-marker {
@@ -224,6 +377,12 @@
       max(1rem, env(safe-area-inset-right, 0px))
       0.55rem
       max(1rem, env(safe-area-inset-left, 0px));
+  }
+
+  .portfolio-nav__section {
+    max-width: min(36vw, 9.5rem);
+    font-size: 0.56rem;
+    letter-spacing: 0.14em;
   }
 
   .portfolio-nav__brand {

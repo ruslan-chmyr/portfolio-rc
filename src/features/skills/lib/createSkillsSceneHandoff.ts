@@ -6,6 +6,9 @@ import {
   PORTFOLIO_SCROLL_REENGAGE_EVENT,
 } from '../../intro/lib/createIntroScrollHandoff'
 import { isProjectsSceneActive } from '../../../shared/scene/portfolioScene'
+import { THEME_CHANGE_EVENT } from '../../../shared/theme'
+import { PORTFOLIO_NAVIGATE_EVENT } from '../../../app/portfolio/lib/navigatePortfolioSection'
+import { isPortfolioNavSessionActive } from '../../../app/portfolio/lib/portfolioNavSession'
 import {
   isAboutReturnAligned,
   isSkillsAligned,
@@ -289,6 +292,8 @@ export function createSkillsSceneHandoff(
 
   const evaluate = (direction: 1 | -1 | 0) => {
     if (disposed || !enabled || selfScrolling) return
+    // Global nav owns programmatic scroll — do not start competing aligns.
+    if (isPortfolioNavSessionActive()) return
     if (isWithinHandoffCooldown(performance.now(), cooldownUntilMs)) return
 
     const top = skillsTop()
@@ -383,6 +388,7 @@ export function createSkillsSceneHandoff(
     pendingEvalRaf = window.requestAnimationFrame(() => {
       pendingEvalRaf = 0
       if (disposed || !enabled || selfScrolling) return
+      if (isPortfolioNavSessionActive()) return
 
       // Finish early if a prior align already landed (bounded, on-demand only).
       if (phase === 'aligning-skills' && isSkillsAligned(skillsTop())) {
@@ -516,6 +522,38 @@ export function createSkillsSceneHandoff(
     }
   }
 
+  const onThemeChange = () => {
+    if (disposed || !enabled) return
+    // Retarget the About pin restore if a reverse align captured the prior theme color.
+    if (phase === 'aligning-about' || themeBgTween) {
+      restoreThemeBackground()
+    }
+  }
+
+  const onPortfolioNavigate = (event: Event) => {
+    if (disposed || !enabled) return
+    const sectionId = (event as CustomEvent<{ sectionId?: string }>).detail
+      ?.sectionId
+    // Always yield to global nav: stop in-flight aligns before phase update.
+    killAlign()
+    killThemeBgTween()
+    if (
+      sectionId === 'projects' ||
+      sectionId === 'experience' ||
+      sectionId === 'contact'
+    ) {
+      setPhase('passed')
+      return
+    }
+    if (sectionId === 'expertise') {
+      setPhase('settled')
+      return
+    }
+    if (sectionId === 'about') {
+      setPhase('idle')
+    }
+  }
+
   if (enabled) {
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('wheel', onWheel, { passive: true })
@@ -524,6 +562,8 @@ export function createSkillsSceneHandoff(
     window.addEventListener('pageshow', onPageShow)
     window.addEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, resetFromIntro)
     window.addEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, resetFromIntro)
+    window.addEventListener(THEME_CHANGE_EVENT, onThemeChange)
+    window.addEventListener(PORTFOLIO_NAVIGATE_EVENT, onPortfolioNavigate)
     // One-shot settle check after mount — not a perpetual loop.
     pendingEvalRaf = window.requestAnimationFrame(() => {
       pendingEvalRaf = 0
@@ -548,6 +588,8 @@ export function createSkillsSceneHandoff(
       window.removeEventListener('pageshow', onPageShow)
       window.removeEventListener(PORTFOLIO_SCROLL_HANDOFF_EVENT, resetFromIntro)
       window.removeEventListener(PORTFOLIO_SCROLL_REENGAGE_EVENT, resetFromIntro)
+      window.removeEventListener(THEME_CHANGE_EVENT, onThemeChange)
+      window.removeEventListener(PORTFOLIO_NAVIGATE_EVENT, onPortfolioNavigate)
     },
   }
 }

@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react'
 import { applyThemeAttribute, readStoredTheme } from './initTheme'
+import { syncThemeDependentSurfaces } from './syncThemeDependentSurfaces'
 import { themeDetail } from './themeTokens'
 import { ThemeContext } from './themeContext'
 import {
@@ -27,6 +28,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyThemeAttribute(theme)
     localStorage.setItem(THEME_STORAGE_KEY, theme)
     publishTheme(theme)
+    syncThemeDependentSurfaces()
   }, [theme])
 
   const setTheme = useCallback((next: Theme) => {

@@ -7,10 +7,23 @@
   overflow: hidden;
   z-index: 1000;
   isolation: isolate;
+  will-change: transform;
+  transition: background-color var(--theme-transition-duration, 320ms) ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-animation {
+    will-change: auto;
+  }
 }
 
 .intro-animation--complete {
   background: var(--color-background-complete);
+}
+
+/* Keep the SVG/fallback mark legible on the complete fill (WebGL path hides SVG). */
+.intro-animation--complete .intro-animation__ink {
+  color: var(--color-ink-on-complete);
 }
 
 .intro-animation--handed-off {

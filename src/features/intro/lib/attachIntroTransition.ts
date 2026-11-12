@@ -9,7 +9,14 @@ export type IntroTransitionHandle = {
   dispose: () => void
 }
 
-export function attachIntroTransition(runtime: IntroRuntime): IntroTransitionHandle {
+export type AttachIntroTransitionOptions = {
+  onOverscrollUp?: () => void
+}
+
+export function attachIntroTransition(
+  runtime: IntroRuntime,
+  options: AttachIntroTransitionOptions = {},
+): IntroTransitionHandle {
   const {
     root,
     transitionCanvas,
@@ -129,6 +136,47 @@ export function attachIntroTransition(runtime: IntroRuntime): IntroTransitionHan
   }
 
   const handoff = createIntroScrollHandoff(root)
+  let pullTween: gsap.core.Tween | null = null
+
+  const killPullTween = () => {
+    pullTween?.kill()
+    pullTween = null
+  }
+
+  const applyPullVisual = (tension: number, displayPx: number) => {
+    if (reducedMotion) return
+    killPullTween()
+    // Whole intro rubber-bands downward — deeper peek of the page behind.
+    pullTween = gsap.to(root, {
+      y: displayPx,
+      scale: 1 - tension * 0.032,
+      duration: 0.14,
+      ease: 'power3.out',
+      overwrite: 'auto',
+      transformOrigin: '50% 0%',
+      onComplete: () => {
+        pullTween = null
+      },
+    })
+  }
+
+  const releasePullVisual = (committed: boolean) => {
+    if (reducedMotion) {
+      gsap.set(root, { y: 0, scale: 1 })
+      return
+    }
+    killPullTween()
+    pullTween = gsap.to(root, {
+      y: 0,
+      scale: 1,
+      duration: committed ? 0.52 : 0.4,
+      ease: committed ? 'back.out(1.35)' : 'power3.out',
+      overwrite: 'auto',
+      onComplete: () => {
+        pullTween = null
+      },
+    })
+  }
 
   const scroll = createIntroScrollController({
     distancePx: () =>
@@ -138,6 +186,16 @@ export function attachIntroTransition(runtime: IntroRuntime): IntroTransitionHan
       ),
     keyboardStep: INTRO_SCROLL.keyboardStep,
     onProgress: applyProgress,
+    onOverscrollPull: (tension, displayPx) => {
+      applyPullVisual(tension, displayPx)
+    },
+    onOverscrollCommit: () => {
+      releasePullVisual(true)
+      options.onOverscrollUp?.()
+    },
+    onOverscrollCancel: () => {
+      releasePullVisual(false)
+    },
     handoff,
   })
 
@@ -150,6 +208,8 @@ export function attachIntroTransition(runtime: IntroRuntime): IntroTransitionHan
           globalThis.clearTimeout(warmIdleId)
         }
       }
+      killPullTween()
+      gsap.set(root, { clearProps: 'transform' })
       scroll.dispose()
       handoff.dispose()
       ctx.revert()

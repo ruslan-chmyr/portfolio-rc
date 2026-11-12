@@ -57,6 +57,16 @@
   background: var(--color-background);
 }
 
+/* Reserves the former in-pin nav height so hero/index layout stays stable. */
+.about-section__chrome-slot {
+  flex-shrink: 0;
+  height: calc(
+    var(--header-controls-top) + clamp(2rem, 2.8vw, 2.5rem) +
+      clamp(0.75rem, 1.8vw, 1.05rem)
+  );
+  pointer-events: none;
+}
+
 /*
  * Post-pin buffer. Desktop handoff aligns Skills to the viewport, so a tall
  * light continuation only left a visible About strip / gap. Keep zero height
@@ -141,7 +151,7 @@
     padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   }
 
-  .about-section__pin > .portfolio-nav {
+  .about-section__pin > .about-section__chrome-slot {
     order: 0;
   }
 

@@ -18,7 +18,21 @@
   pointer-events: auto;
 }
 
-.intro-animation--complete .intro-animation__header {
+.intro-animation__scroll-corner {
+  position: absolute;
+  right: var(--header-controls-right);
+  bottom: clamp(1.1rem, 3.2vw, 1.85rem);
+  z-index: 4;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.intro-animation__scroll-corner > * {
+  pointer-events: auto;
+}
+
+.intro-animation--complete .intro-animation__header,
+.intro-animation--complete .intro-animation__scroll-corner {
   opacity: 0;
   pointer-events: none;
 }
@@ -26,5 +40,9 @@
 @media (max-width: 480px) {
   .intro-animation__header {
     gap: clamp(0.85rem, 4vw, 1.25rem);
+  }
+
+  .intro-animation__scroll-corner {
+    bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   }
 }

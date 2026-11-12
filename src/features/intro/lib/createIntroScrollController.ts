@@ -1,16 +1,36 @@
 import { clamp01 } from './introMath'
 import type { IntroScrollHandoff } from './createIntroScrollHandoff'
+import {
+  INTRO_OVERSCROLL_ARM_PX,
+  INTRO_OVERSCROLL_COMMIT,
+  INTRO_OVERSCROLL_COOLDOWN_MS,
+  INTRO_OVERSCROLL_IDLE_MS,
+  INTRO_OVERSCROLL_MAX_PX,
+  overscrollTension,
+  resistOverscrollPull,
+  shouldCommitOverscroll,
+} from './introOverscroll'
 
 /**
  * Owns the intro's *virtual scroll position*.
  * This is intentionally feature-local: a future page-scroll coordinator can
  * hand off control after the first real page section is mounted.
  */
+
 export type IntroScrollControllerOptions = {
   /** Pixels of physical scrolling needed to cross the entire intro. */
   distancePx: () => number
   keyboardStep: number
   onProgress: (progress: number) => void
+  /**
+   * Rubber-band pull while at progress 0.
+   * `tension` is 0–1; `displayPx` is the resisted translate to apply.
+   */
+  onOverscrollPull?: (tension: number, displayPx: number) => void
+  /** Fired when pull crosses the commit threshold (theme toggle). */
+  onOverscrollCommit?: () => void
+  /** Fired when an incomplete pull springs back to rest. */
+  onOverscrollCancel?: () => void
   handoff?: IntroScrollHandoff
 }
 
@@ -23,10 +43,16 @@ export function createIntroScrollController({
   distancePx,
   keyboardStep,
   onProgress,
+  onOverscrollPull,
+  onOverscrollCommit,
+  onOverscrollCancel,
   handoff,
 }: IntroScrollControllerOptions): IntroScrollController {
   let progress = 0
   let previousTouchY: number | null = null
+  let rawPullPx = 0
+  let lastCommitAt = 0
+  let idleTimer = 0
 
   const setProgress = (next: number) => {
     const clamped = clamp01(next)
@@ -38,6 +64,105 @@ export function createIntroScrollController({
   const move = (deltaPixels: number) => {
     if (!Number.isFinite(deltaPixels) || deltaPixels === 0) return
     setProgress(progress + deltaPixels / Math.max(1, distancePx()))
+  }
+
+  const clearIdleTimer = () => {
+    if (idleTimer) {
+      globalThis.clearTimeout(idleTimer)
+      idleTimer = 0
+    }
+  }
+
+  const publishPull = () => {
+    const displayPx = resistOverscrollPull(rawPullPx)
+    const tension = overscrollTension(displayPx)
+    onOverscrollPull?.(tension, displayPx)
+    return { displayPx, tension }
+  }
+
+  const resetPull = (notifyCancel: boolean) => {
+    clearIdleTimer()
+    const hadPull = rawPullPx > 0
+    rawPullPx = 0
+    if (hadPull) {
+      onOverscrollPull?.(0, 0)
+      if (notifyCancel) onOverscrollCancel?.()
+    }
+  }
+
+  const commitPull = () => {
+    clearIdleTimer()
+    rawPullPx = 0
+    lastCommitAt = performance.now()
+    onOverscrollPull?.(0, 0)
+    onOverscrollCommit?.()
+  }
+
+  const scheduleIdleRelease = () => {
+    if (!onOverscrollPull && !onOverscrollCancel) return
+    clearIdleTimer()
+    idleTimer = globalThis.setTimeout(() => {
+      idleTimer = 0
+      if (rawPullPx <= 0 || progress > 0) return
+      const tension = overscrollTension(resistOverscrollPull(rawPullPx))
+      if (shouldCommitOverscroll(tension)) {
+        commitPull()
+        return
+      }
+      resetPull(true)
+    }, INTRO_OVERSCROLL_IDLE_MS)
+  }
+
+  const applyOverscrollDelta = (deltaPixels: number) => {
+    if (!onOverscrollPull && !onOverscrollCommit) return false
+    if (progress > 0) {
+      if (rawPullPx > 0) resetPull(true)
+      return false
+    }
+
+    // Upward scroll increases pull; downward eases it back.
+    if (deltaPixels < 0) {
+      const now = performance.now()
+      if (now - lastCommitAt < INTRO_OVERSCROLL_COOLDOWN_MS) {
+        scheduleIdleRelease()
+        return true
+      }
+      rawPullPx += Math.abs(deltaPixels)
+      const { tension } = publishPull()
+      if (shouldCommitOverscroll(tension)) {
+        commitPull()
+        return true
+      }
+      scheduleIdleRelease()
+      return true
+    }
+
+    if (rawPullPx > 0) {
+      rawPullPx = Math.max(0, rawPullPx - deltaPixels)
+      if (rawPullPx <= INTRO_OVERSCROLL_ARM_PX) {
+        resetPull(true)
+      } else {
+        publishPull()
+        scheduleIdleRelease()
+      }
+      return true
+    }
+
+    return false
+  }
+
+  /** Keyboard: one decisive tug toward commit. */
+  const keyboardOverscrollNudge = () => {
+    if (progress > 0) return
+    const now = performance.now()
+    if (now - lastCommitAt < INTRO_OVERSCROLL_COOLDOWN_MS) return
+    rawPullPx = Math.max(
+      rawPullPx,
+      INTRO_OVERSCROLL_MAX_PX * INTRO_OVERSCROLL_COMMIT + 8,
+    )
+    const { tension } = publishPull()
+    if (shouldCommitOverscroll(tension)) commitPull()
+    else scheduleIdleRelease()
   }
 
   const onWheel = (event: WheelEvent) => {
@@ -67,6 +192,7 @@ export function createIntroScrollController({
     }
 
     if (event.cancelable) event.preventDefault()
+    if (applyOverscrollDelta(delta)) return
     move(delta)
   }
 
@@ -96,11 +222,16 @@ export function createIntroScrollController({
     }
 
     if (event.cancelable) event.preventDefault()
+    if (applyOverscrollDelta(delta)) return
     move(delta)
   }
 
   const onTouchEnd = () => {
     previousTouchY = null
+    if (progress > 0 || rawPullPx <= 0) return
+    const tension = overscrollTension(resistOverscrollPull(rawPullPx))
+    if (shouldCommitOverscroll(tension)) commitPull()
+    else resetPull(true)
   }
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -134,11 +265,21 @@ export function createIntroScrollController({
         break
       case 'ArrowUp':
       case 'PageUp':
+        if (progress <= 0) {
+          if (event.cancelable) event.preventDefault()
+          keyboardOverscrollNudge()
+          return
+        }
         next = progress - keyboardStep
         break
       case ' ':
         if (!event.shiftKey && handoff && progress >= 1) {
           handoff.releaseForward()
+          return
+        }
+        if (event.shiftKey && progress <= 0) {
+          if (event.cancelable) event.preventDefault()
+          keyboardOverscrollNudge()
           return
         }
         next = progress + (event.shiftKey ? -keyboardStep : keyboardStep)
@@ -153,6 +294,7 @@ export function createIntroScrollController({
         return
     }
     if (event.cancelable) event.preventDefault()
+    if (rawPullPx > 0) resetPull(true)
     setProgress(next)
   }
 
@@ -169,6 +311,7 @@ export function createIntroScrollController({
   return {
     getProgress: () => progress,
     dispose() {
+      clearIdleTimer()
       window.removeEventListener('wheel', onWheel)
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchmove', onTouchMove)
