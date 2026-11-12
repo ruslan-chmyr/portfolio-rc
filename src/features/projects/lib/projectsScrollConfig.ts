@@ -32,9 +32,9 @@ export const PROJECTS_SCROLL = {
    */
   skillsFadeAt: 0.42,
   skillsFadeDuration: 0.55,
-  /** Navy pin backdrop only after Skills is mostly gone. */
-  pinBackdropAt: 0.62,
-  pinBackdropDuration: 0.38,
+  /** Navy pin backdrop once Skills is mostly covered — avoids late gutter flash. */
+  pinBackdropAt: 0.56,
+  pinBackdropDuration: 0.4,
   settleHoldDuration: 0.2,
   /**
    * After Projects settles, scrub the blue scene out left + up so Experience
@@ -50,7 +50,8 @@ export const PROJECTS_SCROLL = {
    * flight so there is no empty gap before the next page.
    */
   exitFadeAt: 0,
-  exitFadeDuration: 0.9,
+  /** Slightly longer pin fade so Experience reads under the flight. */
+  exitFadeDuration: 1,
 } as const
 
 /** @deprecated Prefer `shared/scene/portfolioScene`. */

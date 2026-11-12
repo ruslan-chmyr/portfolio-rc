@@ -45,6 +45,23 @@ describe('detectActivePortfolioSection', () => {
     ).toBe('expertise')
   })
 
+  it('treats aligning-skills as expertise for immersive chrome timing', () => {
+    expect(
+      detectActivePortfolioSection({
+        nativeScroll: true,
+        projectsSceneActive: false,
+        skillsHandoffPhase: 'aligning-skills',
+        sectionTops: {
+          about: -200,
+          expertise: 120,
+          projects: 900,
+          experience: 1600,
+          contact: 2400,
+        },
+      }),
+    ).toBe('expertise')
+  })
+
   it('picks the deepest section whose top crossed the probe', () => {
     expect(
       detectActivePortfolioSection({

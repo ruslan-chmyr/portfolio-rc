@@ -47,6 +47,7 @@ export function detectActivePortfolioSection(
     input.skillsHandoffPhase ??
     (typeof document !== 'undefined' ? readSkillsHandoffPhase() : null)
 
+  // Immersive chrome as soon as Skills alignment owns the gesture.
   if (handoff === 'settled' || handoff === 'aligning-skills') {
     return 'expertise'
   }

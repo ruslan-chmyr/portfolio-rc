@@ -118,7 +118,7 @@
    * Composition bias lives in the mesh/camera instead.
    */
   opacity: 0;
-  transition: opacity 280ms ease;
+  transition: opacity 420ms ease;
 }
 
 .contact-background[data-fabric='webgl'] .contact-background__canvas {

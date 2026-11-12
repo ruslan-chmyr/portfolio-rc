@@ -12,7 +12,7 @@ export function syncTypeClusterLayout(stage: HTMLElement, typeWords: HTMLElement
   const stageY = Number(gsap.getProperty(stage, 'y')) || 0
   const stageOpacity = Number(gsap.getProperty(stage, 'opacity'))
 
-  gsap.set(stage, { scale: 1, x: 0, y: 0, opacity: 1 })
+  gsap.set(stage, { scale: 1, x: 0, y: 0, autoAlpha: 1 })
   gsap.set(typeWords, {
     x: 0,
     y: 0,

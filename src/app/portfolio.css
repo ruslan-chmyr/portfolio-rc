@@ -32,9 +32,18 @@ html.portfolio-native-scroll .about-section .pin-spacer {
   background: linear-gradient(
     180deg,
     var(--color-portfolio-background) 0%,
-    var(--color-portfolio-background) 72%,
+    var(--color-portfolio-background) 82%,
     #05070f 100%
   );
+}
+
+/*
+ * While Skills handoff owns About pin background via GSAP, suppress CSS
+ * background transitions so theme timing does not fight the scrub restore.
+ */
+html:has(#expertise[data-skills-handoff='aligning-about']) .about-section__pin,
+html:has(#expertise[data-skills-handoff='aligning-skills']) .about-section__pin {
+  transition-property: color, border-color, opacity;
 }
 
 /*
