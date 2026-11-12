@@ -1,5 +1,6 @@
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ABOUT_RETURN_PROGRESS } from '../../../features/about/lib/aboutScrollConfig'
+import { projectsNavReadyProgress } from '../../../features/projects/lib/projectsScrollConfig'
 import { isProjectsSceneActive } from '../../../shared/scene/portfolioScene'
 import {
   beginPortfolioNavSession,
@@ -82,7 +83,11 @@ function resolveTargetY(sectionId: NavigableSectionId): number | null {
     const projects = document.getElementById('projects')
     if (!projects) return null
     const st = findScrollTriggerFor(projects)
-    if (st) return st.start + 8
+    if (st && Number.isFinite(st.start) && Number.isFinite(st.end)) {
+      // Land where chrome already owns Projects (wipe complete), before exit flight.
+      const ready = projectsNavReadyProgress()
+      return st.start + (st.end - st.start) * ready
+    }
     return Math.max(0, projects.getBoundingClientRect().top + readScrollY())
   }
 

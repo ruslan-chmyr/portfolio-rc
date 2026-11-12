@@ -1,9 +1,10 @@
 export { PortfolioNav } from './components/PortfolioNav'
 export {
-  PortfolioSectionIndex,
-  type PortfolioSectionIndexPlacement,
-  type PortfolioSectionIndexProps,
-} from './components/PortfolioSectionIndex'
+  PortfolioActiveSectionMarker,
+  type PortfolioActiveSectionMarkerOrientation,
+  type PortfolioActiveSectionMarkerProps,
+} from './components/PortfolioActiveSectionMarker'
+export { PortfolioSectionIndex } from './components/PortfolioSectionIndex'
 export {
   formatPortfolioSectionLabel,
   PORTFOLIO_CURRENT_SECTION,
@@ -12,6 +13,10 @@ export {
   type PortfolioNavMode,
   type PortfolioSectionId,
 } from './lib/portfolioSections'
+export {
+  portfolioSectionProgressRatio,
+  type PortfolioMarkerSectionId,
+} from './lib/portfolioSectionProgress'
 export { detectActivePortfolioSection } from './lib/detectActivePortfolioSection'
 export { resolvePortfolioNavMode } from './lib/resolvePortfolioNavMode'
 export {

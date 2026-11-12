@@ -156,4 +156,33 @@ describe('navigatePortfolioSection', () => {
       expect.objectContaining({ top: 960, left: 0 }),
     )
   })
+
+  it('lands Projects navigation on nav-ready wipe progress, not start+8', async () => {
+    document.documentElement.classList.add('portfolio-native-scroll')
+    document.body.innerHTML = '<section id="projects"></section>'
+    Object.defineProperty(window, 'scrollY', {
+      value: 0,
+      configurable: true,
+      writable: true,
+    })
+    const scrollTo = vi.fn()
+    window.scrollTo = scrollTo
+
+    const projects = document.getElementById('projects')
+    vi.mocked(ScrollTrigger.getAll).mockReturnValue([
+      { trigger: projects, start: 1000, end: 3000 } as never,
+    ])
+
+    const { projectsNavReadyProgress } = await import(
+      '../../../features/projects/lib/projectsScrollConfig'
+    )
+    const ready = projectsNavReadyProgress()
+    const expected = 1000 + (3000 - 1000) * ready
+
+    expect(navigatePortfolioSection('projects')).toBe(true)
+    expect(scrollTo).toHaveBeenCalledWith(
+      expect.objectContaining({ top: expected, left: 0 }),
+    )
+    expect(expected).toBeGreaterThan(1000 + 8)
+  })
 })

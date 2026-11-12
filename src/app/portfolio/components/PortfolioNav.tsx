@@ -13,8 +13,21 @@ import {
   findPortfolioSection,
   formatPortfolioSectionLabel,
   PORTFOLIO_NAV_SECTIONS,
+  PORTFOLIO_RAIL_SECTIONS,
+  type PortfolioSectionId,
 } from '../lib/portfolioSections'
+import type { PortfolioMarkerSectionId } from '../lib/portfolioSectionProgress'
+import { PortfolioActiveSectionMarker } from './PortfolioActiveSectionMarker'
 import '../styles/portfolio-chrome.css'
+
+function railMarkerSectionId(
+  activeSection: PortfolioSectionId,
+): PortfolioMarkerSectionId {
+  if (PORTFOLIO_RAIL_SECTIONS.has(activeSection) && activeSection !== 'intro') {
+    return activeSection as PortfolioMarkerSectionId
+  }
+  return 'expertise'
+}
 
 function ResumeControl({
   configured,
@@ -72,15 +85,12 @@ export function PortfolioNav() {
 
   const menuVisible = mode === 'compact' && menuOpen
   const railActive = mode === 'rail'
-  /** Skills/Projects mobile: RC + Resume + Contact (no Menu), matching the rail chrome. */
+  /** Rail sections on mobile: RC + Resume + Contact (no Menu), matching desktop rail. */
   const immersiveCompact =
-    mode === 'compact' &&
-    (activeSection === 'expertise' || activeSection === 'projects')
+    mode === 'compact' && PORTFOLIO_RAIL_SECTIONS.has(activeSection)
   const showCompactMenu = mode === 'compact' && !immersiveCompact
   const showInlineLinks = mode === 'standard' || immersiveCompact
-  const railActiveLabel = activeEntry
-    ? formatPortfolioSectionLabel(activeEntry.number, activeEntry.title)
-    : '02 / Skills'
+  const showContactLink = activeSection !== 'contact'
 
   useEffect(() => {
     if (!menuVisible) return
@@ -167,7 +177,7 @@ export function PortfolioNav() {
               <li>
                 <ResumeControl configured={resumeConfigured} />
               </li>
-              {activeSection !== 'contact' ? (
+              {showContactLink ? (
                 <li>
                   <a
                     href="#contact"
@@ -255,18 +265,20 @@ export function PortfolioNav() {
           <div className="portfolio-nav-rail__spine" aria-hidden />
 
           <ul className="portfolio-nav-rail__links">
-            <li>
-              <a
-                className="portfolio-nav-rail__link"
-                href="#contact"
-                onClick={(event) => {
-                  event.preventDefault()
-                  goTo('contact')
-                }}
-              >
-                Contact
-              </a>
-            </li>
+            {showContactLink ? (
+              <li>
+                <a
+                  className="portfolio-nav-rail__link"
+                  href="#contact"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    goTo('contact')
+                  }}
+                >
+                  Contact
+                </a>
+              </li>
+            ) : null}
             <li>
               <ResumeControl
                 configured={resumeConfigured}
@@ -275,16 +287,11 @@ export function PortfolioNav() {
             </li>
           </ul>
 
-          <div className="portfolio-nav-rail__active" aria-current="page">
-            <span className="portfolio-nav-rail__active-label">
-              {railActiveLabel}
-            </span>
-            <span className="portfolio-nav-rail__progress" aria-hidden>
-              <span
-                className="portfolio-nav-rail__progress-fill"
-                data-section={activeSection}
-              />
-            </span>
+          <div className="portfolio-nav-rail__active">
+            <PortfolioActiveSectionMarker
+              sectionId={railMarkerSectionId(activeSection)}
+              orientation="vertical"
+            />
           </div>
         </nav>
       ) : null}

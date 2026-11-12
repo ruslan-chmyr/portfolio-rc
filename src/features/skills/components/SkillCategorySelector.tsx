@@ -36,25 +36,36 @@ export function SkillCategorySelector({
     [activeCategory, locked, onSelect],
   )
 
+  const focusCategoryButton = (category: SkillBoardCategory) => {
+    const buttons = groupRef.current?.querySelectorAll<HTMLButtonElement>('button')
+    if (!buttons?.length) return
+    const target = category === 'fe' ? buttons[0] : buttons[1]
+    target?.focus()
+  }
+
   const onGroupKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
       event.preventDefault()
       selectCategory('ai')
+      focusCategoryButton('ai')
       return
     }
     if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
       event.preventDefault()
       selectCategory('fe')
+      focusCategoryButton('fe')
       return
     }
     if (event.key === 'Home') {
       event.preventDefault()
       selectCategory('fe')
+      focusCategoryButton('fe')
       return
     }
     if (event.key === 'End') {
       event.preventDefault()
       selectCategory('ai')
+      focusCategoryButton('ai')
     }
   }
 

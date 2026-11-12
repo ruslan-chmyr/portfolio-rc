@@ -1,5 +1,3 @@
-import { PortfolioSectionIndex } from '../../../app/portfolio'
-import '../../../app/portfolio/styles/portfolio-chrome.css'
 import { EXPERIENCE_ENTRIES } from '../model/experienceConfig'
 import { ExperienceTimeline } from './ExperienceTimeline'
 import '../styles/experience.css'
@@ -12,9 +10,6 @@ export function ExperienceSection() {
       aria-labelledby="experience-heading"
     >
       <div className="experience-section__motion">
-        <div className="portfolio-section-index-rail portfolio-section-index-rail--low">
-          <PortfolioSectionIndex activeId="experience" placement="leading" />
-        </div>
         <div className="experience-section__inner">
           <ExperienceTimeline
             entries={EXPERIENCE_ENTRIES}

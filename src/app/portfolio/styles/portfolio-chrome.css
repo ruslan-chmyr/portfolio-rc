@@ -19,58 +19,6 @@
   pointer-events: none;
 }
 
-/*
- * Mirrored About index — top-left on Experience / Contact.
- * Portfolio surface tokens so it stays legible on the inverted page.
- */
-.about-section__index-column--leading {
-  --about-index-below-nav: clamp(2.5rem, 5.5vh, 3.25rem);
-  --about-index-top-extra: 28px;
-  --about-index-column-gap: 8px;
-  --about-index-stack-gap: 2px;
-  --color-foreground: var(--color-portfolio-foreground);
-  --color-text-muted: var(--color-portfolio-text-muted);
-  --color-border: var(--color-portfolio-border);
-  --color-background: var(--color-portfolio-background);
-  right: auto;
-  left: var(--header-controls-right);
-  align-items: flex-start;
-}
-
-.about-section__index-column--leading .about-section__index-stack {
-  align-items: flex-start;
-}
-
-.about-section__index-column--leading .about-section__index--inactive .about-section__index-line {
-  transform-origin: 0% 50%;
-}
-
-.about-section__index-column--leading .about-section__index--active .about-section__index-label {
-  color: var(--color-foreground);
-}
-
-.about-section__index-column--leading .about-section__index--active .about-section__index-line {
-  background: var(--color-foreground);
-}
-
-/* Sticky host so the leading index tracks the viewport while the section scrolls. */
-.portfolio-section-index-rail {
-  position: sticky;
-  top: 0;
-  z-index: 6;
-  height: 0;
-  pointer-events: none;
-}
-
-/* Contact — tuck the mirrored index just under the chrome. */
-.portfolio-section-index-rail--high .about-section__index-column--leading {
-  top: calc(var(--header-controls-top) + clamp(2.75rem, 4.5vh, 3.75rem));
-}
-
-/* Experience — park the index in the lower third of the viewport. */
-.portfolio-section-index-rail--low .about-section__index-column--leading {
-  top: calc(100svh - clamp(9.5rem, 24vh, 14rem));
-}
 
 .about-section__index-stack {
   display: flex;
@@ -520,6 +468,10 @@
   background: var(--chrome-border);
 }
 
+/*
+ * Stack Contact → Resume as a normal column. writing-mode on the flex
+ * container itself turned “column” into parallel vertical strips.
+ */
 .portfolio-nav-rail__links {
   list-style: none;
   margin: 0;
@@ -528,9 +480,6 @@
   flex-direction: column;
   align-items: center;
   gap: 1.15rem;
-  /* Bottom → top reading along the left edge; logo stays upright above. */
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
   font-size: clamp(0.62rem, 0.28vw + 0.5rem, 0.72rem);
   font-weight: var(--type-label-weight, 600);
   letter-spacing: var(--type-label-tracking, 0.18em);
@@ -538,7 +487,15 @@
   line-height: 1;
 }
 
+.portfolio-nav-rail__links > li {
+  display: flex;
+  justify-content: center;
+}
+
 .portfolio-nav-rail__link {
+  /* Bottom → top reading along the left edge; logo stays upright above. */
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
   color: var(--chrome-strong);
   text-decoration: none;
   transition: color var(--interaction-fast, 160ms) var(--interaction-ease);
@@ -557,48 +514,88 @@
   color: var(--chrome-muted);
 }
 
-/* Active section marker + progress (theme toggle stays in the top strip). */
+/* Active section marker docks at the bottom of the Skills/Projects rail. */
 .portfolio-nav-rail__active {
   margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.85rem;
   padding-bottom: 0.35rem;
 }
 
-.portfolio-nav-rail__active-label {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
+/* —— Shared compact active-section marker —— */
+.portfolio-active-marker {
+  --marker-fg: var(--chrome-fg, var(--color-portfolio-foreground));
+  --marker-muted: var(--chrome-muted, var(--color-portfolio-text-muted));
+  --marker-border: var(--chrome-border, var(--color-portfolio-border));
+  --marker-fill: 38%;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  pointer-events: none;
+  color: var(--marker-muted);
   font-size: clamp(0.62rem, 0.28vw + 0.5rem, 0.72rem);
   font-weight: var(--type-label-weight, 600);
   letter-spacing: var(--type-label-tracking, 0.18em);
   text-transform: uppercase;
   line-height: 1;
-  color: var(--chrome-muted);
+}
+
+.portfolio-active-marker__label {
   white-space: nowrap;
 }
 
-.portfolio-nav-rail__progress {
+.portfolio-active-marker__track {
   position: relative;
-  width: 1px;
-  height: clamp(3.5rem, 12vh, 5.5rem);
-  background: color-mix(in srgb, var(--chrome-border) 70%, transparent);
+  display: block;
   overflow: hidden;
+  background: color-mix(in srgb, var(--marker-border) 70%, transparent);
 }
 
-.portfolio-nav-rail__progress-fill {
+.portfolio-active-marker__fill {
   position: absolute;
+  background: var(--marker-fg);
+}
+
+.portfolio-active-marker--vertical {
+  flex-direction: column;
+  align-items: center;
+}
+
+.portfolio-active-marker--vertical .portfolio-active-marker__label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.portfolio-active-marker--vertical .portfolio-active-marker__track {
+  width: 1px;
+  height: clamp(3.5rem, 12vh, 5.5rem);
+}
+
+.portfolio-active-marker--vertical .portfolio-active-marker__fill {
   left: 0;
   right: 0;
   top: 0;
-  height: 38%;
-  background: var(--chrome-fg);
+  height: var(--marker-fill);
 }
 
-.portfolio-nav-rail__progress-fill[data-section='projects'] {
-  height: 56%;
+.portfolio-active-marker--horizontal {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(44vw, 18rem);
 }
+
+.portfolio-active-marker--horizontal .portfolio-active-marker__track {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 1.15px;
+}
+
+.portfolio-active-marker--horizontal .portfolio-active-marker__fill {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--marker-fill);
+}
+
 
 .about-section__index-marker {
   display: none;
@@ -612,12 +609,6 @@
 }
 
 @media (max-width: 700px) {
-  /* Compact chrome already names the section — hide the mirrored editorial index. */
-  .portfolio-section-index-rail,
-  .about-section__index-column--leading {
-    display: none;
-  }
-
   .portfolio-nav {
     flex-wrap: nowrap;
     align-items: center;

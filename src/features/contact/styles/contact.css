@@ -31,10 +31,12 @@
   box-sizing: border-box;
   /* Hug content — min-height was leaving a tall empty band under the footer. */
   min-height: 0;
+  --contact-rail-gutter: 0px;
   padding:
     clamp(4.5rem, 11vh, 7.5rem)
     var(--contact-gutter)
-    max(1.25rem, env(safe-area-inset-bottom, 0px));
+    max(1.25rem, env(safe-area-inset-bottom, 0px))
+    calc(var(--contact-gutter) + var(--contact-rail-gutter));
   background: #000000;
   color: var(--contact-text);
   /* Visible so the fabric layer can overhang into Experience. */
@@ -42,6 +44,12 @@
   transition:
     background-color 320ms ease,
     color 320ms ease;
+}
+
+/* Clear the shared left rail on desktop Contact. */
+html:has(.portfolio-chrome[data-mode='rail'][data-active-section='contact'])
+  .contact-section {
+  --contact-rail-gutter: clamp(4.75rem, 7.2vw, 6.75rem);
 }
 
 /* Black portfolio page → black Contact */
