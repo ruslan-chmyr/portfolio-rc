@@ -1,12 +1,15 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useKeyboardSound } from '../hooks/useKeyboardSound'
+import { useNearViewport } from '../hooks/useNearViewport'
 import { useSkillCategoryTransition } from '../hooks/useSkillCategoryTransition'
+import { useSkillsKeyboardModule } from '../hooks/useSkillsKeyboardModule'
 import { useSkillsSceneTransition } from '../hooks/useSkillsSceneTransition'
 import {
   shouldPlayEngageSound,
   type SkillEngageOptions,
 } from '../lib/skillEngagement'
 import { resolveSkillInspection } from '../lib/skillSelection'
+import { SKILLS_KEYBOARD_LOAD } from '../lib/skillsKeyboardLoadConfig'
 import { toRelatedSkillSet } from '../lib/storyHighlight'
 import type { StoryFocusPhase } from '../lib/storyFocusTransition'
 import { isStoryFocusActive } from '../lib/storyFocusTransition'
@@ -26,12 +29,6 @@ import { SkillSoundToggle } from './SkillSoundToggle'
 import { SkillsKeyboardFallback } from './SkillsKeyboardFallback'
 import { StoriesPanel } from './stories/StoriesPanel'
 import '../styles/skills.css'
-
-const SkillsKeyboardCanvas = lazy(() =>
-  import('./SkillsKeyboardCanvas').then((module) => ({
-    default: module.SkillsKeyboardCanvas,
-  })),
-)
 
 export function SkillsSection() {
   const sectionRef = useRef<HTMLElement>(null)
@@ -67,6 +64,16 @@ export function SkillsSection() {
     handleFlipSwap,
     handleFlipComplete,
   } = useSkillCategoryTransition()
+
+  // Defer Three/R3F until Skills approaches the viewport (or immediately without IO).
+  const nearViewport = useNearViewport(sectionRef, {
+    rootMargin: SKILLS_KEYBOARD_LOAD.rootMargin,
+    threshold: SKILLS_KEYBOARD_LOAD.threshold,
+    latch: true,
+    enabled: webgl,
+  })
+  const { status: keyboardModuleStatus, Component: SkillsKeyboardCanvas } =
+    useSkillsKeyboardModule(webgl && nearViewport)
 
   const focusedStory = getEngineeringStory(focusedStoryId)
   const relatedSkillIds = useMemo(
@@ -145,6 +152,9 @@ export function SkillsSection() {
   // Mode attribute is also driven by GSAP during transitions; keep a coherent fallback.
   const mode = storyFocusActive ? 'story-focus' : 'explore'
 
+  const canvasReady =
+    webgl && keyboardModuleStatus === 'ready' && Boolean(SkillsKeyboardCanvas)
+
   return (
     <section
       ref={sectionRef}
@@ -152,6 +162,17 @@ export function SkillsSection() {
       className="skills-section"
       data-skills-mode={mode}
       data-skills-entrance="pending"
+      data-skills-keyboard={
+        canvasReady
+          ? 'webgl'
+          : keyboardModuleStatus === 'loading'
+            ? 'loading'
+            : keyboardModuleStatus === 'error'
+              ? 'error'
+              : webgl
+                ? 'pending'
+                : 'fallback'
+      }
       aria-label="Skills"
     >
       <div className="skills-section__shell">
@@ -167,9 +188,9 @@ export function SkillsSection() {
               aria-label="Interactive skills keyboard"
             >
               <div className="skills-section__stars" aria-hidden />
-              <Suspense fallback={<SkillsKeyboardFallback activeCategory={displayCategory} />}>
+              {canvasReady && SkillsKeyboardCanvas ? (
                 <SkillsKeyboardCanvas
-                  enabled={webgl}
+                  enabled
                   displayCategory={displayCategory}
                   selectedSkillId={inspectedSkillId}
                   relatedSkillIds={relatedSkillIds}
@@ -180,7 +201,14 @@ export function SkillsSection() {
                   onFlipSwap={handleFlipSwap}
                   onFlipComplete={handleFlipComplete}
                 />
-              </Suspense>
+              ) : (
+                <SkillsKeyboardFallback
+                  activeCategory={displayCategory}
+                  selectedSkillId={inspectedSkillId}
+                  onEngageSkill={isFlipping ? undefined : handleEngageSkill}
+                  onClearInspection={isFlipping ? undefined : handleClearInspection}
+                />
+              )}
             </div>
 
             <div ref={footerRef} className="skills-section__board-footer">
