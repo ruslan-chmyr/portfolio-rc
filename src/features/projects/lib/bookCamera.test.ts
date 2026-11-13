@@ -20,13 +20,13 @@ describe('bookCamera', () => {
       worldWidth: openBookWidth(),
       fovDeg: 40,
       aspect: 1.6,
-      fill: 0.72,
+      fill: PROJECT_BOOK_CAMERA.openWidthFill,
     })
     const narrow = framingDistance({
       worldWidth: openBookWidth(),
       fovDeg: 40,
       aspect: 0.7,
-      fill: 0.72,
+      fill: PROJECT_BOOK_CAMERA.openWidthFill,
     })
     expect(wide).toBeGreaterThanOrEqual(PROJECT_BOOK_CAMERA.minDistance)
     expect(wide).toBeLessThanOrEqual(PROJECT_BOOK_CAMERA.maxDistance)

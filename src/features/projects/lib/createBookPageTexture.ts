@@ -201,10 +201,6 @@ export function createProjectDetailPageCanvas(
     }
   }
 
-  ctx.fillStyle = '#9a9388'
-  ctx.font = `500 18px ${FONT}`
-  ctx.fillText('Details →', mx, PAGE_H - 56)
-
   return canvas
 }
 

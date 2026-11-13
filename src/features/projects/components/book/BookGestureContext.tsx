@@ -10,11 +10,17 @@ import {
   createBookGestureState,
   type BookGestureState,
 } from '../../lib/bookGesture'
+import {
+  createEmptyBookCameraApi,
+  type BookCameraApi,
+} from '../../lib/bookCameraApi'
 
 export type BookActivityBumper = (ms?: number) => void
 
 type BookGestureContextValue = {
   gesture: MutableRefObject<BookGestureState>
+  /** Imperative camera controls for the HTML toolbar. */
+  cameraApiRef: MutableRefObject<BookCameraApi>
   /** Request frames while animations / damping settle. */
   bumpActivity: BookActivityBumper
   activityUntil: MutableRefObject<number>
@@ -32,8 +38,9 @@ export function BookGestureProvider({
   activityUntil: MutableRefObject<number>
 }) {
   const gesture = useRef(createBookGestureState())
+  const cameraApiRef = useRef<BookCameraApi>(createEmptyBookCameraApi())
   const value = useMemo(
-    () => ({ gesture, bumpActivity, activityUntil }),
+    () => ({ gesture, cameraApiRef, bumpActivity, activityUntil }),
     [bumpActivity, activityUntil],
   )
   return (

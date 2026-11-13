@@ -6,18 +6,14 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Canvas, useThree } from '@react-three/fiber'
+import { Canvas } from '@react-three/fiber'
 import { ContactShadows } from '@react-three/drei'
+import type { Group } from 'three'
 import {
   bookSheetCount,
   maxPageIndex,
   projectIndexForPage,
 } from '../../lib/buildBookSheets'
-import {
-  beginBookPointer,
-  endBookPointer,
-  moveBookPointer,
-} from '../../lib/bookGesture'
 import { warmupInitialBookTextures } from '../../lib/sheetFaceTexture'
 import {
   PROJECT_BOOK_CAMERA,
@@ -26,11 +22,13 @@ import {
 } from '../../model/projectBookConfig'
 import type { ProjectBookEntry } from '../../model/projectBookData'
 import { BookActivityLoop } from './BookActivityLoop'
-import { BookGestureProvider, useBookGesture } from './BookGestureContext'
+import { BookGestureProvider } from './BookGestureContext'
 import { BookOrbitRig } from './BookOrbitRig'
+import { BookPointerOwnership } from './BookPointerOwnership'
+import { BookToolbar } from './BookToolbar'
 import { ProjectBook } from './ProjectBook'
 import { ProjectBookFallback } from './ProjectBookFallback'
-import { ProjectDetailOverlay } from './ProjectDetailOverlay'
+import '../../styles/book-toolbar.css'
 
 export type ProjectBookSceneProps = {
   entries: readonly ProjectBookEntry[]
@@ -42,15 +40,17 @@ export type ProjectBookSceneProps = {
 function BookLights() {
   return (
     <>
-      <ambientLight intensity={0.55} />
+      <ambientLight intensity={0.42} color="#c8d6ff" />
       <directionalLight
         castShadow
-        intensity={2.05}
-        position={[2, 5, 2]}
+        intensity={1.85}
+        color="#e8eeff"
+        position={[2.2, 5.2, 2.4]}
         shadow-mapSize={[1024, 1024]}
         shadow-bias={-0.0001}
       />
-      <directionalLight intensity={0.35} position={[-2.5, 1.2, -1]} />
+      <directionalLight intensity={0.45} color="#7aa7ff" position={[-2.8, 1.4, -1.2]} />
+      <directionalLight intensity={0.22} color="#52ffa5" position={[1.5, 2.2, -2.5]} />
     </>
   )
 }
@@ -85,36 +85,44 @@ function ActiveSpreadAnnouncement({
   )
 }
 
-/** Pointer tracking on the WebGL canvas — separates orbit drags from page clicks. */
-function GestureBridge() {
-  const { gesture } = useBookGesture()
-  const gl = useThree((s) => s.gl)
-
-  useEffect(() => {
-    const el = gl.domElement
-    const onDown = (event: PointerEvent) => {
-      beginBookPointer(gesture.current, event.clientX, event.clientY)
-    }
-    const onMove = (event: PointerEvent) => {
-      moveBookPointer(gesture.current, event.clientX, event.clientY)
-    }
-    const onUp = () => {
-      endBookPointer(gesture.current)
-    }
-
-    el.addEventListener('pointerdown', onDown)
-    el.addEventListener('pointermove', onMove)
-    el.addEventListener('pointerup', onUp)
-    el.addEventListener('pointercancel', onUp)
-    return () => {
-      el.removeEventListener('pointerdown', onDown)
-      el.removeEventListener('pointermove', onMove)
-      el.removeEventListener('pointerup', onUp)
-      el.removeEventListener('pointercancel', onUp)
-    }
-  }, [gesture, gl])
-
-  return null
+/** Always visually hidden — keyboard / screen-reader page nav. */
+function BookA11yControls({
+  page,
+  maxPage,
+  onOpen,
+  onClose,
+  onPrev,
+  onNext,
+}: {
+  page: number
+  maxPage: number
+  onOpen: () => void
+  onClose: () => void
+  onPrev: () => void
+  onNext: () => void
+}) {
+  return (
+    <div className="project-book-scene__a11y">
+      <p id="project-book-a11y-label">{PROJECT_BOOK_META.a11yControlsLabel}</p>
+      {page === 0 ? (
+        <button type="button" onClick={onOpen}>
+          {PROJECT_BOOK_META.openLabel}
+        </button>
+      ) : (
+        <>
+          <button type="button" onClick={onPrev} disabled={page <= 0}>
+            {PROJECT_BOOK_META.prevLabel}
+          </button>
+          <button type="button" onClick={onNext} disabled={page >= maxPage}>
+            {PROJECT_BOOK_META.nextLabel}
+          </button>
+          <button type="button" onClick={onClose}>
+            {PROJECT_BOOK_META.closeLabel}
+          </button>
+        </>
+      )}
+    </div>
+  )
 }
 
 export function ProjectBookScene({
@@ -127,9 +135,11 @@ export function ProjectBookScene({
   const maxPage = maxPageIndex(sheetCount)
   const [page, setPage] = useState(0)
   const [fallbackSpread, setFallbackSpread] = useState(0)
-  const [detailsOpen, setDetailsOpen] = useState(false)
   const [resetNonce, setResetNonce] = useState(0)
-  const [hintVisible, setHintVisible] = useState(true)
+  const [fullscreen, setFullscreen] = useState(false)
+  const bookRootRef = useRef<Group>(null)
+  const sceneRootRef = useRef<HTMLDivElement>(null)
+  const closingLock = useRef(false)
 
   const activityUntil = useRef(0)
   const bumpActivity = useCallback((ms?: number) => {
@@ -142,13 +152,32 @@ export function ProjectBookScene({
 
   const requestReset = useCallback(() => {
     setResetNonce((n) => n + 1)
-    setHintVisible(false)
     bumpActivity(PROJECT_BOOK_CAMERA.resetDurationMs + 100)
   }, [bumpActivity])
 
-  const projectIndex = projectIndexForPage(page, entries.length)
-  const active = projectIndex === null ? null : (entries[projectIndex] ?? null)
-  const canShowDetails = detailsOpen && active !== null && page > 0
+  const closeBook = useCallback(() => {
+    if (page <= 0 || closingLock.current) return
+    closingLock.current = true
+    setPage(0)
+  }, [page])
+
+  const toggleFullscreen = useCallback(async () => {
+    const root = sceneRootRef.current
+    if (!root) return
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+      } else {
+        await root.requestFullscreen()
+      }
+    } catch {
+      // Browser may reject without user gesture or when unsupported.
+    }
+  }, [])
+
+  useEffect(() => {
+    if (page === 0) closingLock.current = false
+  }, [page])
 
   useEffect(() => {
     bumpActivity(PROJECT_BOOK_CAMERA.pageSettleMs)
@@ -157,6 +186,16 @@ export function ProjectBookScene({
   useEffect(() => {
     warmupInitialBookTextures(entries)
   }, [entries])
+
+  useEffect(() => {
+    const onFs = () => {
+      const active = document.fullscreenElement === sceneRootRef.current
+      setFullscreen(active)
+      bumpActivity(400)
+    }
+    document.addEventListener('fullscreenchange', onFs)
+    return () => document.removeEventListener('fullscreenchange', onFs)
+  }, [bumpActivity])
 
   useEffect(() => {
     if (!sectionVisible) return
@@ -170,19 +209,15 @@ export function ProjectBookScene({
       ) {
         return
       }
+      // Let the browser exit fullscreen on Escape first.
       if (event.key === 'Escape') {
-        if (detailsOpen) {
-          event.preventDefault()
-          setDetailsOpen(false)
-          return
-        }
+        if (document.fullscreenElement) return
         if (page > 0) {
           event.preventDefault()
-          setPage(0)
+          closeBook()
         }
         return
       }
-      if (detailsOpen) return
       if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
         event.preventDefault()
         setPage((p) => Math.min(maxPage, p + 1))
@@ -197,10 +232,6 @@ export function ProjectBookScene({
           setPage(1)
         }
       }
-      if ((event.key === 'd' || event.key === 'D') && page > 0 && active) {
-        event.preventDefault()
-        setDetailsOpen(true)
-      }
       if (event.key === 'r' || event.key === 'R') {
         event.preventDefault()
         requestReset()
@@ -208,7 +239,7 @@ export function ProjectBookScene({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [active, detailsOpen, maxPage, page, requestReset, sectionVisible])
+  }, [closeBook, maxPage, page, requestReset, sectionVisible])
 
   if (preferFallback) {
     return (
@@ -221,36 +252,42 @@ export function ProjectBookScene({
   }
 
   return (
-    <div className="project-book-scene">
-      <Canvas
-        className="project-book-scene__canvas"
-        dpr={[1, PROJECT_BOOK_SCENE.dprMax]}
-        shadows
-        frameloop={!sectionVisible ? 'never' : 'demand'}
-        camera={{
-          position: [
-            PROJECT_BOOK_CAMERA.defaultPosition.x,
-            PROJECT_BOOK_CAMERA.defaultPosition.y,
-            PROJECT_BOOK_CAMERA.defaultPosition.z,
-          ],
-          fov: PROJECT_BOOK_CAMERA.fov,
-          near: 0.1,
-          far: 80,
-        }}
-        gl={{
-          antialias: true,
-          alpha: true,
-          powerPreference: 'high-performance',
-        }}
-        onCreated={({ gl, invalidate }) => {
-          gl.setClearColor(0x000000, 0)
-          invalidate()
-          bumpActivity(600)
-        }}
+    <div
+      ref={sceneRootRef}
+      className="project-book-scene"
+      data-fullscreen={fullscreen ? 'true' : 'false'}
+      role="application"
+      aria-label="Interactive project book"
+    >
+      <BookGestureProvider
+        bumpActivity={bumpActivity}
+        activityUntil={activityUntil}
       >
-        <BookGestureProvider
-          bumpActivity={bumpActivity}
-          activityUntil={activityUntil}
+        <Canvas
+          className="project-book-scene__canvas"
+          dpr={[1, PROJECT_BOOK_SCENE.dprMax]}
+          shadows
+          frameloop={!sectionVisible ? 'never' : 'demand'}
+          camera={{
+            position: [
+              PROJECT_BOOK_CAMERA.defaultPosition.x,
+              PROJECT_BOOK_CAMERA.defaultPosition.y,
+              PROJECT_BOOK_CAMERA.defaultPosition.z,
+            ],
+            fov: PROJECT_BOOK_CAMERA.fov,
+            near: 0.1,
+            far: 80,
+          }}
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance',
+          }}
+          onCreated={({ gl, invalidate }) => {
+            gl.setClearColor(0x000000, 0)
+            invalidate()
+            bumpActivity(600)
+          }}
         >
           <Suspense fallback={null}>
             <BookActivityLoop
@@ -263,6 +300,7 @@ export function ProjectBookScene({
             />
             <BookLights />
             <group
+              ref={bookRootRef}
               position-y={PROJECT_BOOK_SCENE.bookOffsetY}
               rotation-x={PROJECT_BOOK_SCENE.bookTiltX}
             >
@@ -274,73 +312,39 @@ export function ProjectBookScene({
               />
             </group>
             <ContactShadows
-              position={[0, -1.35, 0]}
-              opacity={0.35}
-              scale={8}
-              blur={2.5}
-              far={4}
+              position={[0, -1.05, 0]}
+              opacity={0.42}
+              scale={9}
+              blur={2.8}
+              far={4.5}
               frames={1}
+              color="#0b1240"
             />
-            <GestureBridge />
+            <BookPointerOwnership bookRootRef={bookRootRef} />
           </Suspense>
-        </BookGestureProvider>
-      </Canvas>
+        </Canvas>
 
-      <div className="project-book-scene__chrome">
-        {page === 0 && hintVisible ? (
-          <p className="project-book-scene__hint" aria-hidden>
-            {PROJECT_BOOK_META.exploreHint}
-          </p>
-        ) : null}
-
-        <div className="project-book-scene__controls">
-          {page === 0 ? (
-            <button type="button" onClick={() => setPage(1)}>
-              {PROJECT_BOOK_META.openLabel}
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-                disabled={page <= 0}
-              >
-                {PROJECT_BOOK_META.prevLabel}
-              </button>
-              <button
-                type="button"
-                onClick={() => setDetailsOpen(true)}
-                disabled={!active}
-              >
-                {PROJECT_BOOK_META.detailsLabel}
-              </button>
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                disabled={page >= maxPage}
-              >
-                {PROJECT_BOOK_META.nextLabel}
-              </button>
-              <button type="button" onClick={() => setPage(0)}>
-                {PROJECT_BOOK_META.closeLabel}
-              </button>
-            </>
-          )}
-          <button type="button" onClick={requestReset}>
-            {PROJECT_BOOK_META.resetViewLabel}
-          </button>
-        </div>
-      </div>
-
-      {active ? (
-        <ProjectDetailOverlay
-          entry={active}
-          open={canShowDetails}
-          onClose={() => setDetailsOpen(false)}
+        <BookToolbar
+          page={page}
+          fullscreen={fullscreen}
+          onResetView={requestReset}
+          onCloseBook={closeBook}
+          onToggleFullscreen={() => {
+            void toggleFullscreen()
+          }}
         />
-      ) : null}
 
-      <ActiveSpreadAnnouncement entries={entries} page={page} />
+        <BookA11yControls
+          page={page}
+          maxPage={maxPage}
+          onOpen={() => setPage(1)}
+          onClose={closeBook}
+          onPrev={() => setPage((p) => Math.max(0, p - 1))}
+          onNext={() => setPage((p) => Math.min(maxPage, p + 1))}
+        />
+
+        <ActiveSpreadAnnouncement entries={entries} page={page} />
+      </BookGestureProvider>
     </div>
   )
 }

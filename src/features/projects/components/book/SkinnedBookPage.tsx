@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useCursor } from '@react-three/drei'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { easing } from 'maath'
 import {
   Bone,
   Color,
   Group,
-  MathUtils,
   MeshStandardMaterial,
   Skeleton,
   SkinnedMesh,
@@ -17,7 +15,10 @@ import {
   createSheetFaceTexture,
   sheetFaceCacheKey,
 } from '../../lib/sheetFaceTexture'
-import { shouldSuppressPageClick } from '../../lib/bookGesture'
+import {
+  BOOK_PAGE_USERDATA_KEY,
+  shouldSuppressPageClick,
+} from '../../lib/bookGesture'
 import {
   getSkinnedPageGeometry,
   SKINNED_PAGE,
@@ -37,7 +38,6 @@ type SkinnedBookPageProps = {
 }
 
 const whiteColor = new Color('white')
-const emissiveColor = new Color('#c8d0dc')
 
 const edgeMaterials = [
   new MeshStandardMaterial({ color: whiteColor }),
@@ -64,9 +64,7 @@ export function SkinnedBookPage({
   const skinnedMeshRef = useRef<SkinnedMesh>(null)
   const turnedAt = useRef(0)
   const lastOpened = useRef(opened)
-  const [highlighted, setHighlighted] = useState(false)
   const { gesture, bumpActivity } = useBookGesture()
-  useCursor(highlighted)
 
   const frontKey = sheetFaceCacheKey(sheet.front)
   const backKey = sheetFaceCacheKey(sheet.back)
@@ -93,16 +91,12 @@ export function SkinnedBookPage({
         map: frontMap,
         roughness: isCover && number === 0 ? 0.72 : 0.18,
         metalness: isCover && number === 0 ? 0.12 : 0,
-        emissive: emissiveColor,
-        emissiveIntensity: 0,
       }),
       new MeshStandardMaterial({
         color: whiteColor,
         map: backMap,
         roughness: isCover && number === sheetCount - 1 ? 0.72 : 0.18,
         metalness: 0,
-        emissive: emissiveColor,
-        emissiveIntensity: 0,
       }),
     ]
 
@@ -110,6 +104,7 @@ export function SkinnedBookPage({
     mesh.castShadow = true
     mesh.receiveShadow = true
     mesh.frustumCulled = false
+    mesh.userData[BOOK_PAGE_USERDATA_KEY] = true
     mesh.add(skeleton.bones[0]!)
     mesh.bind(skeleton)
     return mesh
@@ -123,7 +118,6 @@ export function SkinnedBookPage({
       const list = Array.isArray(materials) ? materials : [materials]
       for (const mat of list) {
         if (!(mat instanceof MeshStandardMaterial)) continue
-        // Shared edge materials + cached face maps must not be disposed here.
         if (edgeMaterials.includes(mat)) continue
         mat.dispose()
       }
@@ -135,36 +129,6 @@ export function SkinnedBookPage({
     const mesh = skinnedMeshRef.current
     const root = group.current
     if (!mesh || !root) return
-
-    const mats = mesh.material
-    if (!Array.isArray(mats) || mats.length < 6) return
-    const frontMat = mats[4]
-    const backMat = mats[5]
-    if (
-      !(frontMat instanceof MeshStandardMaterial) ||
-      !(backMat instanceof MeshStandardMaterial)
-    ) {
-      return
-    }
-    const emissiveIntensity = highlighted ? 0.12 : 0
-    const nextFront = MathUtils.lerp(
-      frontMat.emissiveIntensity,
-      emissiveIntensity,
-      0.1,
-    )
-    const nextBack = MathUtils.lerp(
-      backMat.emissiveIntensity,
-      emissiveIntensity,
-      0.1,
-    )
-    if (
-      Math.abs(nextFront - frontMat.emissiveIntensity) > 0.001 ||
-      Math.abs(nextBack - backMat.emissiveIntensity) > 0.001
-    ) {
-      bumpActivity(280)
-    }
-    frontMat.emissiveIntensity = nextFront
-    backMat.emissiveIntensity = nextBack
 
     if (lastOpened.current !== opened) {
       turnedAt.current = Date.now()
@@ -236,22 +200,11 @@ export function SkinnedBookPage({
   return (
     <group
       ref={group}
-      onPointerEnter={(event) => {
-        event.stopPropagation()
-        if (shouldSuppressPageClick(gesture.current)) return
-        setHighlighted(true)
-        bumpActivity(280)
-      }}
-      onPointerLeave={(event) => {
-        event.stopPropagation()
-        setHighlighted(false)
-        bumpActivity(280)
-      }}
+      userData={{ [BOOK_PAGE_USERDATA_KEY]: true }}
       onClick={(event) => {
         event.stopPropagation()
         if (shouldSuppressPageClick(gesture.current)) return
         onSelect(opened ? number : number + 1)
-        setHighlighted(false)
         bumpActivity(PROJECT_BOOK_CAMERA.pageSettleMs)
       }}
     >
