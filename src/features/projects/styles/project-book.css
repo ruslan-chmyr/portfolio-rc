@@ -1,0 +1,258 @@
+/* Interactive only after Projects nav ownership (blue wipe settled). */
+html[data-projects-nav='owned'] .projects-section__book-slot {
+  pointer-events: auto;
+}
+
+.projects-section__book-slot {
+  position: absolute;
+  inset: 0;
+  display: block;
+  padding: 0;
+  box-sizing: border-box;
+  /* Absolute fill — never change panel geometry / ScrollTrigger math. */
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.project-book-scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-width: none;
+  max-height: none;
+}
+
+.project-book-scene[data-fullscreen='true'] {
+  background:
+    radial-gradient(
+      120% 90% at 8% 12%,
+      rgba(88, 46, 255, 0.55) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      90% 70% at 92% 8%,
+      rgba(82, 255, 165, 0.18) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      110% 95% at 78% 88%,
+      rgba(40, 107, 255, 0.7) 0%,
+      transparent 70%
+    ),
+    linear-gradient(148deg, #1a1460 0%, #0b1240 36%, #122a88 62%, #1a4fd4 100%);
+}
+
+.project-book-loading {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  pointer-events: none;
+}
+
+.project-book-scene__canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none;
+  max-height: none;
+  border-radius: inherit;
+  /* Pinch / drag orbit inside the panel; section scrub uses wheel outside or without modifier. */
+  touch-action: none;
+  background: transparent;
+}
+
+/* Always clipped — never show book chrome on the blue panel. */
+.project-book-scene__a11y {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.project-book-scene__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* —— 2D fallback / mobile reading surface —— */
+.project-book-fallback {
+  width: min(100%, 52rem);
+  color: #f4f7fb;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  box-sizing: border-box;
+}
+
+.project-book-fallback__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.project-book-fallback__meta,
+.project-book-fallback__count {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.project-book-fallback__spread {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: clamp(1rem, 3vw, 1.75rem);
+  align-items: start;
+}
+
+.project-book-fallback__visual {
+  border-radius: 1rem;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.25);
+  aspect-ratio: 3 / 4;
+}
+
+.project-book-fallback__visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.project-book-fallback__title {
+  margin: 0 0 0.65rem;
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.project-book-fallback__summary {
+  margin: 0 0 1rem;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.5;
+}
+
+.project-book-fallback__block {
+  margin: 0 0 0.85rem;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
+
+.project-book-fallback__block span {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.66rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.project-book-fallback__tech {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-book-fallback__tech li {
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+.project-book-fallback__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.35rem;
+}
+
+.project-book-fallback__nav ol {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-book-fallback__nav button {
+  appearance: none;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(8, 12, 24, 0.35);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.project-book-fallback__nav button[aria-current='true'] {
+  background: rgba(255, 255, 255, 0.92);
+  color: #0b1220;
+}
+
+.project-book-fallback__nav button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.project-book-fallback__empty {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 900px) {
+  .project-book-fallback__spread {
+    grid-template-columns: 1fr;
+  }
+
+  .project-book-fallback__visual {
+    max-width: 22rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .project-book-fallback {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-book-scene__canvas {
+    scroll-behavior: auto;
+  }
+}
