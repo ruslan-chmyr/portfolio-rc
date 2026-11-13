@@ -67,6 +67,7 @@ html:has(.portfolio-chrome[data-mode='rail'][data-active-section='projects'])
       var(--projects-panel) 48%,
       var(--projects-panel-deep) 100%
     );
+  /* Keep none — Skills/Projects wipe must not steal hits. Book slot enables later. */
   pointer-events: none;
 }
 
