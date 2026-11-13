@@ -23,10 +23,14 @@ import '../styles/portfolio-chrome.css'
 function railMarkerSectionId(
   activeSection: PortfolioSectionId,
 ): PortfolioMarkerSectionId {
-  if (PORTFOLIO_RAIL_SECTIONS.has(activeSection) && activeSection !== 'intro') {
-    return activeSection as PortfolioMarkerSectionId
-  }
+  if (activeSection === 'projects') return 'projects'
   return 'expertise'
+}
+
+function isCompactMarkerSection(
+  activeSection: PortfolioSectionId,
+): activeSection is 'experience' | 'contact' {
+  return activeSection === 'experience' || activeSection === 'contact'
 }
 
 function ResumeControl({
@@ -85,12 +89,16 @@ export function PortfolioNav() {
 
   const menuVisible = mode === 'compact' && menuOpen
   const railActive = mode === 'rail'
-  /** Rail sections on mobile: RC + Resume + Contact (no Menu), matching desktop rail. */
-  const immersiveCompact =
+  /** Skills/Projects mobile — keep header minimal; section menu still available. */
+  const railCompact =
     mode === 'compact' && PORTFOLIO_RAIL_SECTIONS.has(activeSection)
-  const showCompactMenu = mode === 'compact' && !immersiveCompact
-  const showInlineLinks = mode === 'standard' || immersiveCompact
+  const showCompactMenu = mode === 'compact'
+  const showInlineLinks = mode === 'standard'
   const showContactLink = activeSection !== 'contact'
+  /** Easy Contact access on immersive mobile without crowding Resume inline. */
+  const showMobileContactShortcut = railCompact && showContactLink
+  const showDesktopSectionMarker =
+    mode === 'standard' && isCompactMarkerSection(activeSection)
 
   useEffect(() => {
     if (!menuVisible) return
@@ -193,6 +201,19 @@ export function PortfolioNav() {
             </ul>
           ) : null}
 
+          {showMobileContactShortcut ? (
+            <a
+              className="portfolio-nav__mobile-contact"
+              href="#contact"
+              onClick={(event) => {
+                event.preventDefault()
+                goTo('contact')
+              }}
+            >
+              Contact
+            </a>
+          ) : null}
+
           {showCompactMenu ? (
             <div className="portfolio-nav__menu" ref={menuRef}>
               <button
@@ -243,6 +264,15 @@ export function PortfolioNav() {
         </div>
       </nav>
 
+      {showDesktopSectionMarker ? (
+        <div className="portfolio-chrome__section-marker" aria-hidden="true">
+          <PortfolioActiveSectionMarker
+            sectionId={activeSection}
+            orientation="horizontal"
+          />
+        </div>
+      ) : null}
+
       {railActive ? (
         <nav className="portfolio-nav-rail" aria-label="Section primary">
           <a
@@ -265,20 +295,18 @@ export function PortfolioNav() {
           <div className="portfolio-nav-rail__spine" aria-hidden />
 
           <ul className="portfolio-nav-rail__links">
-            {showContactLink ? (
-              <li>
-                <a
-                  className="portfolio-nav-rail__link"
-                  href="#contact"
-                  onClick={(event) => {
-                    event.preventDefault()
-                    goTo('contact')
-                  }}
-                >
-                  Contact
-                </a>
-              </li>
-            ) : null}
+            <li>
+              <a
+                className="portfolio-nav-rail__link"
+                href="#contact"
+                onClick={(event) => {
+                  event.preventDefault()
+                  goTo('contact')
+                }}
+              >
+                Contact
+              </a>
+            </li>
             <li>
               <ResumeControl
                 configured={resumeConfigured}

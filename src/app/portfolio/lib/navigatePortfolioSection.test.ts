@@ -157,7 +157,7 @@ describe('navigatePortfolioSection', () => {
     )
   })
 
-  it('lands Projects navigation on nav-ready wipe progress, not start+8', async () => {
+  it('lands Projects navigation safely past ownership threshold, before exit', async () => {
     document.documentElement.classList.add('portfolio-native-scroll')
     document.body.innerHTML = '<section id="projects"></section>'
     Object.defineProperty(window, 'scrollY', {
@@ -173,16 +173,22 @@ describe('navigatePortfolioSection', () => {
       { trigger: projects, start: 1000, end: 3000 } as never,
     ])
 
-    const { projectsNavReadyProgress } = await import(
-      '../../../features/projects/lib/projectsScrollConfig'
-    )
+    const {
+      projectsNavLandingProgress,
+      projectsNavReadyProgress,
+      projectsExitStartsAt,
+      projectsTimelineDuration,
+    } = await import('../../../features/projects/lib/projectsScrollConfig')
+    const landing = projectsNavLandingProgress()
     const ready = projectsNavReadyProgress()
-    const expected = 1000 + (3000 - 1000) * ready
+    const exitStart = projectsExitStartsAt() / projectsTimelineDuration()
+    const expected = 1000 + (3000 - 1000) * landing
 
+    expect(landing).toBeGreaterThan(ready)
+    expect(landing).toBeLessThan(exitStart)
     expect(navigatePortfolioSection('projects')).toBe(true)
     expect(scrollTo).toHaveBeenCalledWith(
       expect.objectContaining({ top: expected, left: 0 }),
     )
-    expect(expected).toBeGreaterThan(1000 + 8)
   })
 })

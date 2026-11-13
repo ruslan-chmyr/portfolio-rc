@@ -16,12 +16,10 @@ export type PortfolioSectionEntry = {
 
 export type PortfolioNavMode = 'intro' | 'standard' | 'compact' | 'rail'
 
-/** Desktop scenes that use the shared left editorial rail instead of horizontal chrome. */
+/** Desktop Skills / Projects use the left editorial rail instead of horizontal chrome. */
 export const PORTFOLIO_RAIL_SECTIONS: ReadonlySet<PortfolioSectionId> = new Set([
   'expertise',
   'projects',
-  'experience',
-  'contact',
 ])
 
 

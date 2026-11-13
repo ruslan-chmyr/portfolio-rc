@@ -121,6 +121,19 @@ export function projectsNavReadyProgress(
   )
 }
 
+/**
+ * Safe programmatic landing inside Projects ownership.
+ * Past the nav-ready threshold, before the exit flight — avoids chrome flicker
+ * when rounding lands exactly on the ownership boundary.
+ */
+export function projectsNavLandingProgress(): number {
+  const ready = projectsNavReadyProgress()
+  const exitStart = projectsExitStartsAt() / projectsTimelineDuration()
+  if (!(exitStart > ready)) return Math.min(0.99, ready + 0.02)
+  const landing = ready + (exitStart - ready) * 0.2
+  return Math.min(landing, exitStart - 0.01)
+}
+
 /** Park the trigger until Skills has finished entering, then use the normal start. */
 export function resolveProjectsTriggerStart(skills: HTMLElement | null): string {
   if (!isSkillsEntranceDone(skills)) return 'bottom+=150% bottom'

@@ -31,21 +31,13 @@
   max-width: 100vw;
   box-sizing: border-box;
   margin-top: calc(-1 * var(--experience-underlap));
-  --experience-rail-gutter: 0px;
   padding:
     clamp(4.75rem, 12vh, 7.75rem)
     var(--experience-gutter)
-    clamp(7.5rem, 18vh, 12rem)
-    calc(var(--experience-gutter) + var(--experience-rail-gutter));
+    clamp(7.5rem, 18vh, 12rem);
   background-color: #000000;
   color: #ffffff;
   /* Avoid overflow-x:clip here — it forces a scrollport and kills position:sticky. */
-}
-
-/* Clear the shared left rail on desktop Experience. */
-html:has(.portfolio-chrome[data-mode='rail'][data-active-section='experience'])
-  .experience-section {
-  --experience-rail-gutter: clamp(4.75rem, 7.2vw, 6.75rem);
 }
 
 /* Black portfolio page */

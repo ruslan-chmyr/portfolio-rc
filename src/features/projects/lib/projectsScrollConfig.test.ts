@@ -4,6 +4,7 @@ import {
   isSkillsEntranceDone,
   projectsExitDistancePx,
   projectsExitStartsAt,
+  projectsNavLandingProgress,
   projectsNavReadyProgress,
   projectsScrubDistancePx,
   projectsTimelineDuration,
@@ -66,6 +67,14 @@ describe('projects exit distance', () => {
       PROJECTS_SCROLL.panelSlideDuration / projectsTimelineDuration(),
       5,
     )
+  })
+
+  it('lands programmatic navigation inside ownership, before exit', () => {
+    const ready = projectsNavReadyProgress()
+    const landing = projectsNavLandingProgress()
+    const exitStart = projectsExitStartsAt() / projectsTimelineDuration()
+    expect(landing).toBeGreaterThan(ready)
+    expect(landing).toBeLessThan(exitStart)
   })
 })
 

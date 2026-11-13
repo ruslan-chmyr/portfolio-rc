@@ -16,7 +16,7 @@ export type ResolvePortfolioNavModeInput = {
  * Mode A — intro capture (minimal; IntroHeader owns chrome).
  * Mode B — standard horizontal portfolio chrome (About).
  * Mode C — compact chrome for immersive / narrow viewports.
- * Mode D — vertical left rail for desktop Skills / Projects / Experience / Contact.
+ * Mode D — vertical left rail for desktop Skills / Projects.
  */
 export function resolvePortfolioNavMode(
   input: ResolvePortfolioNavModeInput,

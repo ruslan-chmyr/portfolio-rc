@@ -40,7 +40,9 @@ export function SkillCategorySelector({
     const buttons = groupRef.current?.querySelectorAll<HTMLButtonElement>('button')
     if (!buttons?.length) return
     const target = category === 'fe' ? buttons[0] : buttons[1]
-    target?.focus()
+    // Disabled segments are not focusable — keep focus on the active control.
+    if (!target || target.disabled) return
+    target.focus()
   }
 
   const onGroupKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {

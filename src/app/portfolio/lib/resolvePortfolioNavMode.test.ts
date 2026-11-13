@@ -25,7 +25,7 @@ describe('resolvePortfolioNavMode', () => {
     ).toBe('standard')
   })
 
-  it('returns rail for desktop Skills, Projects, Experience, and Contact', () => {
+  it('returns rail for desktop Skills and Projects only', () => {
     expect(
       resolvePortfolioNavMode({
         nativeScroll: true,
@@ -40,23 +40,23 @@ describe('resolvePortfolioNavMode', () => {
         viewportWidth: 1440,
       }),
     ).toBe('rail')
+  })
+
+  it('keeps Experience and Contact on standard desktop chrome', () => {
     expect(
       resolvePortfolioNavMode({
         nativeScroll: true,
         activeSection: 'experience',
         viewportWidth: 1440,
       }),
-    ).toBe('rail')
+    ).toBe('standard')
     expect(
       resolvePortfolioNavMode({
         nativeScroll: true,
         activeSection: 'contact',
         viewportWidth: 1440,
       }),
-    ).toBe('rail')
-  })
-
-  it('keeps About on standard desktop chrome', () => {
+    ).toBe('standard')
     expect(
       resolvePortfolioNavMode({
         nativeScroll: true,

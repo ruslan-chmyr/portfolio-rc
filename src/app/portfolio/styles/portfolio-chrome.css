@@ -215,6 +215,43 @@
   pointer-events: none;
 }
 
+/* Immersive mobile: Contact shortcut without crowding Resume into the top bar. */
+.portfolio-nav__mobile-contact {
+  flex-shrink: 0;
+  font-size: clamp(0.62rem, 0.28vw + 0.5rem, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--chrome-strong);
+  transition: color var(--interaction-fast, 160ms) var(--interaction-ease);
+}
+
+.portfolio-nav__mobile-contact:hover {
+  color: var(--chrome-hover);
+}
+
+.portfolio-nav__mobile-contact:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--chrome-fg);
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
+/*
+ * Experience / Contact compact marker — chrome-owned, left under the header.
+ * Hidden from AT (decorative); compact mobile uses the centered section label.
+ */
+.portfolio-chrome__section-marker {
+  position: fixed;
+  z-index: 5;
+  top: calc(var(--header-controls-top) + clamp(3.35rem, 6.5vh, 4.5rem));
+  left: var(--about-gutter, clamp(1rem, 3vw, 2.25rem));
+  pointer-events: none;
+}
+
+.portfolio-chrome__section-marker .portfolio-active-marker--horizontal {
+  width: min(40vw, 16rem);
+}
+
 .portfolio-nav__menu {
   position: relative;
 }
@@ -609,6 +646,10 @@
 }
 
 @media (max-width: 700px) {
+  .portfolio-chrome__section-marker {
+    display: none;
+  }
+
   .portfolio-nav {
     flex-wrap: nowrap;
     align-items: center;
