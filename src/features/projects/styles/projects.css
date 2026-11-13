@@ -2,9 +2,15 @@
   --projects-inset-x: 6vw;
   --projects-inset-y: 3vh;
   --projects-radius: 32px;
-  --projects-panel: #3268e5;
-  --projects-panel-deep: #2a57c7;
-  --projects-panel-lift: #3b74ef;
+  /* Atmospheric editorial palette (reference) */
+  --projects-navy: #0b1240;
+  --projects-indigo: #582eff;
+  --projects-electric: #286bff;
+  --projects-sky: #38b4ff;
+  --projects-mint: #52ffa5;
+  --projects-panel: #1a2f9e;
+  --projects-panel-deep: #0b1240;
+  --projects-panel-lift: #286bff;
   --projects-scene-backdrop: #05070f;
   --projects-scene-overlap: 100vh;
   --projects-scene-overlap: 100dvh;
@@ -60,13 +66,37 @@ html:has(.portfolio-chrome[data-mode='rail'][data-active-section='projects'])
   height: auto;
   box-sizing: border-box;
   border-radius: var(--projects-radius);
+  /* Soft cinematic washes — book stays the hero; no blobs or hard edges. */
   background:
+    radial-gradient(
+      120% 90% at 8% 12%,
+      color-mix(in srgb, var(--projects-indigo) 72%, transparent) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      90% 70% at 92% 8%,
+      color-mix(in srgb, var(--projects-mint) 22%, transparent) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      110% 95% at 78% 88%,
+      color-mix(in srgb, var(--projects-electric) 78%, transparent) 0%,
+      color-mix(in srgb, var(--projects-sky) 28%, transparent) 42%,
+      transparent 70%
+    ),
+    radial-gradient(
+      80% 70% at 42% 48%,
+      color-mix(in srgb, var(--projects-panel) 55%, transparent) 0%,
+      transparent 65%
+    ),
     linear-gradient(
-      155deg,
-      var(--projects-panel-lift) 0%,
-      var(--projects-panel) 48%,
-      var(--projects-panel-deep) 100%
+      148deg,
+      #1a1460 0%,
+      var(--projects-navy) 36%,
+      #122a88 62%,
+      #1a4fd4 100%
     );
+  /* Keep none — Skills/Projects wipe must not steal hits. Book slot enables later. */
   pointer-events: none;
 }
 
