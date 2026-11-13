@@ -1,4 +1,6 @@
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { ABOUT_RETURN_PROGRESS } from '../../../features/about/lib/aboutScrollConfig'
+import { projectsNavLandingProgress } from '../../../features/projects/lib/projectsScrollConfig'
 import { isProjectsSceneActive } from '../../../shared/scene/portfolioScene'
 import {
   beginPortfolioNavSession,
@@ -51,7 +53,16 @@ function resolveTargetY(sectionId: NavigableSectionId): number | null {
     const about = document.querySelector('.about-section')
     if (!about && !document.getElementById('about-heading')) return null
     const st = findScrollTriggerFor(about)
-    return st ? st.start : 0
+    // Land on settled About (bio visible), not the early SENIOR/FRONTEND type frame
+    // and not Intro scrollY=0.
+    if (st && Number.isFinite(st.start) && Number.isFinite(st.end)) {
+      return st.start + (st.end - st.start) * ABOUT_RETURN_PROGRESS
+    }
+    const heading = document.getElementById('about-heading')
+    if (heading) {
+      return Math.max(0, heading.getBoundingClientRect().top + readScrollY() - 72)
+    }
+    return 0
   }
 
   if (sectionId === 'expertise') {
@@ -72,7 +83,11 @@ function resolveTargetY(sectionId: NavigableSectionId): number | null {
     const projects = document.getElementById('projects')
     if (!projects) return null
     const st = findScrollTriggerFor(projects)
-    if (st) return st.start + 8
+    if (st && Number.isFinite(st.start) && Number.isFinite(st.end)) {
+      // Land safely inside Projects ownership (past threshold, before exit).
+      const landing = projectsNavLandingProgress()
+      return st.start + (st.end - st.start) * landing
+    }
     return Math.max(0, projects.getBoundingClientRect().top + readScrollY())
   }
 

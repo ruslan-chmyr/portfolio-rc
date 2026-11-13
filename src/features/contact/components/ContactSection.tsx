@@ -36,7 +36,6 @@ export function ContactSection() {
         <div className="contact-section__grid">
           <div className="contact-section__left">
             <div className="contact-section__intro" ref={introRef} data-contact-intro>
-              <p className="contact-section__label">{CONTACT_CONFIG.sectionLabel}</p>
               <p className="contact-section__availability">
                 <span className="contact-section__status-dot" aria-hidden="true" />
                 {CONTACT_CONFIG.availability}

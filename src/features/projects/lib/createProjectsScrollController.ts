@@ -9,11 +9,13 @@ import {
   cancelScheduledScrollTriggerRefresh,
   isSkillsEntranceDone,
   scheduleScrollTriggerRefresh,
+  setProjectsNavOwned,
   setProjectsSceneActive,
 } from '../../../shared/scene/portfolioScene'
 import {
   PROJECTS_SCROLL,
   projectsExitStartsAt,
+  projectsNavReadyProgress,
   projectsTotalPinDistancePx,
   resolveProjectsTriggerStart,
 } from './projectsScrollConfig'
@@ -62,6 +64,14 @@ export function createProjectsScrollController(
   section.classList.remove('projects-section--static')
   section.dataset.projectsMotion = 'scroll'
   setProjectsSceneActive(section, false)
+  setProjectsNavOwned(false)
+  const navReadyProgress = projectsNavReadyProgress()
+
+  const syncProjectsOwnership = (self: ScrollTrigger) => {
+    setProjectsSceneActive(section, self.isActive)
+    // Keep Skills rail until the wipe is almost finished; drop nav on reverse.
+    setProjectsNavOwned(self.isActive && self.progress >= navReadyProgress)
+  }
 
   const skills = document.getElementById('expertise')
   const skillsKeyboard = skills?.querySelector<HTMLElement>(
@@ -142,16 +152,16 @@ export function createProjectsScrollController(
         invalidateOnRefresh: true,
         onRefresh: (self) => {
           syncPinViewportHeight()
-          setProjectsSceneActive(section, self.isActive)
+          syncProjectsOwnership(self)
           syncSkillsViewportClip(self.isActive)
           syncWillChange(panel, self.progress)
         },
         onToggle: (self) => {
-          setProjectsSceneActive(section, self.isActive)
+          syncProjectsOwnership(self)
           syncSkillsViewportClip(self.isActive)
         },
         onUpdate: (self) => {
-          setProjectsSceneActive(section, self.isActive)
+          syncProjectsOwnership(self)
           syncSkillsViewportClip(self.isActive)
           syncWillChange(panel, self.progress)
         },
@@ -294,6 +304,7 @@ export function createProjectsScrollController(
       }
 
       setProjectsSceneActive(section, false)
+      setProjectsNavOwned(false)
       ctx.revert()
       delete section.dataset.projectsMotion
       ScrollTrigger.refresh()

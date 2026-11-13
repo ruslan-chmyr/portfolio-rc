@@ -87,7 +87,7 @@ export function usePortfolioNavigation(): PortfolioNavigationState {
     const observer = new MutationObserver(schedule)
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class', 'data-projects-scene'],
+      attributeFilter: ['class', 'data-projects-scene', 'data-projects-nav'],
     })
     const skills = document.getElementById('expertise')
     if (skills) {

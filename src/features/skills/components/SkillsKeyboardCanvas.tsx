@@ -69,6 +69,8 @@ function SkillsKeyboardCanvasInner({
   const [cursor, setCursor] = useState<'pointer' | 'auto'>('auto')
   // Canvas may mount early via rootMargin preload; stay paused until truly visible.
   const [inView, setInView] = useState(false)
+  /** Gate first paint until the stage has a real box (avoids wrong-aspect framing). */
+  const [sized, setSized] = useState(false)
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -94,6 +96,25 @@ function SkillsKeyboardCanvasInner({
   }, [])
 
   useEffect(() => {
+    const node = frameRef.current
+    if (!node) return
+
+    const markSized = () => {
+      const { width, height } = node.getBoundingClientRect()
+      if (width >= 32 && height >= 32) setSized(true)
+    }
+
+    markSized()
+    if (typeof ResizeObserver === 'undefined') {
+      setSized(true)
+      return
+    }
+    const resize = new ResizeObserver(markSized)
+    resize.observe(node)
+    return () => resize.disconnect()
+  }, [])
+
+  useEffect(() => {
     if (inView) invalidateRef.current?.()
   }, [inView])
 
@@ -116,6 +137,7 @@ function SkillsKeyboardCanvasInner({
     <div
       ref={frameRef}
       className="skills-keyboard__frame"
+      data-sized={sized ? 'true' : undefined}
       style={{ cursor: isFlipping ? 'auto' : cursor }}
       onPointerLeave={handlePointerLeave}
     >

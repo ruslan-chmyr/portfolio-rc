@@ -46,7 +46,7 @@ type StoriesPanelProps = {
 
 function gridTracksForMode(mode: 'explore' | 'story-focus') {
   return mode === 'story-focus'
-    ? { keyboard: '35fr', stories: '65fr' }
+    ? { keyboard: '42fr', stories: '58fr' }
     : { keyboard: '1fr', stories: '1fr' }
 }
 
@@ -523,9 +523,15 @@ export function StoriesPanel({
         .filter(Boolean)
         .join(' ')}
       data-skills-stories-slot
-      aria-label="Engineering highlights"
+      aria-label="Engineering stories"
     >
       <div className="skills-stories__workspace">
+        {!focusActive ? (
+          <p className="skills-stories__eyebrow" aria-hidden="true">
+            Engineering stories
+          </p>
+        ) : null}
+
         <div
           ref={stageRef}
           className={[
@@ -564,15 +570,16 @@ export function StoriesPanel({
             parallax={reducedMotion || focusActive ? 0 : 0.08}
             stretch={0}
             momentum={0.48}
-            ariaLabel="Engineering highlights carousel. Drag to explore, click or press Enter to open."
+            ariaLabel="Engineering stories carousel. Drag to explore, click or press Enter to open."
             onItemClick={handleItemClick}
           />
-          {!focusActive ? (
-            <p className="skills-stories__hint" aria-hidden="true">
-              Drag to explore · Click to open
-            </p>
-          ) : null}
         </div>
+
+        {!focusActive ? (
+          <p className="skills-stories__hint" aria-hidden="true">
+            Drag to explore
+          </p>
+        ) : null}
 
         <div
           ref={focusSlotRef}
@@ -583,28 +590,28 @@ export function StoriesPanel({
             .filter(Boolean)
             .join(' ')}
           aria-hidden={!focusActive}
-        />
-
-        {overlayStory && overlayStyle ? (
-          <div
-            ref={overlayRef}
-            className={[
-              'skills-stories__expand-overlay',
-              phase === 'focused' ? 'skills-stories__expand-overlay--settled' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            style={overlayStyle}
-          >
-            <StoryExpandedCard
-              ref={expandedRef}
-              story={overlayStory}
-              indexLabel={overlayIndexLabel}
-              contentVisible={contentVisible}
-              onClose={handleClose}
-            />
-          </div>
-        ) : null}
+        >
+          {overlayStory && overlayStyle ? (
+            <div
+              ref={overlayRef}
+              className={[
+                'skills-stories__expand-overlay',
+                phase === 'focused' ? 'skills-stories__expand-overlay--settled' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              style={overlayStyle}
+            >
+              <StoryExpandedCard
+                ref={expandedRef}
+                story={overlayStory}
+                indexLabel={overlayIndexLabel}
+                contentVisible={contentVisible}
+                onClose={handleClose}
+              />
+            </div>
+          ) : null}
+        </div>
       </div>
     </aside>
   )

@@ -1,12 +1,6 @@
-import {
-  findPortfolioSection,
-  formatPortfolioSectionLabel,
-} from '../../../app/portfolio/lib/portfolioSections'
 import { EXPERIENCE_ENTRIES } from '../model/experienceConfig'
 import { ExperienceTimeline } from './ExperienceTimeline'
 import '../styles/experience.css'
-
-const EXPERIENCE_SECTION = findPortfolioSection('experience')!
 
 export function ExperienceSection() {
   return (
@@ -21,12 +15,6 @@ export function ExperienceSection() {
             entries={EXPERIENCE_ENTRIES}
             intro={
               <header className="experience-section__header">
-                <p className="experience-section__label">
-                  {formatPortfolioSectionLabel(
-                    EXPERIENCE_SECTION.number,
-                    EXPERIENCE_SECTION.title,
-                  )}
-                </p>
                 <h2 id="experience-heading" className="experience-section__title">
                   Experience
                 </h2>

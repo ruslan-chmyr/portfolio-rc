@@ -13,7 +13,7 @@ const INTERACTIVE_SELECTOR = [
   'summary',
   'label[for]',
   '.theme-toggle',
-  '.skills-category-toggle',
+  '.skills-category-seg__btn',
   '.skills-sound-toggle',
   '.skills-fallback__chip',
   '.skills-story-expanded__close',
@@ -21,7 +21,6 @@ const INTERACTIVE_SELECTOR = [
   '.contact-form__submit',
   '.contact-links__copy',
   '.contact-links__social',
-  '.experience-cv-cta__button:not(.experience-cv-cta__button--disabled)',
   '.portfolio-nav__menu-toggle',
 ].join(', ')
 const LINK_SELECTOR = 'a[href]'
@@ -53,7 +52,7 @@ export function resolveTrailingCursorMode(
     // Chip / CTA anchors stay in the interactive family.
     if (
       link.matches(
-        '.contact-links__social, .experience-cv-cta__button, .portfolio-nav__brand',
+        '.contact-links__social, .portfolio-nav__brand',
       )
     ) {
       return 'interactive'

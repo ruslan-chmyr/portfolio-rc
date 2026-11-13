@@ -43,6 +43,12 @@
   pointer-events: none;
 }
 
+/* Clear the shared Skills/Projects left rail without changing the panel language. */
+html:has(.portfolio-chrome[data-mode='rail'][data-active-section='projects'])
+  .projects-section {
+  --projects-inset-x: clamp(4.75rem, 7.2vw, 6.75rem);
+}
+
 .projects-section__panel {
   position: absolute;
   inset:

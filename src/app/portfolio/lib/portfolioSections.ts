@@ -14,7 +14,14 @@ export type PortfolioSectionEntry = {
   targetId: string
 }
 
-export type PortfolioNavMode = 'intro' | 'standard' | 'compact'
+export type PortfolioNavMode = 'intro' | 'standard' | 'compact' | 'rail'
+
+/** Desktop Skills / Projects use the left editorial rail instead of horizontal chrome. */
+export const PORTFOLIO_RAIL_SECTIONS: ReadonlySet<PortfolioSectionId> = new Set([
+  'expertise',
+  'projects',
+])
+
 
 export const PORTFOLIO_CURRENT_SECTION: PortfolioSectionEntry = {
   id: 'about',

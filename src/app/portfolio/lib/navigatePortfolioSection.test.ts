@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('gsap/ScrollTrigger', () => ({
   ScrollTrigger: {
-    getAll: () => [],
+    getAll: vi.fn(() => []),
   },
 }))
 
@@ -11,6 +11,7 @@ vi.mock('../../../shared/scene/portfolioScene', () => ({
   isProjectsSceneActive: () => false,
 }))
 
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
   endPortfolioNavSession,
   isPortfolioNavSessionActive,
@@ -45,6 +46,8 @@ describe('navigatePortfolioSection', () => {
 
   afterEach(() => {
     endPortfolioNavSession()
+    vi.mocked(ScrollTrigger.getAll).mockReset()
+    vi.mocked(ScrollTrigger.getAll).mockReturnValue([])
     vi.unstubAllGlobals()
   })
 
@@ -125,8 +128,67 @@ describe('navigatePortfolioSection', () => {
     window.scrollTo = scrollTo
 
     expect(navigatePortfolioSection('about')).toBe(true)
+    // Without an About ScrollTrigger, falls back to 0 / heading measurement.
     expect(scrollTo).toHaveBeenCalledWith(
       expect.objectContaining({ top: 0, left: 0 }),
+    )
+  })
+
+  it('lands About navigation on the settled bio progress when a pin exists', () => {
+    document.documentElement.classList.add('portfolio-native-scroll')
+    document.body.innerHTML = '<section class="about-section"></section>'
+    Object.defineProperty(window, 'scrollY', {
+      value: 4000,
+      configurable: true,
+      writable: true,
+    })
+    const scrollTo = vi.fn()
+    window.scrollTo = scrollTo
+
+    const about = document.querySelector('.about-section')
+    vi.mocked(ScrollTrigger.getAll).mockReturnValue([
+      { trigger: about, start: 100, end: 1100 } as never,
+    ])
+
+    expect(navigatePortfolioSection('about')).toBe(true)
+    // ABOUT_RETURN_PROGRESS = settledStart (0.86) → 100 + 1000 * 0.86
+    expect(scrollTo).toHaveBeenCalledWith(
+      expect.objectContaining({ top: 960, left: 0 }),
+    )
+  })
+
+  it('lands Projects navigation safely past ownership threshold, before exit', async () => {
+    document.documentElement.classList.add('portfolio-native-scroll')
+    document.body.innerHTML = '<section id="projects"></section>'
+    Object.defineProperty(window, 'scrollY', {
+      value: 0,
+      configurable: true,
+      writable: true,
+    })
+    const scrollTo = vi.fn()
+    window.scrollTo = scrollTo
+
+    const projects = document.getElementById('projects')
+    vi.mocked(ScrollTrigger.getAll).mockReturnValue([
+      { trigger: projects, start: 1000, end: 3000 } as never,
+    ])
+
+    const {
+      projectsNavLandingProgress,
+      projectsNavReadyProgress,
+      projectsExitStartsAt,
+      projectsTimelineDuration,
+    } = await import('../../../features/projects/lib/projectsScrollConfig')
+    const landing = projectsNavLandingProgress()
+    const ready = projectsNavReadyProgress()
+    const exitStart = projectsExitStartsAt() / projectsTimelineDuration()
+    const expected = 1000 + (3000 - 1000) * landing
+
+    expect(landing).toBeGreaterThan(ready)
+    expect(landing).toBeLessThan(exitStart)
+    expect(navigatePortfolioSection('projects')).toBe(true)
+    expect(scrollTo).toHaveBeenCalledWith(
+      expect.objectContaining({ top: expected, left: 0 }),
     )
   })
 })

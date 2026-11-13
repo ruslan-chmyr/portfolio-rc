@@ -66,18 +66,11 @@ export const EXPERIENCE_ENTRIES: readonly ExperienceEntry[] = [
 ] as const
 
 /**
- * Public PDF for “View Full CV”.
+ * Public PDF for the chrome Resume link.
  * Leave empty until a hosted PDF path is available.
  * Do not point this at an editable Google Docs URL.
  */
 export const EXPERIENCE_CV_PDF_URL = '' as const
-
-export const EXPERIENCE_CV_CTA = {
-  heading: 'Want the full picture?',
-  description:
-    'Explore my complete experience, skills, and professional background in my CV.',
-  buttonLabel: 'View Full CV',
-} as const
 
 export function getExperienceYears(
   entries: readonly ExperienceEntry[] = EXPERIENCE_ENTRIES,

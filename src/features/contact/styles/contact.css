@@ -663,20 +663,79 @@
 
 .contact-footer__top {
   appearance: none;
-  border: 0;
-  background: transparent;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.55rem;
+  margin: 0;
+  padding: 0.55rem 0.95rem 0.55rem 1.05rem;
+  border: 1px solid color-mix(in srgb, var(--contact-cyan) 42%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--contact-cyan) 10%, transparent);
   color: var(--contact-cyan);
   font-family: var(--contact-font);
-  font-size: 0.86rem;
+  font-size: 0.72rem;
   font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 160ms ease;
+}
+
+.contact-footer__top-label {
+  line-height: 1;
+}
+
+.contact-footer__top-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--contact-cyan) 16%, transparent);
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+
+.contact-footer__top:hover {
+  color: #eafbff;
+  border-color: color-mix(in srgb, var(--contact-cyan) 70%, white);
+  background: color-mix(in srgb, var(--contact-cyan) 18%, transparent);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--contact-cyan) 22%, transparent);
+}
+
+.contact-footer__top:hover .contact-footer__top-icon {
+  background: color-mix(in srgb, var(--contact-cyan) 28%, transparent);
+  transform: translateY(-2px);
+}
+
+.contact-footer__top:active {
+  transform: translateY(1px);
 }
 
 .contact-footer__top:focus-visible {
   outline: 2px solid var(--contact-cyan);
   outline-offset: 3px;
+}
+
+[data-theme='dark'] .contact-footer__top {
+  color: color-mix(in srgb, var(--contact-blue) 72%, #0a1a33);
+  border-color: color-mix(in srgb, var(--contact-blue) 35%, transparent);
+  background: color-mix(in srgb, var(--contact-blue) 8%, transparent);
+}
+
+[data-theme='dark'] .contact-footer__top:hover {
+  color: var(--contact-blue);
+  border-color: color-mix(in srgb, var(--contact-blue) 55%, transparent);
+  background: color-mix(in srgb, var(--contact-blue) 12%, transparent);
+  box-shadow: 0 8px 20px rgba(50, 104, 229, 0.12);
 }
 
 .visually-hidden {

@@ -19,6 +19,7 @@
   pointer-events: none;
 }
 
+
 .about-section__index-stack {
   display: flex;
   flex-direction: column;
@@ -44,8 +45,15 @@
   justify-content: flex-start;
   gap: 0.75rem;
   min-height: calc(var(--about-index-font) * 1.15);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
   pointer-events: auto;
-  cursor: default;
+  cursor: pointer;
   isolation: isolate;
 }
 
@@ -152,7 +160,8 @@
 }
 
 .portfolio-chrome[data-mode='standard'],
-.portfolio-chrome[data-mode='compact'] {
+.portfolio-chrome[data-mode='compact'],
+.portfolio-chrome[data-mode='rail'] {
   opacity: 1;
   visibility: visible;
   transform: none;
@@ -204,6 +213,43 @@
   text-transform: uppercase;
   color: var(--chrome-muted);
   pointer-events: none;
+}
+
+/* Immersive mobile: Contact shortcut without crowding Resume into the top bar. */
+.portfolio-nav__mobile-contact {
+  flex-shrink: 0;
+  font-size: clamp(0.62rem, 0.28vw + 0.5rem, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--chrome-strong);
+  transition: color var(--interaction-fast, 160ms) var(--interaction-ease);
+}
+
+.portfolio-nav__mobile-contact:hover {
+  color: var(--chrome-hover);
+}
+
+.portfolio-nav__mobile-contact:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--chrome-fg);
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
+/*
+ * Experience / Contact compact marker — chrome-owned, left under the header.
+ * Hidden from AT (decorative); compact mobile uses the centered section label.
+ */
+.portfolio-chrome__section-marker {
+  position: fixed;
+  z-index: 5;
+  top: calc(var(--header-controls-top) + clamp(3.35rem, 6.5vh, 4.5rem));
+  left: var(--about-gutter, clamp(1rem, 3vw, 2.25rem));
+  pointer-events: none;
+}
+
+.portfolio-chrome__section-marker .portfolio-active-marker--horizontal {
+  width: min(40vw, 16rem);
 }
 
 .portfolio-nav__menu {
@@ -385,6 +431,209 @@
   outline-color: var(--chrome-fg);
 }
 
+/* Skills desktop: top strip keeps only the theme toggle. */
+.portfolio-nav--theme-only {
+  justify-content: flex-end;
+  background: transparent;
+  padding-bottom: 0.55rem;
+}
+
+.portfolio-nav__brand-spacer {
+  display: none;
+}
+
+/* —— Vertical editorial rail (Skills desktop) —— */
+.portfolio-nav-rail {
+  position: fixed;
+  z-index: 6;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: clamp(2.75rem, 3.6vw, 3.35rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  padding:
+    calc(var(--header-controls-top) + 0.15rem)
+    0
+    max(1.25rem, env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+  color: var(--chrome-fg);
+  /* Rotated vertical labels must not paint over Skills headings. */
+  overflow: hidden;
+}
+
+.portfolio-nav-rail__brand,
+.portfolio-nav-rail__links,
+.portfolio-nav-rail__link,
+.portfolio-nav-rail__active {
+  pointer-events: auto;
+}
+
+.portfolio-nav-rail__brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: opacity var(--interaction-fast, 160ms) var(--interaction-ease);
+}
+
+.portfolio-nav-rail__brand:hover {
+  opacity: 0.82;
+}
+
+.portfolio-nav-rail__brand:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--chrome-fg);
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
+.portfolio-nav-rail__logo {
+  display: block;
+  width: clamp(1.85rem, 2.4vw, 2.25rem);
+  height: clamp(1.85rem, 2.4vw, 2.25rem);
+  object-fit: contain;
+}
+
+.portfolio-nav-rail__spine {
+  flex: 0 0 auto;
+  width: 1px;
+  height: clamp(1.5rem, 4vh, 2.5rem);
+  background: var(--chrome-border);
+}
+
+/*
+ * Stack Contact → Resume as a normal column. writing-mode on the flex
+ * container itself turned “column” into parallel vertical strips.
+ */
+.portfolio-nav-rail__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.15rem;
+  font-size: clamp(0.62rem, 0.28vw + 0.5rem, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.portfolio-nav-rail__links > li {
+  display: flex;
+  justify-content: center;
+}
+
+.portfolio-nav-rail__link {
+  /* Bottom → top reading along the left edge; logo stays upright above. */
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: var(--chrome-strong);
+  text-decoration: none;
+  transition: color var(--interaction-fast, 160ms) var(--interaction-ease);
+}
+
+.portfolio-nav-rail__link:hover {
+  color: var(--chrome-hover);
+}
+
+.portfolio-nav-rail__link:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--chrome-fg);
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
+.portfolio-nav-rail .portfolio-nav__soon {
+  color: var(--chrome-muted);
+}
+
+/* Active section marker docks at the bottom of the Skills/Projects rail. */
+.portfolio-nav-rail__active {
+  margin-top: auto;
+  padding-bottom: 0.35rem;
+}
+
+/* —— Shared compact active-section marker —— */
+.portfolio-active-marker {
+  --marker-fg: var(--chrome-fg, var(--color-portfolio-foreground));
+  --marker-muted: var(--chrome-muted, var(--color-portfolio-text-muted));
+  --marker-border: var(--chrome-border, var(--color-portfolio-border));
+  --marker-fill: 38%;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  pointer-events: none;
+  color: var(--marker-muted);
+  font-size: clamp(0.62rem, 0.28vw + 0.5rem, 0.72rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.portfolio-active-marker__label {
+  white-space: nowrap;
+}
+
+.portfolio-active-marker__track {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--marker-border) 70%, transparent);
+}
+
+.portfolio-active-marker__fill {
+  position: absolute;
+  background: var(--marker-fg);
+}
+
+.portfolio-active-marker--vertical {
+  flex-direction: column;
+  align-items: center;
+}
+
+.portfolio-active-marker--vertical .portfolio-active-marker__label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.portfolio-active-marker--vertical .portfolio-active-marker__track {
+  width: 1px;
+  height: clamp(3.5rem, 12vh, 5.5rem);
+}
+
+.portfolio-active-marker--vertical .portfolio-active-marker__fill {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--marker-fill);
+}
+
+.portfolio-active-marker--horizontal {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(44vw, 18rem);
+}
+
+.portfolio-active-marker--horizontal .portfolio-active-marker__track {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 1.15px;
+}
+
+.portfolio-active-marker--horizontal .portfolio-active-marker__fill {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--marker-fill);
+}
+
+
 .about-section__index-marker {
   display: none;
 }
@@ -397,6 +646,10 @@
 }
 
 @media (max-width: 700px) {
+  .portfolio-chrome__section-marker {
+    display: none;
+  }
+
   .portfolio-nav {
     flex-wrap: nowrap;
     align-items: center;

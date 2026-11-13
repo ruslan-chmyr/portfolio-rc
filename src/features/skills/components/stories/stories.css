@@ -25,12 +25,52 @@
   filter: saturate(0.85);
 }
 
-.skills-stories__hint {
+.skills-stories__eyebrow {
   position: absolute;
-  left: 0.2rem;
-  bottom: 0.35rem;
+  top: 0.15rem;
+  left: 50%;
   z-index: 2;
   margin: 0;
+  padding: 0 0.85rem;
+  transform: translateX(-50%);
+  font-size: var(--type-meta-size, 0.68rem);
+  font-weight: var(--type-label-weight, 600);
+  letter-spacing: var(--type-label-tracking, 0.18em);
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--skills-text-muted) 92%, transparent);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.skills-stories__eyebrow::before,
+.skills-stories__eyebrow::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: clamp(2.5rem, 8vw, 4.5rem);
+  height: 1px;
+  background: color-mix(in srgb, var(--skills-text-muted) 35%, transparent);
+}
+
+.skills-stories__eyebrow::before {
+  right: 100%;
+  margin-right: 0.65rem;
+}
+
+.skills-stories__eyebrow::after {
+  left: 100%;
+  margin-left: 0.65rem;
+}
+
+.skills-stories__hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(0.15rem, 1.2vh, 0.55rem);
+  z-index: 2;
+  margin: 0;
+  padding-inline: 0.75rem;
+  text-align: center;
   font-size: var(--type-meta-size, 0.68rem);
   font-weight: var(--type-label-weight, 600);
   letter-spacing: var(--type-label-tracking, 0.18em);
@@ -41,13 +81,19 @@
 
 .skills-stories__focus-slot {
   position: absolute;
-  inset: 0;
+  /* Keep expanded story clear of theme toggle + viewport edges. */
+  inset:
+    clamp(3.4rem, 7.5vh, 4.6rem)
+    clamp(1.1rem, 2.4vw, 2rem)
+    clamp(1.35rem, 3.2vh, 2.25rem)
+    clamp(0.65rem, 1.4vw, 1.25rem);
   pointer-events: none;
   visibility: hidden;
 }
 
 .skills-stories__focus-slot--active {
   visibility: visible;
+  pointer-events: auto;
 }
 
 .skills-stories__expand-overlay {
@@ -331,7 +377,7 @@
   }
 
   .skills-stories__hint {
-    bottom: 0.2rem;
+    bottom: clamp(0.1rem, 1vh, 0.4rem);
   }
 }
 
@@ -345,8 +391,6 @@
   }
 
   .skills-stories__hint {
-    left: 0;
-    max-width: calc(100% - 0.5rem);
     font-size: 0.66rem;
     letter-spacing: 0.14em;
   }

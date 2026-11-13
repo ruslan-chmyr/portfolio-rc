@@ -163,8 +163,14 @@ export function createSkillsEntranceController(
       timeline?.kill()
       timeline = null
       clearWillChange(nodes)
-      gsap.set(nodes.filter(Boolean), { clearProps: 'opacity,transform,visibility' })
-      setEntranceState('done')
+      /*
+       * Do not clearProps / force `done` here — Strict Mode remount would flash
+       * the unfinished layout (no gutter / stories / camera) for a frame.
+       * Remount re-seeds; finished entrances already cleared transforms onComplete.
+       */
+      if (section.dataset.skillsEntrance === 'done') {
+        gsap.set(nodes.filter(Boolean), { clearProps: 'opacity,transform,visibility' })
+      }
     },
   }
 }

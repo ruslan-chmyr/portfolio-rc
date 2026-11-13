@@ -12,17 +12,21 @@ vi.mock('gsap/ScrollTrigger', () => ({
 }))
 
 import {
+  PROJECTS_NAV_DATASET_KEY,
   PROJECTS_SCENE_DATASET_KEY,
   cancelScheduledScrollTriggerRefresh,
+  isProjectsNavOwned,
   isProjectsSceneActive,
   isSkillsEntranceDone,
   scheduleScrollTriggerRefresh,
+  setProjectsNavOwned,
   setProjectsSceneActive,
 } from './portfolioScene'
 
 describe('portfolioScene coordination', () => {
   afterEach(() => {
     delete document.documentElement.dataset[PROJECTS_SCENE_DATASET_KEY]
+    delete document.documentElement.dataset[PROJECTS_NAV_DATASET_KEY]
     document.body.innerHTML = ''
     vi.unstubAllGlobals()
     refresh.mockClear()
@@ -36,6 +40,14 @@ describe('portfolioScene coordination', () => {
     expect(section.dataset.projectsActive).toBe('true')
     setProjectsSceneActive(section, false)
     expect(isProjectsSceneActive()).toBe(false)
+  })
+
+  it('tracks delayed projects nav ownership separately from scene active', () => {
+    expect(isProjectsNavOwned()).toBe(false)
+    setProjectsNavOwned(true)
+    expect(isProjectsNavOwned()).toBe(true)
+    setProjectsNavOwned(false)
+    expect(isProjectsNavOwned()).toBe(false)
   })
 
   it('reads Skills entrance readiness from the section dataset', () => {

@@ -4,7 +4,10 @@ import {
   isSkillsEntranceDone,
   projectsExitDistancePx,
   projectsExitStartsAt,
+  projectsNavLandingProgress,
+  projectsNavReadyProgress,
   projectsScrubDistancePx,
+  projectsTimelineDuration,
   projectsTotalPinDistancePx,
   resolveProjectsTriggerStart,
   selectProjectsPresentationMode,
@@ -54,6 +57,24 @@ describe('projects exit distance', () => {
       projectsScrubDistancePx(1200) + projectsExitDistancePx(1200),
     )
     expect(projectsExitStartsAt()).toBeGreaterThan(PROJECTS_SCROLL.panelSlideDuration)
+  })
+
+  it('delays projects nav ownership until the wipe is complete', () => {
+    const ready = projectsNavReadyProgress()
+    expect(ready).toBeGreaterThan(0.35)
+    expect(ready).toBeLessThan(0.6)
+    expect(ready).toBeCloseTo(
+      PROJECTS_SCROLL.panelSlideDuration / projectsTimelineDuration(),
+      5,
+    )
+  })
+
+  it('lands programmatic navigation inside ownership, before exit', () => {
+    const ready = projectsNavReadyProgress()
+    const landing = projectsNavLandingProgress()
+    const exitStart = projectsExitStartsAt() / projectsTimelineDuration()
+    expect(landing).toBeGreaterThan(ready)
+    expect(landing).toBeLessThan(exitStart)
   })
 })
 

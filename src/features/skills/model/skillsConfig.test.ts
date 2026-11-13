@@ -201,8 +201,10 @@ describe('skill selection + inspection', () => {
 
     const idle = renderToStaticMarkup(createElement(SkillInspection, { skill: null }))
     expect(idle).toContain('data-mode="idle"')
-    expect(idle).toContain('Explore my skills')
-    expect(idle).toContain('Hover, tap, or press a key.')
+    expect(idle).toContain('Beyond the stack.')
+    expect(idle).toContain(
+      'Tools, architecture, and the decisions behind what I build.',
+    )
   })
 
   it('shows configured icons in inspection and leaves abstract skills text-only', () => {

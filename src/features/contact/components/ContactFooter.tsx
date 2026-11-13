@@ -1,3 +1,4 @@
+import { navigatePortfolioSection } from '../../../app/portfolio'
 import logoOnDarkBg from '../../../assets/rc-logo-white.svg'
 import logoOnLightBg from '../../../assets/rc-logo-dark.svg'
 import { portfolioLogoSrc, useTheme } from '../../../shared/theme'
@@ -11,8 +12,8 @@ export function ContactFooter() {
   })
 
   const onTop = () => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' })
+    // Settled About (bio visible) — not Intro hero / early type frame.
+    navigatePortfolioSection('about')
   }
 
   return (
@@ -35,7 +36,18 @@ export function ContactFooter() {
           </div>
         </div>
         <button type="button" className="contact-footer__top" onClick={onTop}>
-          Back to top
+          <span className="contact-footer__top-label">Back to top</span>
+          <span className="contact-footer__top-icon" aria-hidden="true">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none">
+              <path
+                d="M8 12.5V3.5M8 3.5 3.75 7.75M8 3.5l4.25 4.25"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
         </button>
       </div>
     </footer>

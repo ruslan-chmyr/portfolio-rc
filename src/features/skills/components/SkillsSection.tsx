@@ -178,8 +178,27 @@ export function SkillsSection() {
       <div className="skills-section__shell">
         <div className="skills-section__keyboard-panel">
           <div className="skills-section__board">
+            <p className="skills-section__index" aria-hidden="true">
+              02 / Skills
+            </p>
+
             <div ref={inspectionRef} className="skills-section__inspection-slot">
               <SkillInspection skill={selectedSkill} />
+            </div>
+
+            <div ref={footerRef} className="skills-section__board-footer">
+              {!storyFocusActive ? (
+                <SkillCategorySelector
+                  activeCategory={activeCategory}
+                  onSelect={handleSelectCategory}
+                  locked={isFlipping}
+                />
+              ) : null}
+              <SkillSoundToggle
+                enabled={soundEnabled}
+                onToggle={toggleSound}
+                disabled={isFlipping}
+              />
             </div>
 
             <div
@@ -209,21 +228,6 @@ export function SkillsSection() {
                   onClearInspection={isFlipping ? undefined : handleClearInspection}
                 />
               )}
-            </div>
-
-            <div ref={footerRef} className="skills-section__board-footer">
-              {!storyFocusActive ? (
-                <SkillCategorySelector
-                  activeCategory={activeCategory}
-                  onSelect={handleSelectCategory}
-                  locked={isFlipping}
-                />
-              ) : null}
-              <SkillSoundToggle
-                enabled={soundEnabled}
-                onToggle={toggleSound}
-                disabled={isFlipping}
-              />
             </div>
           </div>
         </div>
