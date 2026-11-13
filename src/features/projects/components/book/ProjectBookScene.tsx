@@ -1,37 +1,37 @@
 import { Suspense, useEffect, useState } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
-import { ContactShadows, Environment } from '@react-three/drei'
+import { ContactShadows } from '@react-three/drei'
 import { useProjectBookController } from '../../hooks/useProjectBookController'
 import { PROJECT_BOOK_META, PROJECT_BOOK_SCENE } from '../../model/projectBookConfig'
 import type { ProjectBookEntry } from '../../model/projectBookData'
 import { ProjectBook } from './ProjectBook'
 import { ProjectBookFallback } from './ProjectBookFallback'
+import { ProjectDetailOverlay } from './ProjectDetailOverlay'
 
 export type ProjectBookSceneProps = {
   entries: readonly ProjectBookEntry[]
   reducedMotion: boolean
-  /** Pause GPU work while the Projects section is offscreen. */
   sectionVisible?: boolean
-  /** Force the 2D reading surface (mobile / reduced complexity). */
   preferFallback?: boolean
 }
 
 function BookLights() {
   return (
     <>
-      <ambientLight intensity={0.45} />
+      <ambientLight intensity={0.42} />
       <directionalLight
         castShadow
-        intensity={1.15}
-        position={[2.4, 4.2, 3.2]}
-        shadow-mapSize={[1024, 1024]}
+        intensity={1.05}
+        position={[2.8, 3.6, 2.4]}
+        shadow-mapSize={[512, 512]}
+        shadow-bias={-0.0002}
       />
-      <directionalLight intensity={0.35} position={[-2.5, 1.5, -1.5]} />
+      <directionalLight intensity={0.28} position={[-2.2, 1.2, -1.8]} />
+      <directionalLight intensity={0.2} position={[0.2, -1.4, 2.2]} />
     </>
   )
 }
 
-/** Keep demand frameloop waking during open/turn without a permanent RAF. */
 function BookInvalidatePulse({ active }: { active: boolean }) {
   const invalidate = useThree((s) => s.invalidate)
   useEffect(() => {
@@ -77,6 +77,11 @@ export function ProjectBookScene({
       reducedMotion,
     })
   const [fallbackSpread, setFallbackSpread] = useState(0)
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const active = entries[state.spreadIndex] ?? entries[0]
+
+  const detailsAllowed = state.phase === 'open' || state.phase === 'turning'
+  const showDetails = detailsOpen && detailsAllowed
 
   useEffect(() => {
     if (!isInteractive || !sectionVisible) return
@@ -90,11 +95,19 @@ export function ProjectBookScene({
       ) {
         return
       }
-      if (event.key === 'Escape' && state.phase === 'open') {
-        event.preventDefault()
-        close()
+      if (event.key === 'Escape') {
+        if (detailsOpen) {
+          event.preventDefault()
+          setDetailsOpen(false)
+          return
+        }
+        if (state.phase === 'open') {
+          event.preventDefault()
+          close()
+        }
         return
       }
+      if (detailsOpen) return
       if (state.phase !== 'open' && state.phase !== 'closed') return
       if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
         event.preventDefault()
@@ -111,10 +124,23 @@ export function ProjectBookScene({
           open()
         }
       }
+      if ((event.key === 'd' || event.key === 'D') && state.phase === 'open') {
+        event.preventDefault()
+        setDetailsOpen(true)
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [close, isInteractive, open, sectionVisible, state.phase, turnNext, turnPrev])
+  }, [
+    close,
+    detailsOpen,
+    isInteractive,
+    open,
+    sectionVisible,
+    state.phase,
+    turnNext,
+    turnPrev,
+  ])
 
   if (preferFallback) {
     return (
@@ -129,8 +155,7 @@ export function ProjectBookScene({
   const animating =
     state.phase === 'opening' ||
     state.phase === 'closing' ||
-    state.phase === 'turning' ||
-    (state.phase === 'closed' && !reducedMotion)
+    state.phase === 'turning'
 
   return (
     <div className="project-book-scene">
@@ -139,18 +164,29 @@ export function ProjectBookScene({
         dpr={[1, PROJECT_BOOK_SCENE.dprMax]}
         shadows
         frameloop={!sectionVisible ? 'never' : 'demand'}
-        camera={{ position: [0, 0.35, 4.2], fov: 32, near: 0.1, far: 40 }}
-        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+        camera={{
+          position: [
+            PROJECT_BOOK_SCENE.closedCamera.x,
+            PROJECT_BOOK_SCENE.closedCamera.y,
+            PROJECT_BOOK_SCENE.closedCamera.z,
+          ],
+          fov: 34,
+          near: 0.1,
+          far: 40,
+        }}
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: 'high-performance',
+        }}
         onCreated={({ gl, invalidate }) => {
           gl.setClearColor(0x000000, 0)
           invalidate()
         }}
-        onPointerMissed={() => undefined}
       >
         <Suspense fallback={null}>
           <BookInvalidatePulse active={sectionVisible && animating} />
           <BookLights />
-          <Environment preset="city" environmentIntensity={0.25} />
           <ProjectBook
             entries={entries}
             state={state}
@@ -158,13 +194,15 @@ export function ProjectBookScene({
             onOpen={open}
             onTurnNext={turnNext}
             onTurnPrev={turnPrev}
+            onRequestDetails={() => setDetailsOpen(true)}
           />
           <ContactShadows
-            position={[0, -1.15, 0]}
-            opacity={0.45}
-            scale={8}
-            blur={2.4}
-            far={4}
+            position={[0, -1.05, 0]}
+            opacity={0.38}
+            scale={7}
+            blur={2.6}
+            far={3.5}
+            frames={1}
           />
         </Suspense>
       </Canvas>
@@ -192,6 +230,13 @@ export function ProjectBookScene({
               </button>
               <button
                 type="button"
+                onClick={() => setDetailsOpen(true)}
+                disabled={state.phase !== 'open'}
+              >
+                {PROJECT_BOOK_META.detailsLabel}
+              </button>
+              <button
+                type="button"
                 onClick={turnNext}
                 disabled={
                   state.phase !== 'open' ||
@@ -200,13 +245,25 @@ export function ProjectBookScene({
               >
                 {PROJECT_BOOK_META.nextLabel}
               </button>
-              <button type="button" onClick={close} disabled={state.phase !== 'open'}>
+              <button
+                type="button"
+                onClick={close}
+                disabled={state.phase !== 'open'}
+              >
                 {PROJECT_BOOK_META.closeLabel}
               </button>
             </>
           )}
         </div>
       </div>
+
+      {active ? (
+        <ProjectDetailOverlay
+          entry={active}
+          open={showDetails}
+          onClose={() => setDetailsOpen(false)}
+        />
+      ) : null}
 
       <ActiveSpreadAnnouncement
         entries={entries}
