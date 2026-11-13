@@ -17,10 +17,13 @@ import {
   createSheetFaceTexture,
   sheetFaceCacheKey,
 } from '../../lib/sheetFaceTexture'
+import { shouldSuppressPageClick } from '../../lib/bookGesture'
 import {
   getSkinnedPageGeometry,
   SKINNED_PAGE,
 } from '../../lib/skinnedPageGeometry'
+import { PROJECT_BOOK_CAMERA } from '../../model/projectBookConfig'
+import { useBookGesture } from './BookGestureContext'
 
 type SkinnedBookPageProps = {
   sheet: BookSheet
@@ -62,6 +65,7 @@ export function SkinnedBookPage({
   const turnedAt = useRef(0)
   const lastOpened = useRef(opened)
   const [highlighted, setHighlighted] = useState(false)
+  const { gesture, bumpActivity } = useBookGesture()
   useCursor(highlighted)
 
   const frontKey = sheetFaceCacheKey(sheet.front)
@@ -119,9 +123,8 @@ export function SkinnedBookPage({
       const list = Array.isArray(materials) ? materials : [materials]
       for (const mat of list) {
         if (!(mat instanceof MeshStandardMaterial)) continue
-        // Shared edge materials must not be disposed.
+        // Shared edge materials + cached face maps must not be disposed here.
         if (edgeMaterials.includes(mat)) continue
-        mat.map?.dispose()
         mat.dispose()
       }
     },
@@ -144,20 +147,29 @@ export function SkinnedBookPage({
       return
     }
     const emissiveIntensity = highlighted ? 0.12 : 0
-    frontMat.emissiveIntensity = MathUtils.lerp(
+    const nextFront = MathUtils.lerp(
       frontMat.emissiveIntensity,
       emissiveIntensity,
       0.1,
     )
-    backMat.emissiveIntensity = MathUtils.lerp(
+    const nextBack = MathUtils.lerp(
       backMat.emissiveIntensity,
       emissiveIntensity,
       0.1,
     )
+    if (
+      Math.abs(nextFront - frontMat.emissiveIntensity) > 0.001 ||
+      Math.abs(nextBack - backMat.emissiveIntensity) > 0.001
+    ) {
+      bumpActivity(280)
+    }
+    frontMat.emissiveIntensity = nextFront
+    backMat.emissiveIntensity = nextBack
 
     if (lastOpened.current !== opened) {
       turnedAt.current = Date.now()
       lastOpened.current = opened
+      bumpActivity(PROJECT_BOOK_CAMERA.pageSettleMs)
     }
 
     let turningTime = Math.min(400, Date.now() - turnedAt.current) / 400
@@ -226,16 +238,21 @@ export function SkinnedBookPage({
       ref={group}
       onPointerEnter={(event) => {
         event.stopPropagation()
+        if (shouldSuppressPageClick(gesture.current)) return
         setHighlighted(true)
+        bumpActivity(280)
       }}
       onPointerLeave={(event) => {
         event.stopPropagation()
         setHighlighted(false)
+        bumpActivity(280)
       }}
       onClick={(event) => {
         event.stopPropagation()
+        if (shouldSuppressPageClick(gesture.current)) return
         onSelect(opened ? number : number + 1)
         setHighlighted(false)
+        bumpActivity(PROJECT_BOOK_CAMERA.pageSettleMs)
       }}
     >
       <primitive

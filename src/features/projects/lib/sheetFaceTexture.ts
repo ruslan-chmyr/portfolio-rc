@@ -8,12 +8,35 @@ import {
   createProjectVisualPageCanvas,
 } from './createBookPageTexture'
 import { PROJECT_BOOK_META } from '../model/projectBookConfig'
+import type { ProjectBookEntry } from '../model/projectBookData'
 
-/** Rasterize a sheet face into a GPU texture (async paints bump needsUpdate). */
+const textureCache = new Map<string, Texture>()
+
+export function sheetFaceCacheKey(face: BookSheetFace): string {
+  switch (face.kind) {
+    case 'cover':
+      return 'cover'
+    case 'backCover':
+      return 'backCover'
+    case 'visual':
+      return `visual:${face.entry.id}:${face.entry.coverImage}`
+    case 'detail':
+      return `detail:${face.entry.id}:${face.entry.title}`
+  }
+}
+
+/** Rasterize a sheet face into a GPU texture (cached by face identity). */
 export function createSheetFaceTexture(
   face: BookSheetFace,
   onPaint?: () => void,
 ): Texture {
+  const key = sheetFaceCacheKey(face)
+  const cached = textureCache.get(key)
+  if (cached) {
+    onPaint?.()
+    return cached
+  }
+
   let map: Texture | null = null
   const notify = () => {
     if (!map) return
@@ -44,18 +67,29 @@ export function createSheetFaceTexture(
   }
 
   map = canvasToTexture(canvas)
+  textureCache.set(key, map)
   return map
 }
 
-export function sheetFaceCacheKey(face: BookSheetFace): string {
-  switch (face.kind) {
-    case 'cover':
-      return 'cover'
-    case 'backCover':
-      return 'backCover'
-    case 'visual':
-      return `visual:${face.entry.id}:${face.entry.coverImage}`
-    case 'detail':
-      return `detail:${face.entry.id}:${face.entry.title}`
+/** Warm cover + first project faces without mounting the Canvas. */
+export function warmupInitialBookTextures(
+  entries: readonly ProjectBookEntry[],
+): void {
+  createSheetFaceTexture({ kind: 'cover' })
+  createSheetFaceTexture({ kind: 'backCover' })
+  const first = entries[0]
+  if (!first) return
+  createSheetFaceTexture({ kind: 'visual', entry: first })
+  createSheetFaceTexture({ kind: 'detail', entry: first })
+  const second = entries[1]
+  if (second) {
+    createSheetFaceTexture({ kind: 'visual', entry: second })
   }
+}
+
+export function clearSheetFaceTextureCache(): void {
+  for (const tex of textureCache.values()) {
+    tex.dispose()
+  }
+  textureCache.clear()
 }

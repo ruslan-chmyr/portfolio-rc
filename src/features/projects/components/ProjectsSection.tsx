@@ -1,10 +1,15 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { canUseWebGL, prefersReducedMotion } from '../../skills/lib/webglSupport'
-import { useProjectsBookModule } from '../hooks/useProjectsBookModule'
+import { useProjectBookPreloadTrigger } from '../hooks/useProjectBookPreloadTrigger'
+import {
+  preloadProjectBookScene,
+  useProjectsBookModule,
+} from '../hooks/useProjectsBookModule'
 import { useProjectsNavOwned } from '../hooks/useProjectsNavOwned'
 import { useProjectsScrollTransition } from '../hooks/useProjectsScrollTransition'
 import { PROJECT_BOOK_SCENE } from '../model/projectBookConfig'
 import { PROJECT_BOOK_ENTRIES } from '../model/projectBookData'
+import { BookLoading } from './book/BookLoading'
 import { ProjectBookFallback } from './book/ProjectBookFallback'
 import '../styles/projects.css'
 import '../styles/project-book.css'
@@ -35,16 +40,28 @@ export function ProjectsSection() {
         .matches,
   )
 
-  // Mount 3D only after the blue wipe owns the scene — never while Skills is live.
-  const shouldLoadBook = projectsReady && webgl && !isMobile
-  const { status, Component: ProjectBookScene } = useProjectsBookModule(shouldLoadBook)
+  const canUseBook = webgl && !isMobile
+  const shouldPreload = useProjectBookPreloadTrigger(sectionRef, canUseBook)
+  // Canvas mounts only after Projects owns the wipe — never during live Skills.
+  const shouldMount = projectsReady && canUseBook
+
+  const { status, Component: ProjectBookScene } =
+    useProjectsBookModule(shouldPreload)
+
+  // Extra idle warm in case the section observer hasn't fired yet.
+  useEffect(() => {
+    if (!canUseBook || shouldPreload) return
+    const t = window.setTimeout(() => {
+      void preloadProjectBookScene()
+    }, 5000)
+    return () => window.clearTimeout(t)
+  }, [canUseBook, shouldPreload])
 
   const [fallbackSpread, setFallbackSpread] = useState(0)
   const showBookContent = projectsReady
   const show3d =
+    shouldMount &&
     Boolean(ProjectBookScene) &&
-    !isMobile &&
-    webgl &&
     status !== 'error'
 
   return (
@@ -54,11 +71,16 @@ export function ProjectsSection() {
       className="projects-section"
       aria-label="Selected Projects"
       data-projects-book={
-        !showBookContent ? 'idle' : show3d ? 'webgl' : 'fallback'
+        !showBookContent
+          ? 'idle'
+          : show3d
+            ? 'webgl'
+            : status === 'loading' || status === 'idle'
+              ? 'loading'
+              : 'fallback'
       }
     >
       <div ref={pinRef} className="projects-section__pin">
-        {/* Empty blue panel until wipe ownership — Skills handoff stays intact. */}
         <div ref={panelRef} className="projects-section__panel">
           {showBookContent ? (
             <div className="projects-section__book-slot">
@@ -68,12 +90,14 @@ export function ProjectsSection() {
                   reducedMotion={reducedMotion}
                   sectionVisible={projectsReady}
                 />
-              ) : (
+              ) : status === 'error' || isMobile || !webgl ? (
                 <ProjectBookFallback
                   entries={PROJECT_BOOK_ENTRIES}
                   spreadIndex={fallbackSpread}
                   onSelect={setFallbackSpread}
                 />
+              ) : (
+                <BookLoading />
               )}
             </div>
           ) : null}

@@ -18,9 +18,33 @@ html[data-projects-nav='owned'] .projects-section__book-slot {
 
 .project-book-scene {
   position: relative;
-  width: min(100%, 56rem);
-  height: min(100%, 42rem);
-  min-height: clamp(20rem, 58vh, 36rem);
+  width: min(100%, 68rem);
+  height: min(100%, 46rem);
+  min-height: clamp(22rem, 64vh, 40rem);
+}
+
+.project-book-loading {
+  display: grid;
+  place-content: center;
+  gap: 0.45rem;
+  width: min(100%, 28rem);
+  min-height: 12rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.project-book-loading__label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.project-book-loading__meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 /* HTML details overlay — long copy stays out of canvas textures */
